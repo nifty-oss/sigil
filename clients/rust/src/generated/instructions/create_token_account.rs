@@ -39,9 +39,9 @@ impl CreateTokenAccount {
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.payer, true,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.namespace,
-            true,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.user, false,
@@ -76,7 +76,7 @@ struct CreateTokenAccountInstructionData {
 
 impl CreateTokenAccountInstructionData {
     fn new() -> Self {
-        Self { discriminator: 0 }
+        Self { discriminator: 1 }
     }
 }
 
@@ -91,7 +91,7 @@ pub struct CreateTokenAccountInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[writable, signer]` payer
-///   1. `[writable, signer]` namespace
+///   1. `[]` namespace
 ///   2. `[]` user
 ///   3. `[writable]` token_account
 ///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
@@ -269,9 +269,9 @@ impl<'a, 'b> CreateTokenAccountCpi<'a, 'b> {
             *self.payer.key,
             true,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.namespace.key,
-            true,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.user.key,
@@ -327,7 +327,7 @@ impl<'a, 'b> CreateTokenAccountCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[writable, signer]` payer
-///   1. `[writable, signer]` namespace
+///   1. `[]` namespace
 ///   2. `[]` user
 ///   3. `[writable]` token_account
 ///   4. `[]` system_program

@@ -3,7 +3,7 @@
   "name": "nifty_oss_token_lite",
   "instructions": [
     {
-      "name": "CreateTokenAccount",
+      "name": "CreateMint",
       "accounts": [
         {
           "name": "payer",
@@ -17,6 +17,63 @@
           "name": "namespace",
           "isMut": true,
           "isSigner": true,
+          "docs": [
+            "The namespace for the token account."
+          ]
+        },
+        {
+          "name": "mintAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The mint account PDA derived from the ticker and namespace."
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The system program"
+          ]
+        },
+        {
+          "name": "niftyProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The Nifty Asset program"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "createMintArgs",
+          "type": {
+            "defined": "CreateMintArgs"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 0
+      }
+    },
+    {
+      "name": "CreateTokenAccount",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The account paying for the storage fees."
+          ]
+        },
+        {
+          "name": "namespace",
+          "isMut": false,
+          "isSigner": false,
           "docs": [
             "The namespace for the token account."
           ]
@@ -56,30 +113,39 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 0
+        "value": 1
       }
     },
     {
-      "name": "CreateMint",
+      "name": "AddToken",
       "accounts": [
         {
           "name": "payer",
           "isMut": true,
           "isSigner": true,
+          "isOptional": true,
           "docs": [
             "The account paying for the storage fees."
           ]
         },
         {
           "name": "namespace",
-          "isMut": true,
-          "isSigner": true,
+          "isMut": false,
+          "isSigner": false,
           "docs": [
             "The namespace for the token account."
           ]
         },
         {
-          "name": "mintAccount",
+          "name": "user",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The pubkey of the user associated with the token account"
+          ]
+        },
+        {
+          "name": "tokenAccount",
           "isMut": true,
           "isSigner": false,
           "docs": [
@@ -90,30 +156,23 @@
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false,
+          "isOptional": true,
           "docs": [
             "The system program"
-          ]
-        },
-        {
-          "name": "niftyProgram",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "The Nifty Asset program"
           ]
         }
       ],
       "args": [
         {
-          "name": "createMintArgs",
+          "name": "addTokenArgs",
           "type": {
-            "defined": "CreateMintArgs"
+            "defined": "AddTokenArgs"
           }
         }
       ],
       "discriminant": {
         "type": "u8",
-        "value": 1
+        "value": 2
       }
     }
   ],
@@ -146,6 +205,18 @@
           {
             "name": "decimals",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AddTokenArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "ticker",
+            "type": "string"
           }
         ]
       }

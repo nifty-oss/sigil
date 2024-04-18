@@ -1,3 +1,5 @@
+use crate::state::TokenAccountMut;
+
 use super::*;
 
 pub fn process_create_token<'a>(
@@ -15,10 +17,7 @@ pub fn process_create_token<'a>(
 
     // Account validation.
     assert_signer("payer", payer_info)?;
-    assert_signer("namespace", namespace_info)?;
-
     assert_empty("token_account", token_account_info)?;
-
     assert_same_pubkeys("sys_prog", system_program_info, &SYSTEM_PROGRAM_ID)?;
 
     let (token_account_pubkey, bump) = Pubkey::find_program_address(
@@ -55,7 +54,7 @@ pub fn process_create_token<'a>(
     msg!("Account data: {:?}", account_data.len());
 
     // // Get the mutable byte muck version of the account so we can mutate the data directly.
-    let mut token_namespace = TokenAccount::from_bytes(account_data);
+    let mut token_namespace = TokenAccountMut::from_bytes_mut(account_data);
 
     // Now can operate on the struct like a normal Rust struct but the bytes are cast directly
     // without deserializ/serializ(ing).

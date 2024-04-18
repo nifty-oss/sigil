@@ -11,9 +11,11 @@ use crate::instruction::{CreateArgs, CreateMintArgs, Instruction};
 use crate::state::{Key, TokenAccount};
 use crate::utils::create_account;
 
+mod add_token;
 mod create_mint;
 mod create_token;
 
+use add_token::process_add_token;
 use create_mint::process_create_mint;
 use create_token::process_create_token;
 
@@ -33,6 +35,10 @@ pub fn process_instruction<'a>(
         Instruction::CreateMint(args) => {
             msg!("Instruction: Create Mint");
             process_create_mint(accounts, args)
+        }
+        Instruction::AddToken(args) => {
+            msg!("Instruction: Add Token");
+            process_add_token(accounts, args)
         }
     }
 }

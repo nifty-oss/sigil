@@ -2139,6 +2139,7 @@ dependencies = [
  "solana-program",
  "solana-program-test",
  "solana-sdk",
+ "stevia",
  "thiserror",
 ]
 

@@ -6,5 +6,6 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
+export * from './addToken';
 export * from './createMint';
 export * from './createTokenAccount';

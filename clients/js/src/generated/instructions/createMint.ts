@@ -91,7 +91,7 @@ export function getCreateMintInstructionDataEncoder(): Encoder<CreateMintInstruc
       ['maxSupply', getU64Encoder()],
       ['decimals', getU8Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 1 })
+    (value) => ({ ...value, discriminator: 0 })
   );
 }
 
@@ -125,7 +125,7 @@ export type CreateMintInput<
   payer: TransactionSigner<TAccountPayer>;
   /** The namespace for the token account. */
   namespace: TransactionSigner<TAccountNamespace>;
-  /** The token namespace account. */
+  /** The mint account PDA derived from the ticker and namespace. */
   mintAccount: Address<TAccountMintAccount>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
@@ -218,7 +218,7 @@ export type ParsedCreateMintInstruction<
     payer: TAccountMetas[0];
     /** The namespace for the token account. */
     namespace: TAccountMetas[1];
-    /** The token namespace account. */
+    /** The mint account PDA derived from the ticker and namespace. */
     mintAccount: TAccountMetas[2];
     /** The system program */
     systemProgram: TAccountMetas[3];

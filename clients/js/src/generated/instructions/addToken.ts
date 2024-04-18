@@ -12,10 +12,10 @@ import {
   Decoder,
   Encoder,
   combineCodec,
+  getStringDecoder,
+  getStringEncoder,
   getStructDecoder,
   getStructEncoder,
-  getU32Decoder,
-  getU32Encoder,
   getU8Decoder,
   getU8Encoder,
   mapEncoder,
@@ -33,15 +33,13 @@ import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
 import { TOKEN_LITE_PROGRAM_ADDRESS } from '../programs';
 import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
-export type CreateTokenAccountInstruction<
+export type AddTokenInstruction<
   TProgram extends string = typeof TOKEN_LITE_PROGRAM_ADDRESS,
   TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountNamespace extends string | IAccountMeta<string> = string,
   TAccountUser extends string | IAccountMeta<string> = string,
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
+  TAccountSystemProgram extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -67,41 +65,38 @@ export type CreateTokenAccountInstruction<
     ]
   >;
 
-export type CreateTokenAccountInstructionData = {
-  discriminator: number;
-  capacity: number;
-};
+export type AddTokenInstructionData = { discriminator: number; ticker: string };
 
-export type CreateTokenAccountInstructionDataArgs = { capacity: number };
+export type AddTokenInstructionDataArgs = { ticker: string };
 
-export function getCreateTokenAccountInstructionDataEncoder(): Encoder<CreateTokenAccountInstructionDataArgs> {
+export function getAddTokenInstructionDataEncoder(): Encoder<AddTokenInstructionDataArgs> {
   return mapEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['capacity', getU32Encoder()],
+      ['ticker', getStringEncoder()],
     ]),
-    (value) => ({ ...value, discriminator: 1 })
+    (value) => ({ ...value, discriminator: 2 })
   );
 }
 
-export function getCreateTokenAccountInstructionDataDecoder(): Decoder<CreateTokenAccountInstructionData> {
+export function getAddTokenInstructionDataDecoder(): Decoder<AddTokenInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['capacity', getU32Decoder()],
+    ['ticker', getStringDecoder()],
   ]);
 }
 
-export function getCreateTokenAccountInstructionDataCodec(): Codec<
-  CreateTokenAccountInstructionDataArgs,
-  CreateTokenAccountInstructionData
+export function getAddTokenInstructionDataCodec(): Codec<
+  AddTokenInstructionDataArgs,
+  AddTokenInstructionData
 > {
   return combineCodec(
-    getCreateTokenAccountInstructionDataEncoder(),
-    getCreateTokenAccountInstructionDataDecoder()
+    getAddTokenInstructionDataEncoder(),
+    getAddTokenInstructionDataDecoder()
   );
 }
 
-export type CreateTokenAccountInput<
+export type AddTokenInput<
   TAccountPayer extends string = string,
   TAccountNamespace extends string = string,
   TAccountUser extends string = string,
@@ -109,7 +104,7 @@ export type CreateTokenAccountInput<
   TAccountSystemProgram extends string = string,
 > = {
   /** The account paying for the storage fees. */
-  payer: TransactionSigner<TAccountPayer>;
+  payer?: TransactionSigner<TAccountPayer>;
   /** The namespace for the token account. */
   namespace: Address<TAccountNamespace>;
   /** The pubkey of the user associated with the token account */
@@ -118,24 +113,24 @@ export type CreateTokenAccountInput<
   tokenAccount: Address<TAccountTokenAccount>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
-  capacity: CreateTokenAccountInstructionDataArgs['capacity'];
+  ticker: AddTokenInstructionDataArgs['ticker'];
 };
 
-export function getCreateTokenAccountInstruction<
+export function getAddTokenInstruction<
   TAccountPayer extends string,
   TAccountNamespace extends string,
   TAccountUser extends string,
   TAccountTokenAccount extends string,
   TAccountSystemProgram extends string,
 >(
-  input: CreateTokenAccountInput<
+  input: AddTokenInput<
     TAccountPayer,
     TAccountNamespace,
     TAccountUser,
     TAccountTokenAccount,
     TAccountSystemProgram
   >
-): CreateTokenAccountInstruction<
+): AddTokenInstruction<
   typeof TOKEN_LITE_PROGRAM_ADDRESS,
   TAccountPayer,
   TAccountNamespace,
@@ -162,12 +157,6 @@ export function getCreateTokenAccountInstruction<
   // Original args.
   const args = { ...input };
 
-  // Resolve default values.
-  if (!accounts.systemProgram.value) {
-    accounts.systemProgram.value =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
-  }
-
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -178,10 +167,10 @@ export function getCreateTokenAccountInstruction<
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
-    data: getCreateTokenAccountInstructionDataEncoder().encode(
-      args as CreateTokenAccountInstructionDataArgs
+    data: getAddTokenInstructionDataEncoder().encode(
+      args as AddTokenInstructionDataArgs
     ),
-  } as CreateTokenAccountInstruction<
+  } as AddTokenInstruction<
     typeof TOKEN_LITE_PROGRAM_ADDRESS,
     TAccountPayer,
     TAccountNamespace,
@@ -193,14 +182,14 @@ export function getCreateTokenAccountInstruction<
   return instruction;
 }
 
-export type ParsedCreateTokenAccountInstruction<
+export type ParsedAddTokenInstruction<
   TProgram extends string = typeof TOKEN_LITE_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
     /** The account paying for the storage fees. */
-    payer: TAccountMetas[0];
+    payer?: TAccountMetas[0] | undefined;
     /** The namespace for the token account. */
     namespace: TAccountMetas[1];
     /** The pubkey of the user associated with the token account */
@@ -208,19 +197,19 @@ export type ParsedCreateTokenAccountInstruction<
     /** The token namespace account. */
     tokenAccount: TAccountMetas[3];
     /** The system program */
-    systemProgram: TAccountMetas[4];
+    systemProgram?: TAccountMetas[4] | undefined;
   };
-  data: CreateTokenAccountInstructionData;
+  data: AddTokenInstructionData;
 };
 
-export function parseCreateTokenAccountInstruction<
+export function parseAddTokenInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedCreateTokenAccountInstruction<TProgram, TAccountMetas> {
+): ParsedAddTokenInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 5) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -231,17 +220,21 @@ export function parseCreateTokenAccountInstruction<
     accountIndex += 1;
     return accountMeta;
   };
+  const getNextOptionalAccount = () => {
+    const accountMeta = getNextAccount();
+    return accountMeta.address === TOKEN_LITE_PROGRAM_ADDRESS
+      ? undefined
+      : accountMeta;
+  };
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      payer: getNextAccount(),
+      payer: getNextOptionalAccount(),
       namespace: getNextAccount(),
       user: getNextAccount(),
       tokenAccount: getNextAccount(),
-      systemProgram: getNextAccount(),
+      systemProgram: getNextOptionalAccount(),
     },
-    data: getCreateTokenAccountInstructionDataDecoder().decode(
-      instruction.data
-    ),
+    data: getAddTokenInstructionDataDecoder().decode(instruction.data),
   };
 }
