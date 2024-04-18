@@ -16,6 +16,8 @@ import {
   getStringEncoder,
   getStructDecoder,
   getStructEncoder,
+  getU64Decoder,
+  getU64Encoder,
   getU8Decoder,
   getU8Encoder,
   mapEncoder,
@@ -71,15 +73,23 @@ export type CreateMintInstruction<
 export type CreateMintInstructionData = {
   discriminator: number;
   ticker: string;
+  maxSupply: bigint;
+  decimals: number;
 };
 
-export type CreateMintInstructionDataArgs = { ticker: string };
+export type CreateMintInstructionDataArgs = {
+  ticker: string;
+  maxSupply: number | bigint;
+  decimals: number;
+};
 
 export function getCreateMintInstructionDataEncoder(): Encoder<CreateMintInstructionDataArgs> {
   return mapEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
       ['ticker', getStringEncoder()],
+      ['maxSupply', getU64Encoder()],
+      ['decimals', getU8Encoder()],
     ]),
     (value) => ({ ...value, discriminator: 1 })
   );
@@ -89,6 +99,8 @@ export function getCreateMintInstructionDataDecoder(): Decoder<CreateMintInstruc
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
     ['ticker', getStringDecoder()],
+    ['maxSupply', getU64Decoder()],
+    ['decimals', getU8Decoder()],
   ]);
 }
 
@@ -120,6 +132,8 @@ export type CreateMintInput<
   /** The Nifty Asset program */
   niftyProgram: Address<TAccountNiftyProgram>;
   ticker: CreateMintInstructionDataArgs['ticker'];
+  maxSupply: CreateMintInstructionDataArgs['maxSupply'];
+  decimals: CreateMintInstructionDataArgs['decimals'];
 };
 
 export function getCreateMintInstruction<

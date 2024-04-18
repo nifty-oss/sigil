@@ -5,9 +5,6 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
-pub mod errors;
-pub mod instructions;
-pub mod programs;
-pub mod types;
+pub(crate) mod r#mint_metadata;
 
-pub(crate) use programs::*;
+pub use self::r#mint_metadata::*;

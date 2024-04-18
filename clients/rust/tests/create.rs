@@ -1,11 +1,12 @@
 #![cfg(feature = "test-sbf")]
 
+use borsh::BorshDeserialize;
 use nifty_asset::{
-    extensions::Proxy,
+    extensions::{Blob, Proxy},
     state::{Asset, Discriminator, Standard, State},
     ZeroCopy,
 };
-use nifty_oss_token_lite::state::{TokenAccount, TokenSeeds};
+use nifty_oss_token_lite::state::{MintMetadata, TokenAccount, TokenSeeds};
 use nifty_oss_token_lite_client::{
     instructions::{CreateMintBuilder, CreateTokenAccountBuilder},
     ID as TokenLiteID,
@@ -108,6 +109,8 @@ async fn create_mint_account() {
     // Given a PDA derived from the payer's public key.
 
     let ticker = String::from("USDC");
+    let max_supply = 100_000_000;
+    let decimals = 2;
 
     let mut seeds = Vec::with_capacity(32);
     seeds.extend(ticker.as_bytes().iter());
@@ -125,7 +128,9 @@ async fn create_mint_account() {
         .namespace(namespace)
         .mint_account(address)
         .nifty_program(nifty_asset::ID)
-        .ticker(ticker)
+        .ticker(ticker.clone())
+        .max_supply(max_supply)
+        .decimals(decimals)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -149,8 +154,17 @@ async fn create_mint_account() {
     assert_eq!(asset.authority, namespace);
     assert_eq!(asset.owner, namespace);
 
-    assert!(Asset::get_extensions(account_data).len() == 1);
+    assert!(Asset::get_extensions(account_data).len() == 2);
+
     let proxy = Asset::get::<Proxy>(account_data).unwrap();
     assert_eq!(*proxy.authority.value().unwrap(), namespace.into());
     assert_eq!(proxy.program, &TokenLiteID);
+
+    let mut blob = Asset::get::<Blob>(account_data).unwrap();
+    let metadata: MintMetadata = BorshDeserialize::deserialize(&mut blob.data).unwrap();
+
+    assert_eq!(metadata.ticker, ticker);
+    assert_eq!(metadata.supply, 0);
+    assert_eq!(metadata.max_supply, max_supply);
+    assert_eq!(metadata.decimals, decimals);
 }

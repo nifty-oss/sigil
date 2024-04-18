@@ -11,6 +11,8 @@ pub struct CreateArgs {
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Eq, Debug, Clone)]
 pub struct CreateMintArgs {
     pub ticker: String,
+    pub max_supply: u64,
+    pub decimals: u8,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Clone, Debug, ShankContext, ShankInstruction)]

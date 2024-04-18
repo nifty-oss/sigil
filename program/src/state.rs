@@ -1,3 +1,4 @@
+use borsh::{BorshDeserialize, BorshSerialize};
 use bytemuck::{Pod, Zeroable};
 use solana_program::pubkey::Pubkey;
 use stevia::collections::AVLTreeMut;
@@ -20,8 +21,7 @@ pub enum Key {
 unsafe impl Zeroable for Key {}
 unsafe impl Pod for Key {}
 
-// pub type Ticker = &'static str;
-pub type Ticker = [u8; 8];
+pub type Ticker = [u8; 4];
 pub type Amount = u64;
 
 pub struct TokenSeeds {
@@ -72,4 +72,17 @@ impl Header {
     pub fn from_bytes(bytes: &'_ mut [u8]) -> &'_ mut Self {
         bytemuck::from_bytes_mut::<Header>(bytes)
     }
+}
+
+// TODO: ByteMuck? Only 21 bytes.
+#[derive(Clone, Debug, Default, Eq, PartialEq, BorshDeserialize, BorshSerialize)]
+pub struct MintMetadata {
+    pub ticker: String,
+    pub supply: u64,
+    pub max_supply: u64,
+    pub decimals: u8,
+}
+
+impl MintMetadata {
+    pub const LEN: usize = std::mem::size_of::<MintMetadata>();
 }

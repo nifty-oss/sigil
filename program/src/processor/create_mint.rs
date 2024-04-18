@@ -1,12 +1,15 @@
+use borsh::BorshSerialize;
 use nifty_asset::{
-    extensions::ProxyBuilder,
+    extensions::{BlobBuilder, ExtensionBuilder, ProxyBuilder},
     instructions::{CreateCpi, CreateInstructionArgs},
     types::{ExtensionInput, ExtensionType, Standard},
 };
 
-use crate::error::TokenLiteError;
+use crate::{error::TokenLiteError, state::MintMetadata};
 
 use super::*;
+
+const CONTENT_TYPE: &str = "custom/mint";
 
 pub fn process_create_mint<'a>(
     accounts: &'a [AccountInfo<'a>],
@@ -49,8 +52,23 @@ pub fn process_create_mint<'a>(
 
     let signer_seeds: &[&[u8]] = &[seeds, &[bump]];
 
-    // Take the ticker bytes and the namespace pubkey and create a string from them: "namespace:ticker".
-    let name = format!("{}:{}", namespace_info.key, args.ticker);
+    let metadata = MintMetadata {
+        ticker: args.ticker.clone(),
+        supply: 0,
+        max_supply: args.max_supply,
+        decimals: args.decimals,
+    }
+    .try_to_vec()?;
+
+    let data = BlobBuilder::with_capacity(2000)
+        .set_data(CONTENT_TYPE, &metadata)
+        .data();
+
+    let blob = ExtensionInput {
+        extension_type: ExtensionType::Blob,
+        length: data.len() as u32,
+        data: Some(data),
+    };
 
     // Proxy extension for the Nifty mint asset.
     let data = ProxyBuilder::with_capacity(100)
@@ -69,6 +87,16 @@ pub fn process_create_mint<'a>(
         data: Some(data),
     };
 
+    // Take the ticker bytes and the namespace pubkey and create a string from them: "namespace:ticker".
+    let name = format!("{}:{}", namespace_info.key, args.ticker);
+
+    let args = CreateInstructionArgs {
+        name,
+        standard: Standard::Proxied,
+        mutable: true,
+        extensions: Some(vec![proxy, blob]),
+    };
+
     // Create the mint account by CPI'ing into the Nifty program.
     CreateCpi {
         __program: nifty_program_info,
@@ -79,12 +107,7 @@ pub fn process_create_mint<'a>(
         group_authority: None,
         payer: Some(payer_info),
         system_program: Some(system_program_info),
-        __args: CreateInstructionArgs {
-            name,
-            standard: Standard::Proxied,
-            mutable: true,
-            extensions: Some(vec![proxy]),
-        },
+        __args: args,
     }
     .invoke_signed(&[signer_seeds])?;
 

@@ -83,6 +83,8 @@ impl CreateMintInstructionData {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateMintInstructionArgs {
     pub ticker: String,
+    pub max_supply: u64,
+    pub decimals: u8,
 }
 
 /// Instruction builder for `CreateMint`.
@@ -102,6 +104,8 @@ pub struct CreateMintBuilder {
     system_program: Option<solana_program::pubkey::Pubkey>,
     nifty_program: Option<solana_program::pubkey::Pubkey>,
     ticker: Option<String>,
+    max_supply: Option<u64>,
+    decimals: Option<u8>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -145,6 +149,16 @@ impl CreateMintBuilder {
         self.ticker = Some(ticker);
         self
     }
+    #[inline(always)]
+    pub fn max_supply(&mut self, max_supply: u64) -> &mut Self {
+        self.max_supply = Some(max_supply);
+        self
+    }
+    #[inline(always)]
+    pub fn decimals(&mut self, decimals: u8) -> &mut Self {
+        self.decimals = Some(decimals);
+        self
+    }
     /// Add an aditional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -176,6 +190,8 @@ impl CreateMintBuilder {
         };
         let args = CreateMintInstructionArgs {
             ticker: self.ticker.clone().expect("ticker is not set"),
+            max_supply: self.max_supply.clone().expect("max_supply is not set"),
+            decimals: self.decimals.clone().expect("decimals is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -342,6 +358,8 @@ impl<'a, 'b> CreateMintCpiBuilder<'a, 'b> {
             system_program: None,
             nifty_program: None,
             ticker: None,
+            max_supply: None,
+            decimals: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -393,6 +411,16 @@ impl<'a, 'b> CreateMintCpiBuilder<'a, 'b> {
         self.instruction.ticker = Some(ticker);
         self
     }
+    #[inline(always)]
+    pub fn max_supply(&mut self, max_supply: u64) -> &mut Self {
+        self.instruction.max_supply = Some(max_supply);
+        self
+    }
+    #[inline(always)]
+    pub fn decimals(&mut self, decimals: u8) -> &mut Self {
+        self.instruction.decimals = Some(decimals);
+        self
+    }
     /// Add an additional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -436,6 +464,16 @@ impl<'a, 'b> CreateMintCpiBuilder<'a, 'b> {
     ) -> solana_program::entrypoint::ProgramResult {
         let args = CreateMintInstructionArgs {
             ticker: self.instruction.ticker.clone().expect("ticker is not set"),
+            max_supply: self
+                .instruction
+                .max_supply
+                .clone()
+                .expect("max_supply is not set"),
+            decimals: self
+                .instruction
+                .decimals
+                .clone()
+                .expect("decimals is not set"),
         };
         let instruction = CreateMintCpi {
             __program: self.instruction.__program,
@@ -475,6 +513,8 @@ struct CreateMintCpiBuilderInstruction<'a, 'b> {
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     nifty_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ticker: Option<String>,
+    max_supply: Option<u64>,
+    decimals: Option<u8>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,
