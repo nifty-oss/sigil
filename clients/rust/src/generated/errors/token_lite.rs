@@ -43,6 +43,9 @@ pub enum TokenLiteError {
     /// 10 (0xA) - Numerical overflow
     #[error("Numerical overflow")]
     NumericalOverflow,
+    /// 11 (0xB) - Invalid utf8 ticker
+    #[error("Invalid utf8 ticker")]
+    InvalidTicker,
 }
 
 impl solana_program::program_error::PrintProgramError for TokenLiteError {

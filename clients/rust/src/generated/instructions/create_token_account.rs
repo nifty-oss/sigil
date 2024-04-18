@@ -9,7 +9,7 @@ use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
 /// Accounts.
-pub struct Create {
+pub struct CreateTokenAccount {
     /// The account paying for the storage fees.
     pub payer: solana_program::pubkey::Pubkey,
     /// The namespace for the token account.
@@ -22,17 +22,17 @@ pub struct Create {
     pub system_program: solana_program::pubkey::Pubkey,
 }
 
-impl Create {
+impl CreateTokenAccount {
     pub fn instruction(
         &self,
-        args: CreateInstructionArgs,
+        args: CreateTokenAccountInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: CreateInstructionArgs,
+        args: CreateTokenAccountInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
@@ -55,7 +55,9 @@ impl Create {
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = CreateInstructionData::new().try_to_vec().unwrap();
+        let mut data = CreateTokenAccountInstructionData::new()
+            .try_to_vec()
+            .unwrap();
         let mut args = args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -68,11 +70,11 @@ impl Create {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct CreateInstructionData {
+struct CreateTokenAccountInstructionData {
     discriminator: u8,
 }
 
-impl CreateInstructionData {
+impl CreateTokenAccountInstructionData {
     fn new() -> Self {
         Self { discriminator: 0 }
     }
@@ -80,11 +82,11 @@ impl CreateInstructionData {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct CreateInstructionArgs {
+pub struct CreateTokenAccountInstructionArgs {
     pub capacity: u32,
 }
 
-/// Instruction builder for `Create`.
+/// Instruction builder for `CreateTokenAccount`.
 ///
 /// ### Accounts:
 ///
@@ -94,7 +96,7 @@ pub struct CreateInstructionArgs {
 ///   3. `[writable]` token_account
 ///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Default)]
-pub struct CreateBuilder {
+pub struct CreateTokenAccountBuilder {
     payer: Option<solana_program::pubkey::Pubkey>,
     namespace: Option<solana_program::pubkey::Pubkey>,
     user: Option<solana_program::pubkey::Pubkey>,
@@ -104,7 +106,7 @@ pub struct CreateBuilder {
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl CreateBuilder {
+impl CreateTokenAccountBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -164,7 +166,7 @@ impl CreateBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = Create {
+        let accounts = CreateTokenAccount {
             payer: self.payer.expect("payer is not set"),
             namespace: self.namespace.expect("namespace is not set"),
             user: self.user.expect("user is not set"),
@@ -173,7 +175,7 @@ impl CreateBuilder {
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
         };
-        let args = CreateInstructionArgs {
+        let args = CreateTokenAccountInstructionArgs {
             capacity: self.capacity.clone().expect("capacity is not set"),
         };
 
@@ -181,8 +183,8 @@ impl CreateBuilder {
     }
 }
 
-/// `create` CPI accounts.
-pub struct CreateCpiAccounts<'a, 'b> {
+/// `create_token_account` CPI accounts.
+pub struct CreateTokenAccountCpiAccounts<'a, 'b> {
     /// The account paying for the storage fees.
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
     /// The namespace for the token account.
@@ -195,8 +197,8 @@ pub struct CreateCpiAccounts<'a, 'b> {
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `create` CPI instruction.
-pub struct CreateCpi<'a, 'b> {
+/// `create_token_account` CPI instruction.
+pub struct CreateTokenAccountCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The account paying for the storage fees.
@@ -210,14 +212,14 @@ pub struct CreateCpi<'a, 'b> {
     /// The system program
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
-    pub __args: CreateInstructionArgs,
+    pub __args: CreateTokenAccountInstructionArgs,
 }
 
-impl<'a, 'b> CreateCpi<'a, 'b> {
+impl<'a, 'b> CreateTokenAccountCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: CreateCpiAccounts<'a, 'b>,
-        args: CreateInstructionArgs,
+        accounts: CreateTokenAccountCpiAccounts<'a, 'b>,
+        args: CreateTokenAccountInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
@@ -290,7 +292,9 @@ impl<'a, 'b> CreateCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = CreateInstructionData::new().try_to_vec().unwrap();
+        let mut data = CreateTokenAccountInstructionData::new()
+            .try_to_vec()
+            .unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -318,7 +322,7 @@ impl<'a, 'b> CreateCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `Create` via CPI.
+/// Instruction builder for `CreateTokenAccount` via CPI.
 ///
 /// ### Accounts:
 ///
@@ -327,13 +331,13 @@ impl<'a, 'b> CreateCpi<'a, 'b> {
 ///   2. `[]` user
 ///   3. `[writable]` token_account
 ///   4. `[]` system_program
-pub struct CreateCpiBuilder<'a, 'b> {
-    instruction: Box<CreateCpiBuilderInstruction<'a, 'b>>,
+pub struct CreateTokenAccountCpiBuilder<'a, 'b> {
+    instruction: Box<CreateTokenAccountCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> CreateCpiBuilder<'a, 'b> {
+impl<'a, 'b> CreateTokenAccountCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(CreateCpiBuilderInstruction {
+        let instruction = Box::new(CreateTokenAccountCpiBuilderInstruction {
             __program: program,
             payer: None,
             namespace: None,
@@ -430,14 +434,14 @@ impl<'a, 'b> CreateCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = CreateInstructionArgs {
+        let args = CreateTokenAccountInstructionArgs {
             capacity: self
                 .instruction
                 .capacity
                 .clone()
                 .expect("capacity is not set"),
         };
-        let instruction = CreateCpi {
+        let instruction = CreateTokenAccountCpi {
             __program: self.instruction.__program,
 
             payer: self.instruction.payer.expect("payer is not set"),
@@ -464,7 +468,7 @@ impl<'a, 'b> CreateCpiBuilder<'a, 'b> {
     }
 }
 
-struct CreateCpiBuilderInstruction<'a, 'b> {
+struct CreateTokenAccountCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     namespace: Option<&'b solana_program::account_info::AccountInfo<'a>>,

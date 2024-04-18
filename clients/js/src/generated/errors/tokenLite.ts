@@ -29,6 +29,8 @@ export const enum TokenLiteProgramErrorCode {
   INVALID_ACCOUNT_KEY = 0x9, // 9
   /** NumericalOverflow: Numerical overflow */
   NUMERICAL_OVERFLOW = 0xa, // 10
+  /** InvalidTicker: Invalid utf8 ticker */
+  INVALID_TICKER = 0xb, // 11
 }
 
 export class TokenLiteProgramError extends Error {
@@ -98,6 +100,10 @@ if (__DEV__) {
     [TokenLiteProgramErrorCode.NUMERICAL_OVERFLOW]: [
       'NumericalOverflow',
       `Numerical overflow`,
+    ],
+    [TokenLiteProgramErrorCode.INVALID_TICKER]: [
+      'InvalidTicker',
+      `Invalid utf8 ticker`,
     ],
   };
 }

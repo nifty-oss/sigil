@@ -14,7 +14,10 @@ import {
   TokenLiteProgramErrorCode,
   getTokenLiteProgramErrorFromCode,
 } from '../errors';
-import { ParsedCreateInstruction } from '../instructions';
+import {
+  ParsedCreateMintInstruction,
+  ParsedCreateTokenAccountInstruction,
+} from '../instructions';
 import { memcmp } from '../shared';
 
 export const TOKEN_LITE_PROGRAM_ADDRESS =
@@ -35,7 +38,8 @@ export function getTokenLiteProgram(): TokenLiteProgram {
 }
 
 export enum TokenLiteInstruction {
-  Create,
+  CreateTokenAccount,
+  CreateMint,
 }
 
 export function identifyTokenLiteInstruction(
@@ -44,7 +48,10 @@ export function identifyTokenLiteInstruction(
   const data =
     instruction instanceof Uint8Array ? instruction : instruction.data;
   if (memcmp(data, getU8Encoder().encode(0), 0)) {
-    return TokenLiteInstruction.Create;
+    return TokenLiteInstruction.CreateTokenAccount;
+  }
+  if (memcmp(data, getU8Encoder().encode(1), 0)) {
+    return TokenLiteInstruction.CreateMint;
   }
   throw new Error(
     'The provided instruction could not be identified as a tokenLite instruction.'
@@ -53,6 +60,10 @@ export function identifyTokenLiteInstruction(
 
 export type ParsedTokenLiteInstruction<
   TProgram extends string = 'BpPMgxYawb8Qiguavj3JccMdp7bTZWemSqJmDeYTsTD9',
-> = {
-  instructionType: TokenLiteInstruction.Create;
-} & ParsedCreateInstruction<TProgram>;
+> =
+  | ({
+      instructionType: TokenLiteInstruction.CreateTokenAccount;
+    } & ParsedCreateTokenAccountInstruction<TProgram>)
+  | ({
+      instructionType: TokenLiteInstruction.CreateMint;
+    } & ParsedCreateMintInstruction<TProgram>);

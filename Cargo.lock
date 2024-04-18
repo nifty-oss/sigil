@@ -1855,6 +1855,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "kaigan"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e623cca1f0e2a0919032c1bdabbf81dd9aa34658d5066aca7bb90d608317ab91"
+dependencies = [
+ "borsh 0.10.3",
+]
+
+[[package]]
 name = "keccak"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2073,11 +2082,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "nifty-asset"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a75ac494054efc518d6d90bd5ec5b5db50d27963ae2c3773009bf7643b11315c"
+dependencies = [
+ "borsh 0.10.3",
+ "kaigan",
+ "nifty-asset-types",
+ "num-derive 0.3.3",
+ "num-traits",
+ "solana-program",
+ "thiserror",
+]
+
+[[package]]
+name = "nifty-asset-types"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a150fb8153040cd5e568c2d01b15e908fd3d0a15a636efb176ae8004c285a1e"
+dependencies = [
+ "borsh 0.10.3",
+ "bytemuck",
+ "podded",
+ "solana-program",
+ "thiserror",
+]
+
+[[package]]
 name = "nifty-oss-token-lite"
 version = "0.0.0"
 dependencies = [
  "borsh 0.10.3",
  "bytemuck",
+ "nifty-asset",
  "num-derive 0.3.3",
  "num-traits",
  "shank",
@@ -2092,6 +2130,7 @@ version = "0.0.0"
 dependencies = [
  "assert_matches",
  "borsh 0.10.3",
+ "nifty-asset",
  "nifty-oss-token-lite",
  "num-derive 0.3.3",
  "num-traits",
@@ -2508,6 +2547,15 @@ name = "plain"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
+
+[[package]]
+name = "podded"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e5ef03855395ea7838e038410cf2be5dd419fa65560c3c82dfcf1ee5b32cfb4e"
+dependencies = [
+ "bytemuck",
+]
 
 [[package]]
 name = "polyval"

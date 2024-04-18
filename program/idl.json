@@ -3,7 +3,7 @@
   "name": "nifty_oss_token_lite",
   "instructions": [
     {
-      "name": "Create",
+      "name": "CreateTokenAccount",
       "accounts": [
         {
           "name": "payer",
@@ -58,6 +58,63 @@
         "type": "u8",
         "value": 0
       }
+    },
+    {
+      "name": "CreateMint",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The account paying for the storage fees."
+          ]
+        },
+        {
+          "name": "namespace",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The namespace for the token account."
+          ]
+        },
+        {
+          "name": "mintAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The token namespace account."
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The system program"
+          ]
+        },
+        {
+          "name": "niftyProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The Nifty Asset program"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "createMintArgs",
+          "type": {
+            "defined": "CreateMintArgs"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 1
+      }
     }
   ],
   "types": [
@@ -69,6 +126,18 @@
           {
             "name": "capacity",
             "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CreateMintArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "ticker",
+            "type": "string"
           }
         ]
       }
@@ -129,6 +198,11 @@
       "code": 10,
       "name": "NumericalOverflow",
       "msg": "Numerical overflow"
+    },
+    {
+      "code": 11,
+      "name": "InvalidTicker",
+      "msg": "Invalid utf8 ticker"
     }
   ],
   "metadata": {

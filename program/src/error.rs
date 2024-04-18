@@ -41,6 +41,9 @@ pub enum TokenLiteError {
     /// 10 - Numerical overflow
     #[error("Numerical overflow")]
     NumericalOverflow,
+    /// 11 - Invalid ticker
+    #[error("Invalid utf8 ticker")]
+    InvalidTicker,
 }
 
 impl PrintProgramError for TokenLiteError {

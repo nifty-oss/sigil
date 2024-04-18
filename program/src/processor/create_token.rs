@@ -1,35 +1,11 @@
-use borsh::BorshDeserialize;
-use solana_program::program_error::ProgramError;
-use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey,
-    system_program::ID as SYSTEM_PROGRAM_ID,
-};
+use super::*;
 
-use crate::assertions::{assert_empty, assert_same_pubkeys, assert_signer};
-use crate::instruction::accounts::CreateAccounts;
-use crate::instruction::{CreateArgs, Instruction};
-use crate::state::{Key, TokenAccount};
-use crate::utils::create_account;
-
-pub fn process_instruction<'a>(
-    _program_id: &Pubkey,
+pub fn process_create_token<'a>(
     accounts: &'a [AccountInfo<'a>],
-    instruction_data: &[u8],
+    args: CreateArgs,
 ) -> ProgramResult {
-    let instruction: Instruction = Instruction::try_from_slice(instruction_data)
-        .map_err(|_| ProgramError::InvalidInstructionData)?;
-
-    match instruction {
-        Instruction::Create(args) => {
-            msg!("Instruction: Create");
-            create(accounts, args)
-        }
-    }
-}
-
-fn create<'a>(accounts: &'a [AccountInfo<'a>], args: CreateArgs) -> ProgramResult {
     // Accounts.
-    let ctx = CreateAccounts::context(accounts)?;
+    let ctx = CreateTokenAccountAccounts::context(accounts)?;
 
     let payer_info = ctx.accounts.payer;
     let user_info = ctx.accounts.user;
