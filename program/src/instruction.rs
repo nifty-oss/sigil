@@ -15,6 +15,18 @@ pub struct CreateMintArgs {
     pub decimals: u8,
 }
 
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Eq, Debug, Clone)]
+pub struct MintToArgs {
+    pub amount: u32,
+}
+
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Eq, Debug, Clone)]
+pub struct TransferArgs {
+    pub amount: u32,
+}
+
 #[derive(BorshDeserialize, BorshSerialize, Clone, Debug, ShankContext, ShankInstruction)]
 #[rustfmt::skip]
 pub enum Instruction {
@@ -47,4 +59,25 @@ pub enum Instruction {
     #[account(3, writable, name="token_account", desc = "The token namespace account.")]
     #[account(4, optional, name="system_program", desc = "The system program")]
     AddToken,
+
+    /// Create a new mint account from a ticker and a namespace.
+    /// The namespace authority must sign the transaction to sign off on creation of a new mint account
+    /// in their namespace.
+    #[account(0, optional, writable, signer, name="payer", desc = "The account paying for the storage fees.")]
+    #[account(1, writable, signer, name="namespace", desc = "The namespace for the token account.")]
+    #[account(2, writable, name="mint_account", desc = "The mint account PDA derived from the ticker and namespace.")]
+    #[account(3, writable, name="token_account", desc = "The token namespace account.")]
+    #[account(4, optional, name="system_program", desc = "The system program")]
+    #[account(5, name="nifty_program", desc = "The Nifty Asset program")]
+    MintTo(MintToArgs),
+
+    /// Transfer tokens from one user to another.
+    #[account(0, optional, writable, signer, name="payer", desc = "The account paying for the storage fees.")]
+    #[account(1, signer, name="user", desc = "The pubkey of the user associated with the token account")]
+    #[account(2, name="recipient", desc = "The recipient account.")]
+    #[account(3, name="mint", desc = "The mint account for the token to be transferred")]
+    #[account(4, writable, name="user_token_account", desc = "The token namespace account.")]
+    #[account(5, writable, name="recipient_token_account", desc = "The token namespace account.")]
+    #[account(6, optional, name="system_program", desc = "The system program")]
+    Transfer(TransferArgs),
 }

@@ -14,10 +14,14 @@ use crate::utils::create_account;
 mod add_token;
 mod create_mint;
 mod create_token;
+mod mint_to;
+mod transfer;
 
 use add_token::process_add_token;
 use create_mint::process_create_mint;
 use create_token::process_create_token;
+use mint_to::process_mint_to;
+use transfer::process_transfer;
 
 pub fn process_instruction<'a>(
     _program_id: &Pubkey,
@@ -39,6 +43,14 @@ pub fn process_instruction<'a>(
         Instruction::AddToken => {
             msg!("Instruction: Add Token");
             process_add_token(accounts)
+        }
+        Instruction::MintTo(args) => {
+            msg!("Instruction: Mint To");
+            process_mint_to(accounts, args)
+        }
+        Instruction::Transfer(args) => {
+            msg!("Instruction: Transfer");
+            process_transfer(accounts, args)
         }
     }
 }

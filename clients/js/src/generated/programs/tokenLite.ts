@@ -18,6 +18,8 @@ import {
   ParsedAddTokenInstruction,
   ParsedCreateMintInstruction,
   ParsedCreateTokenAccountInstruction,
+  ParsedMintToInstruction,
+  ParsedTransferInstruction,
 } from '../instructions';
 import { memcmp } from '../shared';
 
@@ -46,6 +48,8 @@ export enum TokenLiteInstruction {
   CreateMint,
   CreateTokenAccount,
   AddToken,
+  MintTo,
+  Transfer,
 }
 
 export function identifyTokenLiteInstruction(
@@ -61,6 +65,12 @@ export function identifyTokenLiteInstruction(
   }
   if (memcmp(data, getU8Encoder().encode(2), 0)) {
     return TokenLiteInstruction.AddToken;
+  }
+  if (memcmp(data, getU8Encoder().encode(3), 0)) {
+    return TokenLiteInstruction.MintTo;
+  }
+  if (memcmp(data, getU8Encoder().encode(4), 0)) {
+    return TokenLiteInstruction.Transfer;
   }
   throw new Error(
     'The provided instruction could not be identified as a tokenLite instruction.'
@@ -78,4 +88,10 @@ export type ParsedTokenLiteInstruction<
     } & ParsedCreateTokenAccountInstruction<TProgram>)
   | ({
       instructionType: TokenLiteInstruction.AddToken;
-    } & ParsedAddTokenInstruction<TProgram>);
+    } & ParsedAddTokenInstruction<TProgram>)
+  | ({
+      instructionType: TokenLiteInstruction.MintTo;
+    } & ParsedMintToInstruction<TProgram>)
+  | ({
+      instructionType: TokenLiteInstruction.Transfer;
+    } & ParsedTransferInstruction<TProgram>);

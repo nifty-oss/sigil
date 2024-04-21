@@ -35,6 +35,10 @@ export const enum TokenLiteProgramErrorCode {
   INVALID_MINT = 0xc, // 12
   /** InvalidTokenAccount: Invalid token account */
   INVALID_TOKEN_ACCOUNT = 0xd, // 13
+  /** InsufficientFunds: Insufficient funds */
+  INSUFFICIENT_FUNDS = 0xe, // 14
+  /** MaximumSupplyReached: Maximum supply reached */
+  MAXIMUM_SUPPLY_REACHED = 0xf, // 15
 }
 
 export class TokenLiteProgramError extends Error {
@@ -113,6 +117,14 @@ if (__DEV__) {
     [TokenLiteProgramErrorCode.INVALID_TOKEN_ACCOUNT]: [
       'InvalidTokenAccount',
       `Invalid token account`,
+    ],
+    [TokenLiteProgramErrorCode.INSUFFICIENT_FUNDS]: [
+      'InsufficientFunds',
+      `Insufficient funds`,
+    ],
+    [TokenLiteProgramErrorCode.MAXIMUM_SUPPLY_REACHED]: [
+      'MaximumSupplyReached',
+      `Maximum supply reached`,
     ],
   };
 }

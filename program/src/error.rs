@@ -50,6 +50,12 @@ pub enum TokenLiteError {
     /// 13 - Invalid token account
     #[error("Invalid token account")]
     InvalidTokenAccount,
+    /// 14 - Insufficient funds
+    #[error("Insufficient funds")]
+    InsufficientFunds,
+    /// 15 - Maximum supply reached
+    #[error("Maximum supply reached")]
+    MaximumSupplyReached,
 }
 
 impl PrintProgramError for TokenLiteError {

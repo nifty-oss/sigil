@@ -3,7 +3,7 @@ use bytemuck::{Pod, Zeroable};
 use solana_program::pubkey::Pubkey;
 use stevia::collections::{u8_avl_tree::U8Allocator, U8AVLTree, U8AVLTreeMut};
 
-pub const KEY_SIZE: usize = std::mem::size_of::<u64>();
+pub const CONTENT_TYPE: &str = "custom/mint";
 
 #[repr(u64)]
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]

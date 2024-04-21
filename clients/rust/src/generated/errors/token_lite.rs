@@ -52,6 +52,12 @@ pub enum TokenLiteError {
     /// 13 (0xD) - Invalid token account
     #[error("Invalid token account")]
     InvalidTokenAccount,
+    /// 14 (0xE) - Insufficient funds
+    #[error("Insufficient funds")]
+    InsufficientFunds,
+    /// 15 (0xF) - Maximum supply reached
+    #[error("Maximum supply reached")]
+    MaximumSupplyReached,
 }
 
 impl solana_program::program_error::PrintProgramError for TokenLiteError {

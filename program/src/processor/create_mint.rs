@@ -5,11 +5,12 @@ use nifty_asset::{
     types::{ExtensionInput, ExtensionType, Standard},
 };
 
-use crate::{error::TokenLiteError, state::MintMetadata};
+use crate::{
+    error::TokenLiteError,
+    state::{MintMetadata, CONTENT_TYPE},
+};
 
 use super::*;
-
-const CONTENT_TYPE: &str = "custom/mint";
 
 pub fn process_create_mint<'a>(
     accounts: &'a [AccountInfo<'a>],
