@@ -73,12 +73,12 @@ impl AddToken {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-struct AddTokenInstructionData {
+pub struct AddTokenInstructionData {
     discriminator: u8,
 }
 
 impl AddTokenInstructionData {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self { discriminator: 2 }
     }
 }

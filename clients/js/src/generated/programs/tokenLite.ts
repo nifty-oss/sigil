@@ -38,6 +38,10 @@ export function getTokenLiteProgram(): TokenLiteProgram {
   };
 }
 
+export enum TokenLiteAccount {
+  TokenAccount,
+}
+
 export enum TokenLiteInstruction {
   CreateMint,
   CreateTokenAccount,

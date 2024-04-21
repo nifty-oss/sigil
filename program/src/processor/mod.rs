@@ -8,7 +8,7 @@ use solana_program::{
 use crate::assertions::{assert_empty, assert_same_pubkeys, assert_signer};
 use crate::instruction::accounts::{CreateMintAccounts, CreateTokenAccountAccounts};
 use crate::instruction::{CreateArgs, CreateMintArgs, Instruction};
-use crate::state::{Key, TokenAccount};
+use crate::state::TokenAccount;
 use crate::utils::create_account;
 
 mod add_token;

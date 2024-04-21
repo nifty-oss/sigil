@@ -122,10 +122,6 @@ async fn create_token_account() {
     assert_eq!(account.data.len(), TokenAccount::BASE_LEN);
 
     let token_account = TokenAccount::from_bytes(&account.data);
-    assert_eq!(
-        token_account.header.key,
-        nifty_oss_token_lite::state::Key::TokenAccount
-    );
     assert_eq!(token_account.header.namespace, namespace);
 }
 
@@ -206,10 +202,6 @@ async fn add_token() {
 
     //...and the expected data.
     let token_account = TokenAccount::from_bytes(&account.data);
-    assert_eq!(
-        token_account.header.key,
-        nifty_oss_token_lite::state::Key::TokenAccount
-    );
     assert_eq!(token_account.header.namespace, namespace);
 
     // Add a token account for USDC mint to the user's token account.

@@ -9,8 +9,8 @@ devDependencies:
     specifier: ^2.2.5
     version: 2.2.5
   '@metaplex-foundation/kinobi':
-    specifier: ^0.18.0
-    version: 0.18.3(fastestsmallesttextencoderdecoder@1.0.22)
+    specifier: ^0.18.5
+    version: 0.18.5(fastestsmallesttextencoderdecoder@1.0.22)
   '@metaplex-foundation/shank-js':
     specifier: ^0.1.7
     version: 0.1.7
@@ -27,11 +27,11 @@ packages:
     resolution: {integrity: sha512-trnsAYxU3xnS1gPHPyU961coFyLkh4gAD/0zQ5mymY4yOZ+CYvsPqUbOFSw0aDM4y0tV7tiFxL/1XfXPNC6IPg==}
     dev: true
 
-  /@metaplex-foundation/kinobi@0.18.3(fastestsmallesttextencoderdecoder@1.0.22):
-    resolution: {integrity: sha512-va8n1DVYlzhVA6xLpTgiUzxRUB3Dvo53pwDUYYEuKBX43zXKrgg5SWZ438UX23/5iFNv+6M01L+5/Z4oh43fAw==}
+  /@metaplex-foundation/kinobi@0.18.5(fastestsmallesttextencoderdecoder@1.0.22):
+    resolution: {integrity: sha512-qh4h4xGB+PHR5o4rcZki+wsIeZYi6R9SRV5UMqGi/rfDJXk0ckAZ+fxdam+mCc4N8HWLLWmEJbF5gx8E5K0fOA==}
     dependencies:
       '@noble/hashes': 1.4.0
-      '@prettier/sync': 0.5.1(prettier@3.2.5)
+      '@prettier/sync': 0.5.2(prettier@3.2.5)
       '@solana/codecs-strings': 2.0.0-preview.1(fastestsmallesttextencoderdecoder@1.0.22)
       chalk: 4.1.2
       json-stable-stringify: 1.1.1
@@ -89,12 +89,12 @@ packages:
       fastq: 1.17.1
     dev: true
 
-  /@prettier/sync@0.5.1(prettier@3.2.5):
-    resolution: {integrity: sha512-tpF+A1e4ynO2U4fTH21Sjgm9EYENmqg4zmJCMLrmLVfzIzuDc1cKGXyxrxbFgcH8qQRfowyDCZFAUukwhiZlsw==}
+  /@prettier/sync@0.5.2(prettier@3.2.5):
+    resolution: {integrity: sha512-Yb569su456XNx5BsH/Vyem7xD6g/y9iLmLUzRKM1a/dhU/D7HqqvkAG72znulXlMXztbV0iiu9O5AL8K98TzZQ==}
     peerDependencies:
       prettier: '*'
     dependencies:
-      make-synchronized: 0.2.8
+      make-synchronized: 0.2.9
       prettier: 3.2.5
     dev: true
 
@@ -485,8 +485,8 @@ packages:
       yallist: 4.0.0
     dev: true
 
-  /make-synchronized@0.2.8:
-    resolution: {integrity: sha512-jtXnKYCxjmGaXiZhXbDbGPbh4YyTvIIbOgcQjtAboc4RSm9k3nyhTFvFQB0cfs7QFKuZXKe2D2RvOkv1c+vpxg==}
+  /make-synchronized@0.2.9:
+    resolution: {integrity: sha512-4wczOs8SLuEdpEvp3vGo83wh8rjJ78UsIk7DIX5fxdfmfMJGog4bQzxfvOwq7Q3yCHLC4jp1urPHIxRS/A93gA==}
     dev: true
 
   /map-stream@0.1.0:

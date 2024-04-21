@@ -57,7 +57,6 @@ pub fn process_create_token<'a>(
 
     // Now can operate on the struct like a normal Rust struct but the bytes are cast directly
     // without deserializ/serializ(ing).
-    token_namespace.header.key = Key::TokenAccount;
     token_namespace.header.namespace = *namespace_info.key;
     token_namespace.header.user = *user_info.key;
     token_namespace.tokens.initialize(args.capacity);

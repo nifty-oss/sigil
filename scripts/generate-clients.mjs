@@ -13,10 +13,56 @@ kinobi.update(
   })
 );
 
+kinobi.update(
+  k.bottomUpTransformerVisitor([
+    {
+      select: "[programNode]tokenLite",
+      transform: (node) => {
+        k.assertIsNode(node, "programNode");
+        return {
+          ...node,
+          accounts: [
+            ...node.accounts,
+            // Token Account
+            k.accountNode({
+              name: "tokenAccount",
+              data: k.structTypeNode([
+                k.structFieldTypeNode({
+                  name: "namespace",
+                  type: k.publicKeyTypeNode()
+                }),
+                k.structFieldTypeNode({
+                  name: "user",
+                  type: k.publicKeyTypeNode()
+                })
+              ])
+            })
+          ]
+        };
+      }
+    }
+  ])
+);
+
 // Update accounts.
 kinobi.update(
   k.updateAccountsVisitor({
     tokenAccount: {
+      seeds: [
+        k.constantPdaSeedNodeFromString("token_account"),
+        k.variablePdaSeedNode(
+          "user",
+          k.publicKeyTypeNode(),
+          "The user of the token account"
+        ),
+        k.variablePdaSeedNode(
+          "namespace",
+          k.publicKeyTypeNode(),
+          "The namespace of the token account"
+        )
+      ]
+    },
+    mintAccount: {
       seeds: [
         k.constantPdaSeedNodeFromString("token_account"),
         k.variablePdaSeedNode(
@@ -33,27 +79,6 @@ kinobi.update(
     }
   })
 );
-
-// Update instructions.
-// kinobi.update(
-//   k.updateInstructionsVisitor({
-//     create: {
-//       byteDeltas: [k.instructionByteDeltaNode(k.accountLinkNode("counter"))],
-//       accounts: {
-//         counter: { defaultValue: k.pdaValueNode("counter") },
-//         payer: { defaultValue: k.accountValueNode("authority") }
-//       }
-//     }
-//   })
-// );
-
-// Set account discriminators.
-// const key = (name) => ({ field: "key", value: k.enumValueNode("Key", name) });
-// kinobi.update(
-//   k.setAccountDiscriminatorFromFieldVisitor({
-//     tokenAccount: key("token_account")
-//   })
-// );
 
 // Render JavaScript.
 const jsClient = path.join(__dirname, "..", "clients", "js");

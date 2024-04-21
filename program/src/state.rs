@@ -77,7 +77,6 @@ impl<'a> TokenAccountMut<'a> {
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
 pub struct Header {
-    pub key: Key,
     pub namespace: Pubkey,
     pub user: Pubkey,
 }
