@@ -46,6 +46,12 @@ pub enum TokenLiteError {
     /// 11 (0xB) - Invalid utf8 ticker
     #[error("Invalid utf8 ticker")]
     InvalidTicker,
+    /// 12 (0xC) - Invalid mint
+    #[error("Invalid mint")]
+    InvalidMint,
+    /// 13 (0xD) - Invalid token account
+    #[error("Invalid token account")]
+    InvalidTokenAccount,
 }
 
 impl solana_program::program_error::PrintProgramError for TokenLiteError {

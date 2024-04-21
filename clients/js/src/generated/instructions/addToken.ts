@@ -12,8 +12,6 @@ import {
   Decoder,
   Encoder,
   combineCodec,
-  getStringDecoder,
-  getStringEncoder,
   getStructDecoder,
   getStructEncoder,
   getU8Decoder,
@@ -36,8 +34,8 @@ import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 export type AddTokenInstruction<
   TProgram extends string = typeof TOKEN_LITE_PROGRAM_ADDRESS,
   TAccountPayer extends string | IAccountMeta<string> = string,
-  TAccountNamespace extends string | IAccountMeta<string> = string,
   TAccountUser extends string | IAccountMeta<string> = string,
+  TAccountMint extends string | IAccountMeta<string> = string,
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
@@ -49,12 +47,12 @@ export type AddTokenInstruction<
         ? WritableSignerAccount<TAccountPayer> &
             IAccountSignerMeta<TAccountPayer>
         : TAccountPayer,
-      TAccountNamespace extends string
-        ? ReadonlyAccount<TAccountNamespace>
-        : TAccountNamespace,
       TAccountUser extends string
         ? ReadonlyAccount<TAccountUser>
         : TAccountUser,
+      TAccountMint extends string
+        ? ReadonlyAccount<TAccountMint>
+        : TAccountMint,
       TAccountTokenAccount extends string
         ? WritableAccount<TAccountTokenAccount>
         : TAccountTokenAccount,
@@ -65,25 +63,19 @@ export type AddTokenInstruction<
     ]
   >;
 
-export type AddTokenInstructionData = { discriminator: number; ticker: string };
+export type AddTokenInstructionData = { discriminator: number };
 
-export type AddTokenInstructionDataArgs = { ticker: string };
+export type AddTokenInstructionDataArgs = {};
 
 export function getAddTokenInstructionDataEncoder(): Encoder<AddTokenInstructionDataArgs> {
   return mapEncoder(
-    getStructEncoder([
-      ['discriminator', getU8Encoder()],
-      ['ticker', getStringEncoder()],
-    ]),
+    getStructEncoder([['discriminator', getU8Encoder()]]),
     (value) => ({ ...value, discriminator: 2 })
   );
 }
 
 export function getAddTokenInstructionDataDecoder(): Decoder<AddTokenInstructionData> {
-  return getStructDecoder([
-    ['discriminator', getU8Decoder()],
-    ['ticker', getStringDecoder()],
-  ]);
+  return getStructDecoder([['discriminator', getU8Decoder()]]);
 }
 
 export function getAddTokenInstructionDataCodec(): Codec<
@@ -98,43 +90,42 @@ export function getAddTokenInstructionDataCodec(): Codec<
 
 export type AddTokenInput<
   TAccountPayer extends string = string,
-  TAccountNamespace extends string = string,
   TAccountUser extends string = string,
+  TAccountMint extends string = string,
   TAccountTokenAccount extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   /** The account paying for the storage fees. */
   payer?: TransactionSigner<TAccountPayer>;
-  /** The namespace for the token account. */
-  namespace: Address<TAccountNamespace>;
   /** The pubkey of the user associated with the token account */
   user: Address<TAccountUser>;
+  /** The mint account for the token to be added. */
+  mint: Address<TAccountMint>;
   /** The token namespace account. */
   tokenAccount: Address<TAccountTokenAccount>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
-  ticker: AddTokenInstructionDataArgs['ticker'];
 };
 
 export function getAddTokenInstruction<
   TAccountPayer extends string,
-  TAccountNamespace extends string,
   TAccountUser extends string,
+  TAccountMint extends string,
   TAccountTokenAccount extends string,
   TAccountSystemProgram extends string,
 >(
   input: AddTokenInput<
     TAccountPayer,
-    TAccountNamespace,
     TAccountUser,
+    TAccountMint,
     TAccountTokenAccount,
     TAccountSystemProgram
   >
 ): AddTokenInstruction<
   typeof TOKEN_LITE_PROGRAM_ADDRESS,
   TAccountPayer,
-  TAccountNamespace,
   TAccountUser,
+  TAccountMint,
   TAccountTokenAccount,
   TAccountSystemProgram
 > {
@@ -144,8 +135,8 @@ export function getAddTokenInstruction<
   // Original accounts.
   const originalAccounts = {
     payer: { value: input.payer ?? null, isWritable: true },
-    namespace: { value: input.namespace ?? null, isWritable: false },
     user: { value: input.user ?? null, isWritable: false },
+    mint: { value: input.mint ?? null, isWritable: false },
     tokenAccount: { value: input.tokenAccount ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -154,27 +145,22 @@ export function getAddTokenInstruction<
     ResolvedAccount
   >;
 
-  // Original args.
-  const args = { ...input };
-
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
       getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.namespace),
       getAccountMeta(accounts.user),
+      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.tokenAccount),
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
-    data: getAddTokenInstructionDataEncoder().encode(
-      args as AddTokenInstructionDataArgs
-    ),
+    data: getAddTokenInstructionDataEncoder().encode({}),
   } as AddTokenInstruction<
     typeof TOKEN_LITE_PROGRAM_ADDRESS,
     TAccountPayer,
-    TAccountNamespace,
     TAccountUser,
+    TAccountMint,
     TAccountTokenAccount,
     TAccountSystemProgram
   >;
@@ -190,10 +176,10 @@ export type ParsedAddTokenInstruction<
   accounts: {
     /** The account paying for the storage fees. */
     payer?: TAccountMetas[0] | undefined;
-    /** The namespace for the token account. */
-    namespace: TAccountMetas[1];
     /** The pubkey of the user associated with the token account */
-    user: TAccountMetas[2];
+    user: TAccountMetas[1];
+    /** The mint account for the token to be added. */
+    mint: TAccountMetas[2];
     /** The token namespace account. */
     tokenAccount: TAccountMetas[3];
     /** The system program */
@@ -230,8 +216,8 @@ export function parseAddTokenInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       payer: getNextOptionalAccount(),
-      namespace: getNextAccount(),
       user: getNextAccount(),
+      mint: getNextAccount(),
       tokenAccount: getNextAccount(),
       systemProgram: getNextOptionalAccount(),
     },

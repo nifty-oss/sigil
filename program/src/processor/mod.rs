@@ -36,9 +36,9 @@ pub fn process_instruction<'a>(
             msg!("Instruction: Create Mint");
             process_create_mint(accounts, args)
         }
-        Instruction::AddToken(args) => {
+        Instruction::AddToken => {
             msg!("Instruction: Add Token");
-            process_add_token(accounts, args)
+            process_add_token(accounts)
         }
     }
 }

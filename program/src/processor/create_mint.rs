@@ -53,6 +53,7 @@ pub fn process_create_mint<'a>(
     let signer_seeds: &[&[u8]] = &[seeds, &[bump]];
 
     let metadata = MintMetadata {
+        namespace: *namespace_info.key,
         ticker: args.ticker.clone(),
         supply: 0,
         max_supply: args.max_supply,
@@ -60,7 +61,7 @@ pub fn process_create_mint<'a>(
     }
     .try_to_vec()?;
 
-    let data = BlobBuilder::with_capacity(2000)
+    let data = BlobBuilder::with_capacity(MintMetadata::LEN)
         .set_data(CONTENT_TYPE, &metadata)
         .data();
 
@@ -101,7 +102,7 @@ pub fn process_create_mint<'a>(
     CreateCpi {
         __program: nifty_program_info,
         asset: mint_account_info,
-        authority: (namespace_info, true),
+        authority: (namespace_info, false),
         owner: namespace_info,
         group: None,
         group_authority: None,

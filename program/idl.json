@@ -129,19 +129,19 @@
           ]
         },
         {
-          "name": "namespace",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "The namespace for the token account."
-          ]
-        },
-        {
           "name": "user",
           "isMut": false,
           "isSigner": false,
           "docs": [
             "The pubkey of the user associated with the token account"
+          ]
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The mint account for the token to be added."
           ]
         },
         {
@@ -162,14 +162,7 @@
           ]
         }
       ],
-      "args": [
-        {
-          "name": "addTokenArgs",
-          "type": {
-            "defined": "AddTokenArgs"
-          }
-        }
-      ],
+      "args": [],
       "discriminant": {
         "type": "u8",
         "value": 2
@@ -184,7 +177,7 @@
         "fields": [
           {
             "name": "capacity",
-            "type": "u32"
+            "type": "u8"
           }
         ]
       }
@@ -210,22 +203,14 @@
       }
     },
     {
-      "name": "AddTokenArgs",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "ticker",
-            "type": "string"
-          }
-        ]
-      }
-    },
-    {
       "name": "MintMetadata",
       "type": {
         "kind": "struct",
         "fields": [
+          {
+            "name": "namespace",
+            "type": "publicKey"
+          },
           {
             "name": "ticker",
             "type": "string"
@@ -306,6 +291,16 @@
       "code": 11,
       "name": "InvalidTicker",
       "msg": "Invalid utf8 ticker"
+    },
+    {
+      "code": 12,
+      "name": "InvalidMint",
+      "msg": "Invalid mint"
+    },
+    {
+      "code": 13,
+      "name": "InvalidTokenAccount",
+      "msg": "Invalid token account"
     }
   ],
   "metadata": {

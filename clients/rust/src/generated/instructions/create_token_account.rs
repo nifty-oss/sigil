@@ -83,7 +83,7 @@ impl CreateTokenAccountInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateTokenAccountInstructionArgs {
-    pub capacity: u32,
+    pub capacity: u8,
 }
 
 /// Instruction builder for `CreateTokenAccount`.
@@ -102,7 +102,7 @@ pub struct CreateTokenAccountBuilder {
     user: Option<solana_program::pubkey::Pubkey>,
     token_account: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
-    capacity: Option<u32>,
+    capacity: Option<u8>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -142,7 +142,7 @@ impl CreateTokenAccountBuilder {
         self
     }
     #[inline(always)]
-    pub fn capacity(&mut self, capacity: u32) -> &mut Self {
+    pub fn capacity(&mut self, capacity: u8) -> &mut Self {
         self.capacity = Some(capacity);
         self
     }
@@ -389,7 +389,7 @@ impl<'a, 'b> CreateTokenAccountCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn capacity(&mut self, capacity: u32) -> &mut Self {
+    pub fn capacity(&mut self, capacity: u8) -> &mut Self {
         self.instruction.capacity = Some(capacity);
         self
     }
@@ -475,7 +475,7 @@ struct CreateTokenAccountCpiBuilderInstruction<'a, 'b> {
     user: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    capacity: Option<u32>,
+    capacity: Option<u8>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

@@ -8,97 +8,50 @@ use nifty_asset::{
 };
 use nifty_oss_token_lite::state::{MintMetadata, TokenAccount, TokenSeeds};
 use nifty_oss_token_lite_client::{
-    instructions::{AddTokenBuilder, CreateMintBuilder, CreateTokenAccountBuilder},
+    instructions::{AddTokenBuilder, CreateTokenAccountBuilder},
     ID as TokenLiteID,
 };
-use solana_program_test::{tokio, BanksClientError, ProgramTest, ProgramTestContext};
+use solana_program_test::tokio;
 use solana_sdk::{
-    pubkey::Pubkey,
     signature::{Keypair, Signer},
-    system_instruction, system_program,
+    system_program,
     transaction::Transaction,
 };
-use stevia::collections::avl_tree::Node;
+use stevia::collections::u8_avl_tree::U8Node;
 
-type Result<T> = std::result::Result<T, BanksClientError>;
+pub mod helpers;
 
-pub async fn airdrop(
-    context: &mut ProgramTestContext,
-    receiver: &Pubkey,
-    amount: u64,
-) -> Result<()> {
-    let tx = Transaction::new_signed_with_payer(
-        &[system_instruction::transfer(
-            &context.payer.pubkey(),
-            receiver,
-            amount,
-        )],
-        Some(&context.payer.pubkey()),
-        &[&context.payer],
-        context.last_blockhash,
-    );
+use helpers::program_context;
 
-    context.banks_client.process_transaction(tx).await.unwrap();
-    Ok(())
-}
+use crate::helpers::{create_mint, CreateMintParams, DirtyClone, TestMint};
 
-async fn program_context() -> ProgramTestContext {
-    let mut test = ProgramTest::new(
-        "nifty_oss_token_lite",
-        nifty_oss_token_lite_client::ID,
-        None,
-    );
-    test.add_program(&nifty_asset::ID.to_string(), nifty_asset::ID, None);
-    test.start_with_context().await
-}
-
-#[ignore]
 #[tokio::test]
 async fn create_mint_account() {
     let mut context = program_context().await;
 
-    let payer_signer = context.payer;
-    let payer = payer_signer.pubkey();
+    let payer_signer = context.payer.dirty_clone();
 
     let namespace_signer = Keypair::new();
     let namespace = namespace_signer.pubkey();
 
-    // Given a PDA derived from the payer's public key.
+    let TestMint {
+        mint,
+        metadata: expected_metadata,
+    } = create_mint(
+        &mut context,
+        CreateMintParams {
+            payer_signer: &payer_signer,
+            namespace_signer: &namespace_signer,
+            ticker: String::from("USDC"),
+            namespace,
+            max_supply: 1_000_000_000,
+            decimals: 6,
+        },
+    )
+    .await
+    .unwrap();
 
-    let ticker = String::from("USDC");
-    let max_supply = 100_000_000;
-    let decimals = 2;
-
-    let mut seeds = Vec::with_capacity(32);
-    seeds.extend(ticker.as_bytes().iter());
-    seeds.extend(namespace.as_ref()[..28].iter());
-    let seeds: &[u8; 32] = seeds.as_slice().try_into().unwrap();
-
-    let (address, _) = Pubkey::find_program_address(
-        // Seeds should be 32 bytes long, so we take the first 28 bytes of the namespace.
-        &[seeds],
-        &TokenLiteID,
-    );
-
-    let ix = CreateMintBuilder::new()
-        .payer(payer)
-        .namespace(namespace)
-        .mint_account(address)
-        .nifty_program(nifty_asset::ID)
-        .ticker(ticker.clone())
-        .max_supply(max_supply)
-        .decimals(decimals)
-        .instruction();
-
-    let tx = Transaction::new_signed_with_payer(
-        &[ix],
-        Some(&payer),
-        &[&payer_signer, &namespace_signer],
-        context.last_blockhash,
-    );
-    context.banks_client.process_transaction(tx).await.unwrap();
-
-    let account = context.banks_client.get_account(address).await.unwrap();
+    let account = context.banks_client.get_account(mint).await.unwrap();
     assert!(account.is_some());
 
     let account = account.unwrap();
@@ -120,13 +73,12 @@ async fn create_mint_account() {
     let mut blob = Asset::get::<Blob>(account_data).unwrap();
     let metadata: MintMetadata = BorshDeserialize::deserialize(&mut blob.data).unwrap();
 
-    assert_eq!(metadata.ticker, ticker);
+    assert_eq!(metadata.ticker, expected_metadata.ticker);
     assert_eq!(metadata.supply, 0);
-    assert_eq!(metadata.max_supply, max_supply);
-    assert_eq!(metadata.decimals, decimals);
+    assert_eq!(metadata.max_supply, expected_metadata.max_supply);
+    assert_eq!(metadata.decimals, expected_metadata.decimals);
 }
 
-#[ignore]
 #[tokio::test]
 async fn create_token_account() {
     let mut context = program_context().await;
@@ -166,10 +118,10 @@ async fn create_token_account() {
 
     assert!(account.is_some());
 
-    let mut account = account.unwrap();
-    assert_eq!(account.data.len(), TokenAccount::LEN);
+    let account = account.unwrap();
+    assert_eq!(account.data.len(), TokenAccount::BASE_LEN);
 
-    let token_account = TokenAccount::from_bytes(&mut account.data);
+    let token_account = TokenAccount::from_bytes(&account.data);
     assert_eq!(
         token_account.header.key,
         nifty_oss_token_lite::state::Key::TokenAccount
@@ -181,7 +133,7 @@ async fn create_token_account() {
 async fn add_token() {
     let mut context = program_context().await;
 
-    let payer_signer = context.payer;
+    let payer_signer = context.payer.dirty_clone();
     let payer = payer_signer.pubkey();
 
     let namespace_signer = Keypair::new();
@@ -189,6 +141,40 @@ async fn add_token() {
 
     let user_signer = Keypair::new();
     let user = user_signer.pubkey();
+
+    let TestMint {
+        mint: usdc_mint,
+        metadata: _,
+    } = create_mint(
+        &mut context,
+        CreateMintParams {
+            payer_signer: &payer_signer,
+            namespace_signer: &namespace_signer,
+            ticker: String::from("USDC"),
+            namespace,
+            max_supply: 1_000_000_000,
+            decimals: 6,
+        },
+    )
+    .await
+    .unwrap();
+
+    let TestMint {
+        mint: bonk_mint,
+        metadata: _,
+    } = create_mint(
+        &mut context,
+        CreateMintParams {
+            payer_signer: &payer_signer,
+            namespace_signer: &namespace_signer,
+            ticker: String::from("BONK"),
+            namespace,
+            max_supply: 1_000_000_000,
+            decimals: 6,
+        },
+    )
+    .await
+    .unwrap();
 
     // Find user's token account for the namespace.
     let address = TokenAccount::find_pda(TokenSeeds { user, namespace }).0;
@@ -215,27 +201,25 @@ async fn add_token() {
     assert!(account.is_some());
 
     //...and has the base length
-    let mut account = account.unwrap();
-    assert_eq!(account.data.len(), TokenAccount::LEN);
+    let account = account.unwrap();
+    assert_eq!(account.data.len(), TokenAccount::BASE_LEN);
 
     //...and the expected data.
-    let token_account = TokenAccount::from_bytes(&mut account.data);
+    let token_account = TokenAccount::from_bytes(&account.data);
     assert_eq!(
         token_account.header.key,
         nifty_oss_token_lite::state::Key::TokenAccount
     );
     assert_eq!(token_account.header.namespace, namespace);
 
-    // Add a ticker to the token account.
-    let ticker = String::from("USDC");
+    // Add a token account for USDC mint to the user's token account.
 
     let ix = AddTokenBuilder::new()
         .payer(Some(payer))
         .user(user)
-        .namespace(namespace)
+        .mint(usdc_mint)
         .token_account(address)
         .system_program(Some(system_program::ID))
-        .ticker(ticker)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -249,23 +233,20 @@ async fn add_token() {
     let account = context.banks_client.get_account(address).await.unwrap();
     assert!(account.is_some());
 
-    // the account now has extra eight bytes of the ticker.
+    // the account now has additional data the size of one U8Node.
     let account = account.unwrap();
     assert_eq!(
         account.data.len(),
-        TokenAccount::LEN + std::mem::size_of::<Node<u32, u32>>()
+        TokenAccount::BASE_LEN + std::mem::size_of::<U8Node<u32, u32>>()
     );
 
-    // Add a second ticker to the token account.
-    let ticker = String::from("BONK");
-
+    // Add a second token to the token account.
     let ix = AddTokenBuilder::new()
         .payer(Some(payer))
         .user(user)
-        .namespace(namespace)
+        .mint(bonk_mint)
         .token_account(address)
         .system_program(Some(system_program::ID))
-        .ticker(ticker)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
@@ -275,4 +256,14 @@ async fn add_token() {
         context.last_blockhash,
     );
     context.banks_client.process_transaction(tx).await.unwrap();
+
+    let account = context.banks_client.get_account(address).await.unwrap();
+    assert!(account.is_some());
+
+    // the account now has additional data the size of two U8Node.
+    let account = account.unwrap();
+    assert_eq!(
+        account.data.len(),
+        TokenAccount::BASE_LEN + std::mem::size_of::<U8Node<u32, u32>>() * 2
+    );
 }

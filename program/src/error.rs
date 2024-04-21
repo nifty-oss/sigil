@@ -44,6 +44,12 @@ pub enum TokenLiteError {
     /// 11 - Invalid ticker
     #[error("Invalid utf8 ticker")]
     InvalidTicker,
+    /// 12 - Invalid mint
+    #[error("Invalid mint")]
+    InvalidMint,
+    /// 13 - Invalid token account
+    #[error("Invalid token account")]
+    InvalidTokenAccount,
 }
 
 impl PrintProgramError for TokenLiteError {

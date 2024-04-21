@@ -4,7 +4,7 @@ use shank::{ShankContext, ShankInstruction};
 #[repr(C)]
 #[derive(BorshSerialize, BorshDeserialize, PartialEq, Eq, Debug, Clone)]
 pub struct CreateArgs {
-    pub capacity: u32,
+    pub capacity: u8,
 }
 
 #[repr(C)]
@@ -13,12 +13,6 @@ pub struct CreateMintArgs {
     pub ticker: String,
     pub max_supply: u64,
     pub decimals: u8,
-}
-
-#[repr(C)]
-#[derive(BorshSerialize, BorshDeserialize, PartialEq, Eq, Debug, Clone)]
-pub struct AddTokenArgs {
-    pub ticker: String,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Clone, Debug, ShankContext, ShankInstruction)]
@@ -48,9 +42,9 @@ pub enum Instruction {
     /// Add a new ticker to a user's token account.
     /// This only requires a payer to sign to pay for the small additional state bond storage fees.
     #[account(0, optional, writable, signer, name="payer", desc = "The account paying for the storage fees.")]
-    #[account(1, name="namespace", desc = "The namespace for the token account.")]
-    #[account(2, name="user", desc = "The pubkey of the user associated with the token account")]
+    #[account(1, name="user", desc = "The pubkey of the user associated with the token account")]
+    #[account(2, name="mint", desc = "The mint account for the token to be added.")]
     #[account(3, writable, name="token_account", desc = "The token namespace account.")]
     #[account(4, optional, name="system_program", desc = "The system program")]
-    AddToken(AddTokenArgs),
+    AddToken,
 }

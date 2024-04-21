@@ -31,6 +31,10 @@ export const enum TokenLiteProgramErrorCode {
   NUMERICAL_OVERFLOW = 0xa, // 10
   /** InvalidTicker: Invalid utf8 ticker */
   INVALID_TICKER = 0xb, // 11
+  /** InvalidMint: Invalid mint */
+  INVALID_MINT = 0xc, // 12
+  /** InvalidTokenAccount: Invalid token account */
+  INVALID_TOKEN_ACCOUNT = 0xd, // 13
 }
 
 export class TokenLiteProgramError extends Error {
@@ -104,6 +108,11 @@ if (__DEV__) {
     [TokenLiteProgramErrorCode.INVALID_TICKER]: [
       'InvalidTicker',
       `Invalid utf8 ticker`,
+    ],
+    [TokenLiteProgramErrorCode.INVALID_MINT]: ['InvalidMint', `Invalid mint`],
+    [TokenLiteProgramErrorCode.INVALID_TOKEN_ACCOUNT]: [
+      'InvalidTokenAccount',
+      `Invalid token account`,
     ],
   };
 }

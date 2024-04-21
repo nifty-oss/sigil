@@ -14,8 +14,6 @@ import {
   combineCodec,
   getStructDecoder,
   getStructEncoder,
-  getU32Decoder,
-  getU32Encoder,
   getU8Decoder,
   getU8Encoder,
   mapEncoder,
@@ -78,7 +76,7 @@ export function getCreateTokenAccountInstructionDataEncoder(): Encoder<CreateTok
   return mapEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['capacity', getU32Encoder()],
+      ['capacity', getU8Encoder()],
     ]),
     (value) => ({ ...value, discriminator: 1 })
   );
@@ -87,7 +85,7 @@ export function getCreateTokenAccountInstructionDataEncoder(): Encoder<CreateTok
 export function getCreateTokenAccountInstructionDataDecoder(): Decoder<CreateTokenAccountInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['capacity', getU32Decoder()],
+    ['capacity', getU8Decoder()],
   ]);
 }
 

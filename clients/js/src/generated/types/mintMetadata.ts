@@ -7,6 +7,11 @@
  */
 
 import {
+  Address,
+  getAddressDecoder,
+  getAddressEncoder,
+} from '@solana/addresses';
+import {
   Codec,
   Decoder,
   Encoder,
@@ -22,6 +27,7 @@ import {
 } from '@solana/codecs';
 
 export type MintMetadata = {
+  namespace: Address;
   ticker: string;
   supply: bigint;
   maxSupply: bigint;
@@ -29,6 +35,7 @@ export type MintMetadata = {
 };
 
 export type MintMetadataArgs = {
+  namespace: Address;
   ticker: string;
   supply: number | bigint;
   maxSupply: number | bigint;
@@ -37,6 +44,7 @@ export type MintMetadataArgs = {
 
 export function getMintMetadataEncoder(): Encoder<MintMetadataArgs> {
   return getStructEncoder([
+    ['namespace', getAddressEncoder()],
     ['ticker', getStringEncoder()],
     ['supply', getU64Encoder()],
     ['maxSupply', getU64Encoder()],
@@ -46,6 +54,7 @@ export function getMintMetadataEncoder(): Encoder<MintMetadataArgs> {
 
 export function getMintMetadataDecoder(): Decoder<MintMetadata> {
   return getStructDecoder([
+    ['namespace', getAddressDecoder()],
     ['ticker', getStringDecoder()],
     ['supply', getU64Decoder()],
     ['maxSupply', getU64Decoder()],

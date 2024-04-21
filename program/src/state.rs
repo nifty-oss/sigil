@@ -1,12 +1,9 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use bytemuck::{Pod, Zeroable};
 use solana_program::pubkey::Pubkey;
-use stevia::collections::{AVLTree, AVLTreeMut};
+use stevia::collections::{u8_avl_tree::U8Allocator, U8AVLTree, U8AVLTreeMut};
 
 pub const KEY_SIZE: usize = std::mem::size_of::<u64>();
-
-// Allocator size for the AVL tree.
-const AVL_SIZE: usize = std::mem::size_of::<u32>() * 6;
 
 #[repr(u64)]
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -33,18 +30,19 @@ pub struct TokenSeeds {
 pub struct TokenAccount<'a> {
     pub header: &'a Header,
 
-    pub tokens: AVLTree<'a, Ticker, Amount>,
+    pub tokens: U8AVLTree<'a, Ticker, Amount>,
 }
 
 /// Seeds: "token_account", <user>, <namespace>
 pub struct TokenAccountMut<'a> {
     pub header: &'a mut Header,
 
-    pub tokens: AVLTreeMut<'a, Ticker, Amount>,
+    pub tokens: U8AVLTreeMut<'a, Ticker, Amount>,
 }
 
 impl<'a> TokenAccount<'a> {
-    pub const LEN: usize = Header::LEN + AVL_SIZE;
+    // Header + AVL tree allocator without any nodes.
+    pub const BASE_LEN: usize = Header::LEN + std::mem::size_of::<U8Allocator>();
 
     pub const PREFIX: &'static [u8] = b"token_account";
 
@@ -52,7 +50,7 @@ impl<'a> TokenAccount<'a> {
         let (header, data) = bytes.split_at(Header::LEN);
         let header = Header::from_bytes(header);
 
-        let tokens = AVLTree::from_bytes(data);
+        let tokens = U8AVLTree::from_bytes(data);
 
         Self { header, tokens }
     }
@@ -70,7 +68,7 @@ impl<'a> TokenAccountMut<'a> {
         let (header, data) = bytes.split_at_mut(Header::LEN);
         let header = Header::from_bytes_mut(header);
 
-        let tokens = AVLTreeMut::from_bytes_mut(data);
+        let tokens = U8AVLTreeMut::from_bytes_mut(data);
 
         Self { header, tokens }
     }
@@ -81,6 +79,7 @@ impl<'a> TokenAccountMut<'a> {
 pub struct Header {
     pub key: Key,
     pub namespace: Pubkey,
+    pub user: Pubkey,
 }
 
 impl Header {
@@ -99,6 +98,7 @@ impl Header {
 // TODO: ByteMuck? Only 21 bytes.
 #[derive(Clone, Debug, Default, Eq, PartialEq, BorshDeserialize, BorshSerialize)]
 pub struct MintMetadata {
+    pub namespace: Pubkey,
     pub ticker: String,
     pub supply: u64,
     pub max_supply: u64,

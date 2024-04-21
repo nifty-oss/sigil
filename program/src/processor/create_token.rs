@@ -44,24 +44,22 @@ pub fn process_create_token<'a>(
         token_account_info,
         payer_info,
         system_program_info,
-        TokenAccount::LEN,
+        TokenAccount::BASE_LEN,
         &crate::ID,
         Some(&[signer_seeds]),
     )?;
 
     // Get a mutable reference to the account data.
     let account_data = &mut (*token_account_info.data).borrow_mut();
-    msg!("Account data: {:?}", account_data.len());
 
     // // Get the mutable byte muck version of the account so we can mutate the data directly.
     let mut token_namespace = TokenAccountMut::from_bytes_mut(account_data);
 
     // Now can operate on the struct like a normal Rust struct but the bytes are cast directly
     // without deserializ/serializ(ing).
-    msg!("Namespace key: {:?}", namespace_info.key);
-
     token_namespace.header.key = Key::TokenAccount;
     token_namespace.header.namespace = *namespace_info.key;
+    token_namespace.header.user = *user_info.key;
     token_namespace.tokens.initialize(args.capacity);
 
     // No need to serialize the data back into the account, it's already there.
