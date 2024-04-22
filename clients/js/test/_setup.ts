@@ -22,7 +22,7 @@ import {
   signTransactionWithSigners,
 } from '@solana/web3.js';
 
-type Client = {
+export type Client = {
   rpc: Rpc<SolanaRpcApi>;
   rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
 };

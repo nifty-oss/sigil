@@ -26,3 +26,4 @@ num-traits = "^0.2"
 stevia = { path = "../../stevia" }
 solana-program = "1.16.27"
 thiserror = "^1.0"
+nifty-asset-interface = "0.4.0"

@@ -34,6 +34,54 @@ kinobi.update(
                 k.structFieldTypeNode({
                   name: "user",
                   type: k.publicKeyTypeNode()
+                }),
+                k.structFieldTypeNode({
+                  name: "tree",
+                  type: k.definedTypeLinkNode("tree")
+                })
+              ])
+            })
+          ],
+          definedTypes: [
+            ...node.definedTypes,
+            k.definedTypeNode({
+              name: "tree",
+              type: k.structTypeNode([
+                k.structFieldTypeNode({
+                  name: "allocator",
+                  type: k.arrayTypeNode(
+                    k.numberTypeNode("u8"),
+                    k.fixedSizeNode(8)
+                  )
+                }),
+                k.structFieldTypeNode({
+                  name: "nodes",
+                  type: k.arrayTypeNode(
+                    k.definedTypeLinkNode("node"),
+                    k.remainderSizeNode()
+                  )
+                })
+              ])
+            }),
+            k.definedTypeNode({
+              name: "node",
+              type: k.structTypeNode([
+                k.structFieldTypeNode({
+                  name: "pointer",
+                  type: k.arrayTypeNode(
+                    k.numberTypeNode("u8"),
+                    k.fixedSizeNode(4)
+                  )
+                }),
+                k.structFieldTypeNode({
+                  name: "ticker",
+                  type: k.stringTypeNode({
+                    size: k.fixedSizeNode(4)
+                  })
+                }),
+                k.structFieldTypeNode({
+                  name: "amount",
+                  type: k.numberTypeNode("u32")
                 })
               ])
             })

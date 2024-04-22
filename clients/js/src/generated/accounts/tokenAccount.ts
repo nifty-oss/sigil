@@ -33,6 +33,7 @@ import {
   getStructEncoder,
 } from '@solana/codecs';
 import { TokenAccountSeeds, findTokenAccountPda } from '../pdas';
+import { Tree, TreeArgs, getTreeDecoder, getTreeEncoder } from '../types';
 
 export type TokenAccount<TAddress extends string = string> = Account<
   TokenAccountAccountData,
@@ -44,14 +45,23 @@ export type MaybeTokenAccount<TAddress extends string = string> = MaybeAccount<
   TAddress
 >;
 
-export type TokenAccountAccountData = { namespace: Address; user: Address };
+export type TokenAccountAccountData = {
+  namespace: Address;
+  user: Address;
+  tree: Tree;
+};
 
-export type TokenAccountAccountDataArgs = TokenAccountAccountData;
+export type TokenAccountAccountDataArgs = {
+  namespace: Address;
+  user: Address;
+  tree: TreeArgs;
+};
 
 export function getTokenAccountAccountDataEncoder(): Encoder<TokenAccountAccountDataArgs> {
   return getStructEncoder([
     ['namespace', getAddressEncoder()],
     ['user', getAddressEncoder()],
+    ['tree', getTreeEncoder()],
   ]);
 }
 
@@ -59,6 +69,7 @@ export function getTokenAccountAccountDataDecoder(): Decoder<TokenAccountAccount
   return getStructDecoder([
     ['namespace', getAddressDecoder()],
     ['user', getAddressDecoder()],
+    ['tree', getTreeDecoder()],
   ]);
 }
 

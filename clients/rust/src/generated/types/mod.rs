@@ -6,5 +6,9 @@
 //!
 
 pub(crate) mod r#mint_metadata;
+pub(crate) mod r#node;
+pub(crate) mod r#tree;
 
 pub use self::r#mint_metadata::*;
+pub use self::r#node::*;
+pub use self::r#tree::*;

@@ -8,6 +8,7 @@ import {
   findTokenAccountPda,
   getAddTokenInstruction,
   fetchTokenAccount,
+  getMintToInstruction,
 } from '../src/index.js';
 import {
   createDefaultSolanaClient,
@@ -16,53 +17,20 @@ import {
   signAndSendTransaction,
 } from './_setup.js';
 
-test('it can create a new mint account', async (t) => {
-  // Given an authority key pair with some SOL.
-  const client = createDefaultSolanaClient();
-
-  const namespace = await generateKeyPairSignerWithSol(client);
-
-  const ticker = 'USDC';
-
-  const [mintAccount] = await findMintAccountPda({
-    ticker,
-    namespace: namespace.address,
-  });
-
-  const createMintIx = getCreateMintInstruction({
-    payer: namespace,
-    mintAccount,
-    namespace,
-    niftyProgram: address(ASSET_PROGRAM_ID),
-    decimals: 0,
-    maxSupply: 1000,
-    ticker: 'USDC',
-  });
-
-  await pipe(
-    await createDefaultTransaction(client, namespace),
-    (tx) => appendTransactionInstruction(createMintIx, tx),
-    (tx) => signAndSendTransaction(client, tx)
-  );
-
-  t.pass();
-});
-
-test('it can create a new token account', async (t) => {
-  // Given an authority key pair with some SOL.
+test('it can mint tokens to an existing account', async (t) => {
   const client = createDefaultSolanaClient();
 
   const namespace = await generateKeyPairSignerWithSol(client);
   const user = await generateKeyPairSignerWithSol(client);
 
   const ticker = 'USDC';
+  const mintAmount = 100;
 
   const [mintAccount] = await findMintAccountPda({
     ticker,
     namespace: namespace.address,
   });
 
-  // When we create a new counter account.
   const createMintIx = getCreateMintInstruction({
     payer: namespace,
     mintAccount,
@@ -93,50 +61,68 @@ test('it can create a new token account', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  const account = await fetchTokenAccount(client.rpc, tokenAccount);
+  const addTokenIx = getAddTokenInstruction({
+    payer: user,
+    user: user.address,
+    mint: mintAccount,
+    tokenAccount,
+    systemProgram: address('11111111111111111111111111111111'),
+  });
 
-  t.assert(account?.data.namespace === namespace.address);
-  t.assert(account?.data.user === user.address);
+  await pipe(
+    await createDefaultTransaction(client, namespace),
+    (tx) => appendTransactionInstruction(addTokenIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  let account = await fetchTokenAccount(client.rpc, tokenAccount);
+
+  t.assert(account?.data.tree.nodes[0].ticker === ticker);
+  t.assert(account?.data.tree.nodes[0].amount === 0);
+
+  const mintToIx = getMintToInstruction({
+    payer: namespace,
+    namespace,
+    mintAccount,
+    tokenAccount,
+    amount: mintAmount,
+    niftyProgram: address(ASSET_PROGRAM_ID),
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, namespace),
+    (tx) => appendTransactionInstruction(mintToIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  account = await fetchTokenAccount(client.rpc, tokenAccount);
+
+  t.assert(account?.data.tree.nodes[0].ticker === ticker);
+  t.assert(account?.data.tree.nodes[0].amount === mintAmount);
 });
 
-test('it can add tokens to a token account', async (t) => {
-  // Given an authority key pair with some SOL.
+test('it can add a token and mint to it account', async (t) => {
   const client = createDefaultSolanaClient();
 
   const namespace = await generateKeyPairSignerWithSol(client);
   const user = await generateKeyPairSignerWithSol(client);
 
-  const ticker1 = 'USDC';
-  const ticker2 = 'BONK';
+  const ticker = 'USDC';
+  const mintAmount = 100;
 
-  const [mintAccount1] = await findMintAccountPda({
-    ticker: ticker1,
+  const [mintAccount] = await findMintAccountPda({
+    ticker,
     namespace: namespace.address,
   });
 
-  const [mintAccount2] = await findMintAccountPda({
-    ticker: ticker2,
-    namespace: namespace.address,
-  });
-
-  const createMintIx1 = getCreateMintInstruction({
+  const createMintIx = getCreateMintInstruction({
     payer: namespace,
-    mintAccount: mintAccount1,
+    mintAccount,
     namespace,
     niftyProgram: address(ASSET_PROGRAM_ID),
     decimals: 0,
     maxSupply: 1000,
-    ticker: ticker1,
-  });
-
-  const createMintIx2 = getCreateMintInstruction({
-    payer: namespace,
-    mintAccount: mintAccount2,
-    namespace,
-    niftyProgram: address(ASSET_PROGRAM_ID),
-    decimals: 0,
-    maxSupply: 1000,
-    ticker: ticker2,
+    ticker: 'USDC',
   });
 
   const [tokenAccount] = await findTokenAccountPda({
@@ -154,43 +140,32 @@ test('it can add tokens to a token account', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, namespace),
-    (tx) => appendTransactionInstruction(createMintIx1, tx),
-    (tx) => appendTransactionInstruction(createMintIx2, tx),
+    (tx) => appendTransactionInstruction(createMintIx, tx),
     (tx) => appendTransactionInstruction(createTokenAccountIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  const addTokenIx1 = getAddTokenInstruction({
-    payer: user,
-    user: user.address,
-    mint: mintAccount1,
+  // We do not add the token prior to minting. The mint instruction should
+  // add it for us.
+
+  const mintToIx = getMintToInstruction({
+    payer: namespace,
+    namespace,
+    mintAccount,
     tokenAccount,
+    amount: mintAmount,
+    niftyProgram: address(ASSET_PROGRAM_ID),
     systemProgram: address('11111111111111111111111111111111'),
   });
 
   await pipe(
     await createDefaultTransaction(client, namespace),
-    (tx) => appendTransactionInstruction(addTokenIx1, tx),
-    (tx) => signAndSendTransaction(client, tx)
-  );
-
-  const addTokenIx2 = getAddTokenInstruction({
-    payer: user,
-    user: user.address,
-    mint: mintAccount2,
-    tokenAccount,
-    systemProgram: address('11111111111111111111111111111111'),
-  });
-
-  await pipe(
-    await createDefaultTransaction(client, namespace),
-    (tx) => appendTransactionInstruction(addTokenIx2, tx),
+    (tx) => appendTransactionInstruction(mintToIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
   const account = await fetchTokenAccount(client.rpc, tokenAccount);
 
-  t.assert(account?.data.tree.nodes.length === 2);
-  t.assert(account?.data.tree.nodes[0].ticker === ticker1);
-  t.assert(account?.data.tree.nodes[1].ticker === ticker2);
+  t.assert(account?.data.tree.nodes[0].ticker === ticker);
+  t.assert(account?.data.tree.nodes[0].amount === mintAmount);
 });

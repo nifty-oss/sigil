@@ -1,8 +1,8 @@
 use borsh::BorshSerialize;
-use nifty_asset::{
+use nifty_asset::state::{Asset, Discriminator};
+use nifty_asset_interface::{
     extensions::{Blob, BlobBuilder, ExtensionBuilder, Proxy},
     instructions::{UpdateCpi, UpdateInstructionArgs},
-    state::{Asset, Discriminator},
     types::{ExtensionInput, ExtensionType},
 };
 use solana_program::{
@@ -47,17 +47,17 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
     assert_non_empty("mint", mint_info)?;
     assert_program_owner("mint", mint_info, &nifty_asset::ID)?;
 
-    let data = mint_info.data.borrow_mut();
+    let asset_data = mint_info.data.borrow_mut();
 
     // Must be an initialized Nifty asset.
     require!(
-        data.len() >= Asset::LEN && data[0] == Discriminator::Asset.into(),
+        asset_data.len() >= Asset::LEN && asset_data[0] == Discriminator::Asset.into(),
         TokenLiteError::InvalidMint,
         "asset"
     );
 
     // Must have the proxy extension.
-    let proxy = Asset::get::<Proxy>(&data).ok_or(TokenLiteError::InvalidMint)?;
+    let proxy = Asset::get::<Proxy>(&asset_data).ok_or(TokenLiteError::InvalidMint)?;
 
     // The proxy program must match the current program.
     require!(
@@ -66,8 +66,8 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
         "proxy program does not match"
     );
 
-    // Must have the blob extension that stores the mint data.
-    let blob = Asset::get::<Blob>(&data).ok_or(TokenLiteError::InvalidMint)?;
+    // Must have the blob extension that stores the mint asset_data.
+    let blob = Asset::get::<Blob>(&asset_data).ok_or(TokenLiteError::InvalidMint)?;
 
     let mut metadata =
         MintMetadata::try_from_slice(blob.data).map_err(|_| TokenLiteError::InvalidMint)?;
@@ -95,14 +95,20 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
         return Err(TokenLiteError::MaximumSupplyReached.into());
     }
 
-    match token_account.tokens.get(&ticker) {
-        Some(_) => (),
-        None => {
-            let tree_is_full = token_account.tokens.is_full();
-            drop(account_data);
+    let maybe_ticker = token_account.tokens.get(&ticker);
+    let tree_is_full = token_account.tokens.is_full();
 
+    drop(account_data);
+
+    match maybe_ticker {
+        Some(_) => {
+            msg!("Ticker exists, minting tokens to account.");
+        }
+        None => {
+            msg!("Ticker doesn't exist, adding token to account.");
             // Resize if the tree is full.
             if tree_is_full {
+                msg!("Tree is full, resizing.");
                 // We must reallocate so need a payer and the system program.
                 require!(
                     payer_info.is_some() && system_program_info.is_some(),
@@ -146,17 +152,20 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
         }
     }
 
+    msg!("Getting new mutable reference to account data.");
     // We need a new reference to the recipient account data after the potential resize.
     let mut account_data = (*token_account_info.data).borrow_mut();
     let mut token_account = TokenAccountMut::from_bytes_mut(&mut account_data);
 
     // Mint the tokens to the token account.
+    msg!("Minting tokens to account.");
     let amount = token_account.tokens.get_mut(&ticker).unwrap();
     *amount = amount
         .checked_add(args.amount)
         .ok_or(TokenLiteError::NumericalOverflow)?;
 
     // Update the mint supply.
+    msg!("Updating mint supply.");
     metadata.supply = new_amount;
 
     let data = BlobBuilder::with_capacity(MintMetadata::LEN)
@@ -173,7 +182,20 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
         }),
     };
 
+    // Have to drop this before the CPI.
+    drop(asset_data);
+
+    let mut seeds = Vec::with_capacity(32);
+    seeds.extend(ticker.iter());
+    seeds.extend(namespace_info.key.as_ref()[..28].iter());
+    let seeds: &[u8; 32] = seeds.as_slice().try_into().unwrap();
+
+    let (_, bump) = Pubkey::find_program_address(&[seeds], &crate::ID);
+
+    let signer_seeds: &[&[u8]] = &[seeds, &[bump]];
+
     // Update the Blob with the new mint data.
+    msg!("Nifty cpi");
     UpdateCpi {
         __program: nifty_program_info,
         asset: mint_info,
@@ -184,7 +206,7 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
         __args: args,
         buffer: None,
     }
-    .invoke()?;
+    .invoke_signed(&[signer_seeds])?;
 
     Ok(())
 }

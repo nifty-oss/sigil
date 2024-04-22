@@ -5,6 +5,7 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
+use crate::generated::types::Tree;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 use solana_program::pubkey::Pubkey;
@@ -22,6 +23,7 @@ pub struct TokenAccount {
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
     pub user: Pubkey,
+    pub tree: Tree,
 }
 
 impl TokenAccount {

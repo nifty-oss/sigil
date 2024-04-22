@@ -1856,11 +1856,12 @@ dependencies = [
 
 [[package]]
 name = "kaigan"
-version = "0.2.4"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e623cca1f0e2a0919032c1bdabbf81dd9aa34658d5066aca7bb90d608317ab91"
+checksum = "b6dd100976df9dd59d0c3fecf6f9ad3f161a087374d1b2a77ebb4ad8920f11bb"
 dependencies = [
  "borsh 0.10.3",
+ "serde",
 ]
 
 [[package]]
@@ -2097,6 +2098,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "nifty-asset-interface"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56f2be39397e7a45ea2363edc251b88d01ce3b5f5de376882a7d925e7816949e"
+dependencies = [
+ "borsh 0.10.3",
+ "nifty-asset-types",
+ "shank 0.3.0",
+ "solana-program",
+]
+
+[[package]]
 name = "nifty-asset-types"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2116,9 +2129,10 @@ dependencies = [
  "borsh 0.10.3",
  "bytemuck",
  "nifty-asset",
+ "nifty-asset-interface",
  "num-derive 0.3.3",
  "num-traits",
- "shank",
+ "shank 0.4.2",
  "solana-program",
  "stevia",
  "thiserror",
@@ -2130,6 +2144,7 @@ version = "0.0.0"
 dependencies = [
  "assert_matches",
  "borsh 0.10.3",
+ "kaigan",
  "nifty-asset",
  "nifty-oss-token-lite",
  "num-derive 0.3.3",
@@ -3335,11 +3350,33 @@ dependencies = [
 
 [[package]]
 name = "shank"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57c9395612d493b69a522725eef78a095f199d43eeb847f4a4b77ec0cacab535"
+dependencies = [
+ "shank_macro 0.3.0",
+]
+
+[[package]]
+name = "shank"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23d894855493d4ce613b25550fe1ed1c62d0af5486b984579ba55e3f8c9631d5"
 dependencies = [
- "shank_macro",
+ "shank_macro 0.4.2",
+]
+
+[[package]]
+name = "shank_macro"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8abef069c02e15f62233679b1e71f3152fac10f90b3ff89ebbad6a25b7497754"
+dependencies = [
+ "proc-macro2 1.0.79",
+ "quote 1.0.36",
+ "shank_macro_impl 0.3.0",
+ "shank_render 0.3.0",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -3350,8 +3387,21 @@ checksum = "a9bf2645f8eebde043da69200195058e7b59806705104f908a31d05ca82844ce"
 dependencies = [
  "proc-macro2 1.0.79",
  "quote 1.0.36",
- "shank_macro_impl",
- "shank_render",
+ "shank_macro_impl 0.4.2",
+ "shank_render 0.4.2",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "shank_macro_impl"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "64d3d92bfcc6e08f882f2264d774d1a2f46dc36122adc1b76416ba6405a29a9c"
+dependencies = [
+ "anyhow",
+ "proc-macro2 1.0.79",
+ "quote 1.0.36",
+ "serde",
  "syn 1.0.109",
 ]
 
@@ -3370,13 +3420,24 @@ dependencies = [
 
 [[package]]
 name = "shank_render"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a2ea9c6dd95ea311b3b81e63cf4e9c808ed04b098819e6d2c4b1a467d587203"
+dependencies = [
+ "proc-macro2 1.0.79",
+ "quote 1.0.36",
+ "shank_macro_impl 0.3.0",
+]
+
+[[package]]
+name = "shank_render"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "121175ba61809189f888dc5822ebfd30fa0d91e1e1f61d25a4d40b0847b3075e"
 dependencies = [
  "proc-macro2 1.0.79",
  "quote 1.0.36",
- "shank_macro_impl",
+ "shank_macro_impl 0.4.2",
 ]
 
 [[package]]

@@ -68,6 +68,13 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
     let ticker: [u8; 4] = metadata.ticker.as_bytes().try_into().unwrap();
     let namespace = metadata.namespace;
 
+    // Token accounts must exist.
+    assert_non_empty("user_token", user_token_account_info)?;
+    assert_program_owner("user_token", user_token_account_info, &crate::ID)?;
+
+    assert_non_empty("recipient_token", recipient_token_account_info)?;
+    assert_program_owner("recipient_token", recipient_token_account_info, &crate::ID)?;
+
     let mut user_account_data = (*user_token_account_info.data).borrow_mut();
     let recipient_account_data = (*recipient_token_account_info.data).borrow();
 

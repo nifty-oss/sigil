@@ -9,7 +9,7 @@ devDependencies:
     specifier: ^2.2.5
     version: 2.2.5
   '@metaplex-foundation/kinobi':
-    specifier: ^0.18.5
+    specifier: ^0.18.4
     version: 0.18.5(fastestsmallesttextencoderdecoder@1.0.22)
   '@metaplex-foundation/shank-js':
     specifier: ^0.1.7

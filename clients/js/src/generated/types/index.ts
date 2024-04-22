@@ -7,3 +7,5 @@
  */
 
 export * from './mintMetadata';
+export * from './node';
+export * from './tree';
