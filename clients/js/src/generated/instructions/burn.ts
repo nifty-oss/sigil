@@ -26,43 +26,33 @@ import {
   IInstructionWithAccounts,
   IInstructionWithData,
   ReadonlyAccount,
+  ReadonlySignerAccount,
   WritableAccount,
-  WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
 import { TOKEN_LITE_PROGRAM_ADDRESS } from '../programs';
 import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
-export type MintToInstruction<
+export type BurnInstruction<
   TProgram extends string = typeof TOKEN_LITE_PROGRAM_ADDRESS,
-  TAccountPayer extends string | IAccountMeta<string> = string,
-  TAccountNamespace extends string | IAccountMeta<string> = string,
+  TAccountUser extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends string | IAccountMeta<string> = string,
   TAccountNiftyProgram extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountPayer extends string
-        ? WritableSignerAccount<TAccountPayer> &
-            IAccountSignerMeta<TAccountPayer>
-        : TAccountPayer,
-      TAccountNamespace extends string
-        ? WritableSignerAccount<TAccountNamespace> &
-            IAccountSignerMeta<TAccountNamespace>
-        : TAccountNamespace,
+      TAccountUser extends string
+        ? ReadonlySignerAccount<TAccountUser> & IAccountSignerMeta<TAccountUser>
+        : TAccountUser,
       TAccountMint extends string
         ? WritableAccount<TAccountMint>
         : TAccountMint,
       TAccountTokenAccount extends string
         ? WritableAccount<TAccountTokenAccount>
         : TAccountTokenAccount,
-      TAccountSystemProgram extends string
-        ? ReadonlyAccount<TAccountSystemProgram>
-        : TAccountSystemProgram,
       TAccountNiftyProgram extends string
         ? ReadonlyAccount<TAccountNiftyProgram>
         : TAccountNiftyProgram,
@@ -70,83 +60,71 @@ export type MintToInstruction<
     ]
   >;
 
-export type MintToInstructionData = { discriminator: number; amount: number };
+export type BurnInstructionData = { discriminator: number; amount: number };
 
-export type MintToInstructionDataArgs = { amount: number };
+export type BurnInstructionDataArgs = { amount: number };
 
-export function getMintToInstructionDataEncoder(): Encoder<MintToInstructionDataArgs> {
+export function getBurnInstructionDataEncoder(): Encoder<BurnInstructionDataArgs> {
   return mapEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
       ['amount', getU32Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 3 })
+    (value) => ({ ...value, discriminator: 4 })
   );
 }
 
-export function getMintToInstructionDataDecoder(): Decoder<MintToInstructionData> {
+export function getBurnInstructionDataDecoder(): Decoder<BurnInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
     ['amount', getU32Decoder()],
   ]);
 }
 
-export function getMintToInstructionDataCodec(): Codec<
-  MintToInstructionDataArgs,
-  MintToInstructionData
+export function getBurnInstructionDataCodec(): Codec<
+  BurnInstructionDataArgs,
+  BurnInstructionData
 > {
   return combineCodec(
-    getMintToInstructionDataEncoder(),
-    getMintToInstructionDataDecoder()
+    getBurnInstructionDataEncoder(),
+    getBurnInstructionDataDecoder()
   );
 }
 
-export type MintToInput<
-  TAccountPayer extends string = string,
-  TAccountNamespace extends string = string,
+export type BurnInput<
+  TAccountUser extends string = string,
   TAccountMint extends string = string,
   TAccountTokenAccount extends string = string,
-  TAccountSystemProgram extends string = string,
   TAccountNiftyProgram extends string = string,
 > = {
-  /** The account paying for the storage fees. */
-  payer?: TransactionSigner<TAccountPayer>;
-  /** The namespace for the token account. */
-  namespace: TransactionSigner<TAccountNamespace>;
+  /** The user of the token account */
+  user: TransactionSigner<TAccountUser>;
   /** The mint account PDA derived from the ticker and namespace. */
   mint: Address<TAccountMint>;
   /** The token namespace account. */
   tokenAccount: Address<TAccountTokenAccount>;
-  /** The system program */
-  systemProgram?: Address<TAccountSystemProgram>;
   /** The Nifty Asset program */
   niftyProgram: Address<TAccountNiftyProgram>;
-  amount: MintToInstructionDataArgs['amount'];
+  amount: BurnInstructionDataArgs['amount'];
 };
 
-export function getMintToInstruction<
-  TAccountPayer extends string,
-  TAccountNamespace extends string,
+export function getBurnInstruction<
+  TAccountUser extends string,
   TAccountMint extends string,
   TAccountTokenAccount extends string,
-  TAccountSystemProgram extends string,
   TAccountNiftyProgram extends string,
 >(
-  input: MintToInput<
-    TAccountPayer,
-    TAccountNamespace,
+  input: BurnInput<
+    TAccountUser,
     TAccountMint,
     TAccountTokenAccount,
-    TAccountSystemProgram,
     TAccountNiftyProgram
   >
-): MintToInstruction<
+): BurnInstruction<
   typeof TOKEN_LITE_PROGRAM_ADDRESS,
-  TAccountPayer,
-  TAccountNamespace,
+  TAccountUser,
   TAccountMint,
   TAccountTokenAccount,
-  TAccountSystemProgram,
   TAccountNiftyProgram
 > {
   // Program address.
@@ -154,11 +132,9 @@ export function getMintToInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    payer: { value: input.payer ?? null, isWritable: true },
-    namespace: { value: input.namespace ?? null, isWritable: true },
+    user: { value: input.user ?? null, isWritable: false },
     mint: { value: input.mint ?? null, isWritable: true },
     tokenAccount: { value: input.tokenAccount ?? null, isWritable: true },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     niftyProgram: { value: input.niftyProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -172,61 +148,53 @@ export function getMintToInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.namespace),
+      getAccountMeta(accounts.user),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.tokenAccount),
-      getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.niftyProgram),
     ],
     programAddress,
-    data: getMintToInstructionDataEncoder().encode(
-      args as MintToInstructionDataArgs
+    data: getBurnInstructionDataEncoder().encode(
+      args as BurnInstructionDataArgs
     ),
-  } as MintToInstruction<
+  } as BurnInstruction<
     typeof TOKEN_LITE_PROGRAM_ADDRESS,
-    TAccountPayer,
-    TAccountNamespace,
+    TAccountUser,
     TAccountMint,
     TAccountTokenAccount,
-    TAccountSystemProgram,
     TAccountNiftyProgram
   >;
 
   return instruction;
 }
 
-export type ParsedMintToInstruction<
+export type ParsedBurnInstruction<
   TProgram extends string = typeof TOKEN_LITE_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    /** The account paying for the storage fees. */
-    payer?: TAccountMetas[0] | undefined;
-    /** The namespace for the token account. */
-    namespace: TAccountMetas[1];
+    /** The user of the token account */
+    user: TAccountMetas[0];
     /** The mint account PDA derived from the ticker and namespace. */
-    mint: TAccountMetas[2];
+    mint: TAccountMetas[1];
     /** The token namespace account. */
-    tokenAccount: TAccountMetas[3];
-    /** The system program */
-    systemProgram?: TAccountMetas[4] | undefined;
+    tokenAccount: TAccountMetas[2];
     /** The Nifty Asset program */
-    niftyProgram: TAccountMetas[5];
+    niftyProgram: TAccountMetas[3];
   };
-  data: MintToInstructionData;
+  data: BurnInstructionData;
 };
 
-export function parseMintToInstruction<
+export function parseBurnInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedMintToInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 6) {
+): ParsedBurnInstruction<TProgram, TAccountMetas> {
+  if (instruction.accounts.length < 4) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -236,22 +204,14 @@ export function parseMintToInstruction<
     accountIndex += 1;
     return accountMeta;
   };
-  const getNextOptionalAccount = () => {
-    const accountMeta = getNextAccount();
-    return accountMeta.address === TOKEN_LITE_PROGRAM_ADDRESS
-      ? undefined
-      : accountMeta;
-  };
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      payer: getNextOptionalAccount(),
-      namespace: getNextAccount(),
+      user: getNextAccount(),
       mint: getNextAccount(),
       tokenAccount: getNextAccount(),
-      systemProgram: getNextOptionalAccount(),
       niftyProgram: getNextAccount(),
     },
-    data: getMintToInstructionDataDecoder().decode(instruction.data),
+    data: getBurnInstructionDataDecoder().decode(instruction.data),
   };
 }

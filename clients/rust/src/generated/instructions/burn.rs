@@ -9,46 +9,33 @@ use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
 /// Accounts.
-pub struct MintTo {
-    /// The account paying for the storage fees.
-    pub payer: Option<solana_program::pubkey::Pubkey>,
-    /// The namespace for the token account.
-    pub namespace: solana_program::pubkey::Pubkey,
+pub struct Burn {
+    /// The user of the token account
+    pub user: solana_program::pubkey::Pubkey,
     /// The mint account PDA derived from the ticker and namespace.
     pub mint: solana_program::pubkey::Pubkey,
     /// The token namespace account.
     pub token_account: solana_program::pubkey::Pubkey,
-    /// The system program
-    pub system_program: Option<solana_program::pubkey::Pubkey>,
     /// The Nifty Asset program
     pub nifty_program: solana_program::pubkey::Pubkey,
 }
 
-impl MintTo {
+impl Burn {
     pub fn instruction(
         &self,
-        args: MintToInstructionArgs,
+        args: BurnInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: MintToInstructionArgs,
+        args: BurnInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
-        if let Some(payer) = self.payer {
-            accounts.push(solana_program::instruction::AccountMeta::new(payer, true));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::TOKEN_LITE_ID,
-                false,
-            ));
-        }
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.namespace,
-            true,
+        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.user, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.mint, false,
@@ -57,23 +44,12 @@ impl MintTo {
             self.token_account,
             false,
         ));
-        if let Some(system_program) = self.system_program {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                system_program,
-                false,
-            ));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::TOKEN_LITE_ID,
-                false,
-            ));
-        }
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.nifty_program,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = MintToInstructionData::new().try_to_vec().unwrap();
+        let mut data = BurnInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -86,59 +62,48 @@ impl MintTo {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct MintToInstructionData {
+pub struct BurnInstructionData {
     discriminator: u8,
 }
 
-impl MintToInstructionData {
+impl BurnInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 3 }
+        Self { discriminator: 4 }
     }
 }
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct MintToInstructionArgs {
+pub struct BurnInstructionArgs {
     pub amount: u32,
 }
 
-/// Instruction builder for `MintTo`.
+/// Instruction builder for `Burn`.
 ///
 /// ### Accounts:
 ///
-///   0. `[writable, signer, optional]` payer
-///   1. `[writable, signer]` namespace
-///   2. `[writable]` mint
-///   3. `[writable]` token_account
-///   4. `[optional]` system_program
-///   5. `[]` nifty_program
+///   0. `[signer]` user
+///   1. `[writable]` mint
+///   2. `[writable]` token_account
+///   3. `[]` nifty_program
 #[derive(Default)]
-pub struct MintToBuilder {
-    payer: Option<solana_program::pubkey::Pubkey>,
-    namespace: Option<solana_program::pubkey::Pubkey>,
+pub struct BurnBuilder {
+    user: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     token_account: Option<solana_program::pubkey::Pubkey>,
-    system_program: Option<solana_program::pubkey::Pubkey>,
     nifty_program: Option<solana_program::pubkey::Pubkey>,
     amount: Option<u32>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl MintToBuilder {
+impl BurnBuilder {
     pub fn new() -> Self {
         Self::default()
     }
-    /// `[optional account]`
-    /// The account paying for the storage fees.
+    /// The user of the token account
     #[inline(always)]
-    pub fn payer(&mut self, payer: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
-        self.payer = payer;
-        self
-    }
-    /// The namespace for the token account.
-    #[inline(always)]
-    pub fn namespace(&mut self, namespace: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.namespace = Some(namespace);
+    pub fn user(&mut self, user: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.user = Some(user);
         self
     }
     /// The mint account PDA derived from the ticker and namespace.
@@ -151,16 +116,6 @@ impl MintToBuilder {
     #[inline(always)]
     pub fn token_account(&mut self, token_account: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_account = Some(token_account);
-        self
-    }
-    /// `[optional account]`
-    /// The system program
-    #[inline(always)]
-    pub fn system_program(
-        &mut self,
-        system_program: Option<solana_program::pubkey::Pubkey>,
-    ) -> &mut Self {
-        self.system_program = system_program;
         self
     }
     /// The Nifty Asset program
@@ -194,15 +149,13 @@ impl MintToBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = MintTo {
-            payer: self.payer,
-            namespace: self.namespace.expect("namespace is not set"),
+        let accounts = Burn {
+            user: self.user.expect("user is not set"),
             mint: self.mint.expect("mint is not set"),
             token_account: self.token_account.expect("token_account is not set"),
-            system_program: self.system_program,
             nifty_program: self.nifty_program.expect("nifty_program is not set"),
         };
-        let args = MintToInstructionArgs {
+        let args = BurnInstructionArgs {
             amount: self.amount.clone().expect("amount is not set"),
         };
 
@@ -210,55 +163,45 @@ impl MintToBuilder {
     }
 }
 
-/// `mint_to` CPI accounts.
-pub struct MintToCpiAccounts<'a, 'b> {
-    /// The account paying for the storage fees.
-    pub payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    /// The namespace for the token account.
-    pub namespace: &'b solana_program::account_info::AccountInfo<'a>,
+/// `burn` CPI accounts.
+pub struct BurnCpiAccounts<'a, 'b> {
+    /// The user of the token account
+    pub user: &'b solana_program::account_info::AccountInfo<'a>,
     /// The mint account PDA derived from the ticker and namespace.
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// The token namespace account.
     pub token_account: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The system program
-    pub system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The Nifty Asset program
     pub nifty_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `mint_to` CPI instruction.
-pub struct MintToCpi<'a, 'b> {
+/// `burn` CPI instruction.
+pub struct BurnCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The account paying for the storage fees.
-    pub payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    /// The namespace for the token account.
-    pub namespace: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The user of the token account
+    pub user: &'b solana_program::account_info::AccountInfo<'a>,
     /// The mint account PDA derived from the ticker and namespace.
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// The token namespace account.
     pub token_account: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The system program
-    pub system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The Nifty Asset program
     pub nifty_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
-    pub __args: MintToInstructionArgs,
+    pub __args: BurnInstructionArgs,
 }
 
-impl<'a, 'b> MintToCpi<'a, 'b> {
+impl<'a, 'b> BurnCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: MintToCpiAccounts<'a, 'b>,
-        args: MintToInstructionArgs,
+        accounts: BurnCpiAccounts<'a, 'b>,
+        args: BurnInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
-            payer: accounts.payer,
-            namespace: accounts.namespace,
+            user: accounts.user,
             mint: accounts.mint,
             token_account: accounts.token_account,
-            system_program: accounts.system_program,
             nifty_program: accounts.nifty_program,
             __args: args,
         }
@@ -296,19 +239,9 @@ impl<'a, 'b> MintToCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
-        if let Some(payer) = self.payer {
-            accounts.push(solana_program::instruction::AccountMeta::new(
-                *payer.key, true,
-            ));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::TOKEN_LITE_ID,
-                false,
-            ));
-        }
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.namespace.key,
+        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.user.key,
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -319,17 +252,6 @@ impl<'a, 'b> MintToCpi<'a, 'b> {
             *self.token_account.key,
             false,
         ));
-        if let Some(system_program) = self.system_program {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                *system_program.key,
-                false,
-            ));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::TOKEN_LITE_ID,
-                false,
-            ));
-        }
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.nifty_program.key,
             false,
@@ -341,7 +263,7 @@ impl<'a, 'b> MintToCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = MintToInstructionData::new().try_to_vec().unwrap();
+        let mut data = BurnInstructionData::new().try_to_vec().unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -350,17 +272,11 @@ impl<'a, 'b> MintToCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(6 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(4 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        if let Some(payer) = self.payer {
-            account_infos.push(payer.clone());
-        }
-        account_infos.push(self.namespace.clone());
+        account_infos.push(self.user.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.token_account.clone());
-        if let Some(system_program) = self.system_program {
-            account_infos.push(system_program.clone());
-        }
         account_infos.push(self.nifty_program.clone());
         remaining_accounts
             .iter()
@@ -374,52 +290,35 @@ impl<'a, 'b> MintToCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `MintTo` via CPI.
+/// Instruction builder for `Burn` via CPI.
 ///
 /// ### Accounts:
 ///
-///   0. `[writable, signer, optional]` payer
-///   1. `[writable, signer]` namespace
-///   2. `[writable]` mint
-///   3. `[writable]` token_account
-///   4. `[optional]` system_program
-///   5. `[]` nifty_program
-pub struct MintToCpiBuilder<'a, 'b> {
-    instruction: Box<MintToCpiBuilderInstruction<'a, 'b>>,
+///   0. `[signer]` user
+///   1. `[writable]` mint
+///   2. `[writable]` token_account
+///   3. `[]` nifty_program
+pub struct BurnCpiBuilder<'a, 'b> {
+    instruction: Box<BurnCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> MintToCpiBuilder<'a, 'b> {
+impl<'a, 'b> BurnCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(MintToCpiBuilderInstruction {
+        let instruction = Box::new(BurnCpiBuilderInstruction {
             __program: program,
-            payer: None,
-            namespace: None,
+            user: None,
             mint: None,
             token_account: None,
-            system_program: None,
             nifty_program: None,
             amount: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
     }
-    /// `[optional account]`
-    /// The account paying for the storage fees.
+    /// The user of the token account
     #[inline(always)]
-    pub fn payer(
-        &mut self,
-        payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    ) -> &mut Self {
-        self.instruction.payer = payer;
-        self
-    }
-    /// The namespace for the token account.
-    #[inline(always)]
-    pub fn namespace(
-        &mut self,
-        namespace: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.namespace = Some(namespace);
+    pub fn user(&mut self, user: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.user = Some(user);
         self
     }
     /// The mint account PDA derived from the ticker and namespace.
@@ -435,16 +334,6 @@ impl<'a, 'b> MintToCpiBuilder<'a, 'b> {
         token_account: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.token_account = Some(token_account);
-        self
-    }
-    /// `[optional account]`
-    /// The system program
-    #[inline(always)]
-    pub fn system_program(
-        &mut self,
-        system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    ) -> &mut Self {
-        self.instruction.system_program = system_program;
         self
     }
     /// The Nifty Asset program
@@ -502,15 +391,13 @@ impl<'a, 'b> MintToCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = MintToInstructionArgs {
+        let args = BurnInstructionArgs {
             amount: self.instruction.amount.clone().expect("amount is not set"),
         };
-        let instruction = MintToCpi {
+        let instruction = BurnCpi {
             __program: self.instruction.__program,
 
-            payer: self.instruction.payer,
-
-            namespace: self.instruction.namespace.expect("namespace is not set"),
+            user: self.instruction.user.expect("user is not set"),
 
             mint: self.instruction.mint.expect("mint is not set"),
 
@@ -518,8 +405,6 @@ impl<'a, 'b> MintToCpiBuilder<'a, 'b> {
                 .instruction
                 .token_account
                 .expect("token_account is not set"),
-
-            system_program: self.instruction.system_program,
 
             nifty_program: self
                 .instruction
@@ -534,13 +419,11 @@ impl<'a, 'b> MintToCpiBuilder<'a, 'b> {
     }
 }
 
-struct MintToCpiBuilderInstruction<'a, 'b> {
+struct BurnCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    namespace: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    user: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     nifty_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     amount: Option<u32>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

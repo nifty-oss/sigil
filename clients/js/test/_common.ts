@@ -25,14 +25,14 @@ export const setupAndMint = async (
   ticker: string,
   amount: number
 ) => {
-  const [mintAccount] = await findMintAccountPda({
+  const [mint] = await findMintAccountPda({
     ticker,
     namespace: namespace.address,
   });
 
   const createMintIx = getCreateMintInstruction({
     payer: namespace,
-    mintAccount,
+    mint,
     namespace,
     niftyProgram: address(ASSET_PROGRAM_ID),
     decimals: 0,
@@ -56,7 +56,7 @@ export const setupAndMint = async (
   const mintToIx = getMintToInstruction({
     payer: namespace,
     namespace,
-    mintAccount,
+    mint,
     tokenAccount,
     amount,
     systemProgram: address('11111111111111111111111111111111'),
@@ -71,5 +71,5 @@ export const setupAndMint = async (
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  return mintAccount;
+  return mint;
 };

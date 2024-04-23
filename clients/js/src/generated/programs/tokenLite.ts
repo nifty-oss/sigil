@@ -16,6 +16,7 @@ import {
 } from '../errors';
 import {
   ParsedAddTokenInstruction,
+  ParsedBurnInstruction,
   ParsedCreateMintInstruction,
   ParsedCreateTokenAccountInstruction,
   ParsedMintToInstruction,
@@ -49,6 +50,7 @@ export enum TokenLiteInstruction {
   CreateTokenAccount,
   AddToken,
   MintTo,
+  Burn,
   Transfer,
 }
 
@@ -70,6 +72,9 @@ export function identifyTokenLiteInstruction(
     return TokenLiteInstruction.MintTo;
   }
   if (memcmp(data, getU8Encoder().encode(4), 0)) {
+    return TokenLiteInstruction.Burn;
+  }
+  if (memcmp(data, getU8Encoder().encode(5), 0)) {
     return TokenLiteInstruction.Transfer;
   }
   throw new Error(
@@ -92,6 +97,9 @@ export type ParsedTokenLiteInstruction<
   | ({
       instructionType: TokenLiteInstruction.MintTo;
     } & ParsedMintToInstruction<TProgram>)
+  | ({
+      instructionType: TokenLiteInstruction.Burn;
+    } & ParsedBurnInstruction<TProgram>)
   | ({
       instructionType: TokenLiteInstruction.Transfer;
     } & ParsedTransferInstruction<TProgram>);

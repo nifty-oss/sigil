@@ -22,7 +22,7 @@
           ]
         },
         {
-          "name": "mintAccount",
+          "name": "mint",
           "isMut": true,
           "isSigner": false,
           "docs": [
@@ -189,7 +189,7 @@
           ]
         },
         {
-          "name": "mintAccount",
+          "name": "mint",
           "isMut": true,
           "isSigner": false,
           "docs": [
@@ -233,6 +233,55 @@
       "discriminant": {
         "type": "u8",
         "value": 3
+      }
+    },
+    {
+      "name": "Burn",
+      "accounts": [
+        {
+          "name": "user",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "The user of the token account"
+          ]
+        },
+        {
+          "name": "mint",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The mint account PDA derived from the ticker and namespace."
+          ]
+        },
+        {
+          "name": "tokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The token namespace account."
+          ]
+        },
+        {
+          "name": "niftyProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The Nifty Asset program"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "burnArgs",
+          "type": {
+            "defined": "BurnArgs"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 4
       }
     },
     {
@@ -307,7 +356,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 4
+        "value": 5
       }
     }
   ],
@@ -346,6 +395,18 @@
     },
     {
       "name": "MintToArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "amount",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BurnArgs",
       "type": {
         "kind": "struct",
         "fields": [

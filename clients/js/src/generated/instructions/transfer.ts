@@ -84,7 +84,7 @@ export function getTransferInstructionDataEncoder(): Encoder<TransferInstruction
       ['discriminator', getU8Encoder()],
       ['amount', getU32Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 4 })
+    (value) => ({ ...value, discriminator: 5 })
   );
 }
 

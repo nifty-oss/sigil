@@ -26,14 +26,14 @@ test('it can mint tokens to an existing account', async (t) => {
   const ticker = 'USDC';
   const mintAmount = 100;
 
-  const [mintAccount] = await findMintAccountPda({
+  const [mint] = await findMintAccountPda({
     ticker,
     namespace: namespace.address,
   });
 
   const createMintIx = getCreateMintInstruction({
     payer: namespace,
-    mintAccount,
+    mint,
     namespace,
     niftyProgram: address(ASSET_PROGRAM_ID),
     decimals: 0,
@@ -64,7 +64,7 @@ test('it can mint tokens to an existing account', async (t) => {
   const addTokenIx = getAddTokenInstruction({
     payer: user,
     user: user.address,
-    mint: mintAccount,
+    mint,
     tokenAccount,
     systemProgram: address('11111111111111111111111111111111'),
   });
@@ -83,7 +83,7 @@ test('it can mint tokens to an existing account', async (t) => {
   const mintToIx = getMintToInstruction({
     payer: namespace,
     namespace,
-    mintAccount,
+    mint,
     tokenAccount,
     amount: mintAmount,
     niftyProgram: address(ASSET_PROGRAM_ID),
@@ -110,14 +110,14 @@ test('it can add a token and mint to it account', async (t) => {
   const ticker = 'USDC';
   const mintAmount = 100;
 
-  const [mintAccount] = await findMintAccountPda({
+  const [mint] = await findMintAccountPda({
     ticker,
     namespace: namespace.address,
   });
 
   const createMintIx = getCreateMintInstruction({
     payer: namespace,
-    mintAccount,
+    mint,
     namespace,
     niftyProgram: address(ASSET_PROGRAM_ID),
     decimals: 0,
@@ -151,7 +151,7 @@ test('it can add a token and mint to it account', async (t) => {
   const mintToIx = getMintToInstruction({
     payer: namespace,
     namespace,
-    mintAccount,
+    mint,
     tokenAccount,
     amount: mintAmount,
     niftyProgram: address(ASSET_PROGRAM_ID),

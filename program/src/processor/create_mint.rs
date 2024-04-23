@@ -21,7 +21,7 @@ pub fn process_create_mint<'a>(
 
     let payer_info = ctx.accounts.payer;
     let namespace_info = ctx.accounts.namespace;
-    let mint_account_info = ctx.accounts.mint_account;
+    let mint_account_info = ctx.accounts.mint;
     let system_program_info = ctx.accounts.system_program;
     let nifty_program_info = ctx.accounts.nifty_program;
 

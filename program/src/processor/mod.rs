@@ -12,12 +12,14 @@ use crate::state::TokenAccount;
 use crate::utils::create_account;
 
 mod add_token;
+mod burn;
 mod create_mint;
 mod create_token;
 mod mint_to;
 mod transfer;
 
 use add_token::process_add_token;
+use burn::process_burn;
 use create_mint::process_create_mint;
 use create_token::process_create_token;
 use mint_to::process_mint_to;
@@ -47,6 +49,10 @@ pub fn process_instruction<'a>(
         Instruction::MintTo(args) => {
             msg!("Instruction: Mint To");
             process_mint_to(accounts, args)
+        }
+        Instruction::Burn(args) => {
+            msg!("Instruction: Burn");
+            process_burn(accounts, args)
         }
         Instruction::Transfer(args) => {
             msg!("Instruction: Transfer");

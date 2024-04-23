@@ -94,7 +94,7 @@ pub async fn create_mint<'a>(
     let ix = CreateMintBuilder::new()
         .payer(payer)
         .namespace(namespace)
-        .mint_account(mint)
+        .mint(mint)
         .nifty_program(nifty_asset::ID)
         .ticker(ticker.clone())
         .max_supply(max_supply)

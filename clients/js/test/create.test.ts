@@ -24,14 +24,14 @@ test('it can create a new mint account', async (t) => {
 
   const ticker = 'USDC';
 
-  const [mintAccount] = await findMintAccountPda({
+  const [mint] = await findMintAccountPda({
     ticker,
     namespace: namespace.address,
   });
 
   const createMintIx = getCreateMintInstruction({
     payer: namespace,
-    mintAccount,
+    mint,
     namespace,
     niftyProgram: address(ASSET_PROGRAM_ID),
     decimals: 0,
@@ -57,7 +57,7 @@ test('it can create a new token account', async (t) => {
 
   const ticker = 'USDC';
 
-  const [mintAccount] = await findMintAccountPda({
+  const [mint] = await findMintAccountPda({
     ticker,
     namespace: namespace.address,
   });
@@ -65,7 +65,7 @@ test('it can create a new token account', async (t) => {
   // When we create a new counter account.
   const createMintIx = getCreateMintInstruction({
     payer: namespace,
-    mintAccount,
+    mint,
     namespace,
     niftyProgram: address(ASSET_PROGRAM_ID),
     decimals: 0,
@@ -109,19 +109,19 @@ test('it can add tokens to a token account', async (t) => {
   const ticker1 = 'USDC';
   const ticker2 = 'BONK';
 
-  const [mintAccount1] = await findMintAccountPda({
+  const [mint1] = await findMintAccountPda({
     ticker: ticker1,
     namespace: namespace.address,
   });
 
-  const [mintAccount2] = await findMintAccountPda({
+  const [mint2] = await findMintAccountPda({
     ticker: ticker2,
     namespace: namespace.address,
   });
 
   const createMintIx1 = getCreateMintInstruction({
     payer: namespace,
-    mintAccount: mintAccount1,
+    mint: mint1,
     namespace,
     niftyProgram: address(ASSET_PROGRAM_ID),
     decimals: 0,
@@ -131,7 +131,7 @@ test('it can add tokens to a token account', async (t) => {
 
   const createMintIx2 = getCreateMintInstruction({
     payer: namespace,
-    mintAccount: mintAccount2,
+    mint: mint2,
     namespace,
     niftyProgram: address(ASSET_PROGRAM_ID),
     decimals: 0,
@@ -163,7 +163,7 @@ test('it can add tokens to a token account', async (t) => {
   const addTokenIx1 = getAddTokenInstruction({
     payer: user,
     user: user.address,
-    mint: mintAccount1,
+    mint: mint1,
     tokenAccount,
     systemProgram: address('11111111111111111111111111111111'),
   });
@@ -177,7 +177,7 @@ test('it can add tokens to a token account', async (t) => {
   const addTokenIx2 = getAddTokenInstruction({
     payer: user,
     user: user.address,
-    mint: mintAccount2,
+    mint: mint2,
     tokenAccount,
     systemProgram: address('11111111111111111111111111111111'),
   });

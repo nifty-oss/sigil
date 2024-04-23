@@ -26,7 +26,7 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
 
     let payer_info = ctx.accounts.payer;
     let namespace_info = ctx.accounts.namespace;
-    let mint_info = ctx.accounts.mint_account;
+    let mint_info = ctx.accounts.mint;
     let token_account_info = ctx.accounts.token_account;
     let system_program_info = ctx.accounts.system_program;
     let nifty_program_info = ctx.accounts.nifty_program;

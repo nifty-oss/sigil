@@ -39,7 +39,7 @@ export type CreateMintInstruction<
   TProgram extends string = typeof TOKEN_LITE_PROGRAM_ADDRESS,
   TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountNamespace extends string | IAccountMeta<string> = string,
-  TAccountMintAccount extends string | IAccountMeta<string> = string,
+  TAccountMint extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
@@ -57,9 +57,9 @@ export type CreateMintInstruction<
         ? WritableSignerAccount<TAccountNamespace> &
             IAccountSignerMeta<TAccountNamespace>
         : TAccountNamespace,
-      TAccountMintAccount extends string
-        ? WritableAccount<TAccountMintAccount>
-        : TAccountMintAccount,
+      TAccountMint extends string
+        ? WritableAccount<TAccountMint>
+        : TAccountMint,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -117,7 +117,7 @@ export function getCreateMintInstructionDataCodec(): Codec<
 export type CreateMintInput<
   TAccountPayer extends string = string,
   TAccountNamespace extends string = string,
-  TAccountMintAccount extends string = string,
+  TAccountMint extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountNiftyProgram extends string = string,
 > = {
@@ -126,7 +126,7 @@ export type CreateMintInput<
   /** The namespace for the token account. */
   namespace: TransactionSigner<TAccountNamespace>;
   /** The mint account PDA derived from the ticker and namespace. */
-  mintAccount: Address<TAccountMintAccount>;
+  mint: Address<TAccountMint>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
   /** The Nifty Asset program */
@@ -139,14 +139,14 @@ export type CreateMintInput<
 export function getCreateMintInstruction<
   TAccountPayer extends string,
   TAccountNamespace extends string,
-  TAccountMintAccount extends string,
+  TAccountMint extends string,
   TAccountSystemProgram extends string,
   TAccountNiftyProgram extends string,
 >(
   input: CreateMintInput<
     TAccountPayer,
     TAccountNamespace,
-    TAccountMintAccount,
+    TAccountMint,
     TAccountSystemProgram,
     TAccountNiftyProgram
   >
@@ -154,7 +154,7 @@ export function getCreateMintInstruction<
   typeof TOKEN_LITE_PROGRAM_ADDRESS,
   TAccountPayer,
   TAccountNamespace,
-  TAccountMintAccount,
+  TAccountMint,
   TAccountSystemProgram,
   TAccountNiftyProgram
 > {
@@ -165,7 +165,7 @@ export function getCreateMintInstruction<
   const originalAccounts = {
     payer: { value: input.payer ?? null, isWritable: true },
     namespace: { value: input.namespace ?? null, isWritable: true },
-    mintAccount: { value: input.mintAccount ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     niftyProgram: { value: input.niftyProgram ?? null, isWritable: false },
   };
@@ -188,7 +188,7 @@ export function getCreateMintInstruction<
     accounts: [
       getAccountMeta(accounts.payer),
       getAccountMeta(accounts.namespace),
-      getAccountMeta(accounts.mintAccount),
+      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.niftyProgram),
     ],
@@ -200,7 +200,7 @@ export function getCreateMintInstruction<
     typeof TOKEN_LITE_PROGRAM_ADDRESS,
     TAccountPayer,
     TAccountNamespace,
-    TAccountMintAccount,
+    TAccountMint,
     TAccountSystemProgram,
     TAccountNiftyProgram
   >;
@@ -219,7 +219,7 @@ export type ParsedCreateMintInstruction<
     /** The namespace for the token account. */
     namespace: TAccountMetas[1];
     /** The mint account PDA derived from the ticker and namespace. */
-    mintAccount: TAccountMetas[2];
+    mint: TAccountMetas[2];
     /** The system program */
     systemProgram: TAccountMetas[3];
     /** The Nifty Asset program */
@@ -251,7 +251,7 @@ export function parseCreateMintInstruction<
     accounts: {
       payer: getNextAccount(),
       namespace: getNextAccount(),
-      mintAccount: getNextAccount(),
+      mint: getNextAccount(),
       systemProgram: getNextAccount(),
       niftyProgram: getNextAccount(),
     },

@@ -15,7 +15,7 @@ pub struct CreateMint {
     /// The namespace for the token account.
     pub namespace: solana_program::pubkey::Pubkey,
     /// The mint account PDA derived from the ticker and namespace.
-    pub mint_account: solana_program::pubkey::Pubkey,
+    pub mint: solana_program::pubkey::Pubkey,
     /// The system program
     pub system_program: solana_program::pubkey::Pubkey,
     /// The Nifty Asset program
@@ -44,8 +44,7 @@ impl CreateMint {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.mint_account,
-            false,
+            self.mint, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.system_program,
@@ -93,14 +92,14 @@ pub struct CreateMintInstructionArgs {
 ///
 ///   0. `[writable, signer]` payer
 ///   1. `[writable, signer]` namespace
-///   2. `[writable]` mint_account
+///   2. `[writable]` mint
 ///   3. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   4. `[]` nifty_program
 #[derive(Default)]
 pub struct CreateMintBuilder {
     payer: Option<solana_program::pubkey::Pubkey>,
     namespace: Option<solana_program::pubkey::Pubkey>,
-    mint_account: Option<solana_program::pubkey::Pubkey>,
+    mint: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     nifty_program: Option<solana_program::pubkey::Pubkey>,
     ticker: Option<String>,
@@ -127,8 +126,8 @@ impl CreateMintBuilder {
     }
     /// The mint account PDA derived from the ticker and namespace.
     #[inline(always)]
-    pub fn mint_account(&mut self, mint_account: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.mint_account = Some(mint_account);
+    pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.mint = Some(mint);
         self
     }
     /// `[optional account, default to '11111111111111111111111111111111']`
@@ -182,7 +181,7 @@ impl CreateMintBuilder {
         let accounts = CreateMint {
             payer: self.payer.expect("payer is not set"),
             namespace: self.namespace.expect("namespace is not set"),
-            mint_account: self.mint_account.expect("mint_account is not set"),
+            mint: self.mint.expect("mint is not set"),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
@@ -205,7 +204,7 @@ pub struct CreateMintCpiAccounts<'a, 'b> {
     /// The namespace for the token account.
     pub namespace: &'b solana_program::account_info::AccountInfo<'a>,
     /// The mint account PDA derived from the ticker and namespace.
-    pub mint_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// The system program
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The Nifty Asset program
@@ -221,7 +220,7 @@ pub struct CreateMintCpi<'a, 'b> {
     /// The namespace for the token account.
     pub namespace: &'b solana_program::account_info::AccountInfo<'a>,
     /// The mint account PDA derived from the ticker and namespace.
-    pub mint_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
     /// The system program
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The Nifty Asset program
@@ -240,7 +239,7 @@ impl<'a, 'b> CreateMintCpi<'a, 'b> {
             __program: program,
             payer: accounts.payer,
             namespace: accounts.namespace,
-            mint_account: accounts.mint_account,
+            mint: accounts.mint,
             system_program: accounts.system_program,
             nifty_program: accounts.nifty_program,
             __args: args,
@@ -289,7 +288,7 @@ impl<'a, 'b> CreateMintCpi<'a, 'b> {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.mint_account.key,
+            *self.mint.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -320,7 +319,7 @@ impl<'a, 'b> CreateMintCpi<'a, 'b> {
         account_infos.push(self.__program.clone());
         account_infos.push(self.payer.clone());
         account_infos.push(self.namespace.clone());
-        account_infos.push(self.mint_account.clone());
+        account_infos.push(self.mint.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.nifty_program.clone());
         remaining_accounts
@@ -341,7 +340,7 @@ impl<'a, 'b> CreateMintCpi<'a, 'b> {
 ///
 ///   0. `[writable, signer]` payer
 ///   1. `[writable, signer]` namespace
-///   2. `[writable]` mint_account
+///   2. `[writable]` mint
 ///   3. `[]` system_program
 ///   4. `[]` nifty_program
 pub struct CreateMintCpiBuilder<'a, 'b> {
@@ -354,7 +353,7 @@ impl<'a, 'b> CreateMintCpiBuilder<'a, 'b> {
             __program: program,
             payer: None,
             namespace: None,
-            mint_account: None,
+            mint: None,
             system_program: None,
             nifty_program: None,
             ticker: None,
@@ -381,11 +380,8 @@ impl<'a, 'b> CreateMintCpiBuilder<'a, 'b> {
     }
     /// The mint account PDA derived from the ticker and namespace.
     #[inline(always)]
-    pub fn mint_account(
-        &mut self,
-        mint_account: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.mint_account = Some(mint_account);
+    pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.mint = Some(mint);
         self
     }
     /// The system program
@@ -482,10 +478,7 @@ impl<'a, 'b> CreateMintCpiBuilder<'a, 'b> {
 
             namespace: self.instruction.namespace.expect("namespace is not set"),
 
-            mint_account: self
-                .instruction
-                .mint_account
-                .expect("mint_account is not set"),
+            mint: self.instruction.mint.expect("mint is not set"),
 
             system_program: self
                 .instruction
@@ -509,7 +502,7 @@ struct CreateMintCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     namespace: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    mint_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     nifty_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ticker: Option<String>,

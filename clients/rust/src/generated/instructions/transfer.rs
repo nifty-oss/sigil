@@ -97,7 +97,7 @@ pub struct TransferInstructionData {
 
 impl TransferInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 4 }
+        Self { discriminator: 5 }
     }
 }
 
