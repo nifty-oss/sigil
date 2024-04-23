@@ -14,7 +14,7 @@ use crate::{
     assertions::{assert_non_empty, assert_program_owner},
     error::TokenLiteError,
     instruction::{accounts::MintToAccounts, MintToArgs},
-    require,
+    require, resize_account,
     state::{MintMetadata, TokenAccountMut, CONTENT_TYPE},
 };
 
@@ -106,42 +106,15 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
         }
         None => {
             msg!("Ticker doesn't exist, adding token to account.");
+
             // Resize if the tree is full.
-            if tree_is_full {
-                msg!("Tree is full, resizing.");
-                // We must reallocate so need a payer and the system program.
-                require!(
-                    payer_info.is_some() && system_program_info.is_some(),
-                    ProgramError::NotEnoughAccountKeys,
-                    "payer and system program required"
-                );
-
-                let payer_info = payer_info.unwrap();
-
-                // Get the new length of the account data.
-                let new_len = token_account_info
-                    .data_len()
-                    .checked_add(std::mem::size_of::<U8Node<u32, u32>>())
-                    .ok_or(TokenLiteError::NumericalOverflow)?;
-
-                // Resize the account data.
-                token_account_info.realloc(new_len, false)?;
-
-                let rent = Rent::get()?;
-                let new_lamports = rent.minimum_balance(new_len);
-                let difference = new_lamports
-                    .checked_sub(token_account_info.lamports())
-                    .ok_or(TokenLiteError::NumericalOverflow)?;
-
-                invoke(
-                    &system_instruction::transfer(
-                        payer_info.key,
-                        token_account_info.key,
-                        difference as u64,
-                    ),
-                    &[payer_info.clone(), token_account_info.clone()],
-                )?;
-            }
+            resize_account!(
+                tree_is_full,
+                ticker,
+                token_account_info,
+                payer_info,
+                system_program_info
+            );
 
             // We need a new reference to the recipient account data after the potential resize.
             let mut account_data = (*token_account_info.data).borrow_mut();
@@ -152,20 +125,17 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
         }
     }
 
-    msg!("Getting new mutable reference to account data.");
     // We need a new reference to the recipient account data after the potential resize.
     let mut account_data = (*token_account_info.data).borrow_mut();
     let mut token_account = TokenAccountMut::from_bytes_mut(&mut account_data);
 
     // Mint the tokens to the token account.
-    msg!("Minting tokens to account.");
     let amount = token_account.tokens.get_mut(&ticker).unwrap();
     *amount = amount
         .checked_add(args.amount)
         .ok_or(TokenLiteError::NumericalOverflow)?;
 
     // Update the mint supply.
-    msg!("Updating mint supply.");
     metadata.supply = new_amount;
 
     let data = BlobBuilder::with_capacity(MintMetadata::LEN)
@@ -195,7 +165,6 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
     let signer_seeds: &[&[u8]] = &[seeds, &[bump]];
 
     // Update the Blob with the new mint data.
-    msg!("Nifty cpi");
     UpdateCpi {
         __program: nifty_program_info,
         asset: mint_info,

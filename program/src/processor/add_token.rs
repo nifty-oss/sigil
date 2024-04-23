@@ -11,7 +11,7 @@ use crate::{
     assertions::{assert_non_empty, assert_program_owner},
     error::TokenLiteError,
     instruction::accounts::AddTokenAccounts,
-    require,
+    require, resize_account,
     state::{MintMetadata, TokenAccountMut},
 };
 
@@ -85,40 +85,13 @@ pub fn process_add_token<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
     drop(account_data);
 
     // Resize if the tree is full.
-    if tree_is_full {
-        // We must reallocate so need a payer and the system program.
-        require!(
-            payer_info.is_some() && system_program_info.is_some(),
-            ProgramError::NotEnoughAccountKeys,
-            "payer and system program required"
-        );
-
-        let payer_info = payer_info.unwrap();
-
-        // Get the new length of the account data.
-        let new_len = token_account_info
-            .data_len()
-            .checked_add(std::mem::size_of::<U8Node<u32, u32>>())
-            .ok_or(TokenLiteError::NumericalOverflow)?;
-
-        // Resize the account data.
-        token_account_info.realloc(new_len, false)?;
-
-        let rent = Rent::get()?;
-        let new_lamports = rent.minimum_balance(new_len);
-        let difference = new_lamports
-            .checked_sub(token_account_info.lamports())
-            .ok_or(TokenLiteError::NumericalOverflow)?;
-
-        invoke(
-            &system_instruction::transfer(
-                payer_info.key,
-                token_account_info.key,
-                difference as u64,
-            ),
-            &[payer_info.clone(), token_account_info.clone()],
-        )?;
-    }
+    resize_account!(
+        tree_is_full,
+        ticker,
+        token_account_info,
+        payer_info,
+        system_program_info
+    );
 
     // Get a mutable reference to the account data.
     let account_data = &mut (*token_account_info.data).borrow_mut();

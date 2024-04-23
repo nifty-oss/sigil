@@ -121,3 +121,43 @@ pub fn transfer_lamports_from_pdas<'a>(
 
     Ok(())
 }
+
+#[macro_export]
+macro_rules! resize_account {
+    ($tree_is_full:expr, $ticker:expr, $recipient_token_account_info:expr, $payer_info:expr, $system_program_info:expr) => {
+        if $tree_is_full {
+            // We must reallocate so need a payer and the system program.
+            require!(
+                $payer_info.is_some() && $system_program_info.is_some(),
+                ProgramError::NotEnoughAccountKeys,
+                "payer and system program required"
+            );
+
+            let payer_info = $payer_info.unwrap();
+
+            // Get the new length of the account data.
+            let new_len = $recipient_token_account_info
+                .data_len()
+                .checked_add(std::mem::size_of::<U8Node<u32, u32>>())
+                .ok_or(TokenLiteError::NumericalOverflow)?;
+
+            // Resize the account data.
+            $recipient_token_account_info.realloc(new_len, false)?;
+
+            let rent = Rent::get()?;
+            let new_lamports = rent.minimum_balance(new_len);
+            let difference = new_lamports
+                .checked_sub($recipient_token_account_info.lamports())
+                .ok_or(TokenLiteError::NumericalOverflow)?;
+
+            invoke(
+                &system_instruction::transfer(
+                    payer_info.key,
+                    $recipient_token_account_info.key,
+                    difference as u64,
+                ),
+                &[payer_info.clone(), $recipient_token_account_info.clone()],
+            )?;
+        }
+    };
+}

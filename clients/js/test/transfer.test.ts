@@ -74,13 +74,11 @@ test('it can transfer tokens', async (t) => {
     amount: transferAmount,
   });
 
-  const sig = await pipe(
+  await pipe(
     await createDefaultTransaction(client, namespace),
     (tx) => appendTransactionInstruction(transferIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
-
-  console.log('sig', sig);
 
   userAccount = await fetchTokenAccount(client.rpc, userTokenAccount);
   recipientAccount = await fetchTokenAccount(client.rpc, recipientTokenAccount);

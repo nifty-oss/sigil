@@ -11,7 +11,7 @@ use crate::{
     assertions::{assert_non_empty, assert_program_owner},
     error::TokenLiteError,
     instruction::{accounts::TransferAccounts, TransferArgs},
-    require,
+    require, resize_account,
     state::{MintMetadata, TokenAccountMut},
 };
 
@@ -92,7 +92,6 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
         TokenLiteError::InvalidTokenAccount,
         "token namespace mismatch"
     );
-
     // The token accounts must be associated with the user and recipient passed in.
     require!(
         &user_token_account.header.user == user_info.key,
@@ -124,40 +123,13 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
             drop(recipient_account_data);
 
             // Resize if the tree is full.
-            if tree_is_full {
-                // We must reallocate so need a payer and the system program.
-                require!(
-                    payer_info.is_some() && system_program_info.is_some(),
-                    ProgramError::NotEnoughAccountKeys,
-                    "payer and system program required"
-                );
-
-                let payer_info = payer_info.unwrap();
-
-                // Get the new length of the account data.
-                let new_len = recipient_token_account_info
-                    .data_len()
-                    .checked_add(std::mem::size_of::<U8Node<u32, u32>>())
-                    .ok_or(TokenLiteError::NumericalOverflow)?;
-
-                // Resize the account data.
-                recipient_token_account_info.realloc(new_len, false)?;
-
-                let rent = Rent::get()?;
-                let new_lamports = rent.minimum_balance(new_len);
-                let difference = new_lamports
-                    .checked_sub(recipient_token_account_info.lamports())
-                    .ok_or(TokenLiteError::NumericalOverflow)?;
-
-                invoke(
-                    &system_instruction::transfer(
-                        payer_info.key,
-                        recipient_token_account_info.key,
-                        difference as u64,
-                    ),
-                    &[payer_info.clone(), recipient_token_account_info.clone()],
-                )?;
-            }
+            resize_account!(
+                tree_is_full,
+                ticker,
+                recipient_token_account_info,
+                payer_info,
+                system_program_info
+            );
 
             // We need a new reference to the recipient account data after the potential resize.
             let mut account_data = (*recipient_token_account_info.data).borrow_mut();
