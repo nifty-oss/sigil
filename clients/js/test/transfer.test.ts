@@ -6,18 +6,18 @@ import {
   getCreateTokenAccountInstruction,
   getTransferInstruction,
 } from '../src/index.js';
+import { setupAndMint } from './_common.js';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
 } from './_setup.js';
-import { setupAndMint } from './_common.js';
 
 test('it can transfer tokens', async (t) => {
   const client = createDefaultSolanaClient();
 
-  const namespace = await generateKeyPairSignerWithSol(client);
+  const authority = await generateKeyPairSignerWithSol(client);
   const user = await generateKeyPairSignerWithSol(client);
 
   const recipient = await generateKeyPairSignerWithSol(client);
@@ -26,29 +26,29 @@ test('it can transfer tokens', async (t) => {
   const mintAmount = 100;
   const transferAmount = 25;
 
-  const mint = await setupAndMint(client, namespace, user, ticker, mintAmount);
+  const mint = await setupAndMint(client, authority, user, ticker, mintAmount);
 
   const [userTokenAccount] = await findTokenAccountPda({
-    namespace: namespace.address,
+    authority: authority.address,
     user: user.address,
   });
 
   const [recipientTokenAccount] = await findTokenAccountPda({
-    namespace: namespace.address,
+    authority: authority.address,
     user: recipient.address,
   });
 
   // Create recipient token account.
   const createTokenAccountIx = getCreateTokenAccountInstruction({
-    payer: namespace,
+    payer: authority,
     user: recipient.address,
-    namespace: namespace.address,
+    authority: authority.address,
     tokenAccount: recipientTokenAccount,
     capacity: 0,
   });
 
   await pipe(
-    await createDefaultTransaction(client, namespace),
+    await createDefaultTransaction(client, authority),
     (tx) => appendTransactionInstruction(createTokenAccountIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
@@ -64,7 +64,7 @@ test('it can transfer tokens', async (t) => {
   t.assert(recipientAccount?.data.tree.nodes.length === 0);
 
   const transferIx = getTransferInstruction({
-    payer: namespace,
+    payer: authority,
     user,
     recipient: recipient.address,
     mint,
@@ -75,7 +75,7 @@ test('it can transfer tokens', async (t) => {
   });
 
   await pipe(
-    await createDefaultTransaction(client, namespace),
+    await createDefaultTransaction(client, authority),
     (tx) => appendTransactionInstruction(transferIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );

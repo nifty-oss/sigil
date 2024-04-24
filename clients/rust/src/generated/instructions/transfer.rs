@@ -18,9 +18,9 @@ pub struct Transfer {
     pub recipient: solana_program::pubkey::Pubkey,
     /// The mint account for the token to be transferred
     pub mint: solana_program::pubkey::Pubkey,
-    /// The token namespace account.
+    /// The token authority account.
     pub user_token_account: solana_program::pubkey::Pubkey,
-    /// The token namespace account.
+    /// The token authority account.
     pub recipient_token_account: solana_program::pubkey::Pubkey,
     /// The system program
     pub system_program: Option<solana_program::pubkey::Pubkey>,
@@ -160,7 +160,7 @@ impl TransferBuilder {
         self.mint = Some(mint);
         self
     }
-    /// The token namespace account.
+    /// The token authority account.
     #[inline(always)]
     pub fn user_token_account(
         &mut self,
@@ -169,7 +169,7 @@ impl TransferBuilder {
         self.user_token_account = Some(user_token_account);
         self
     }
-    /// The token namespace account.
+    /// The token authority account.
     #[inline(always)]
     pub fn recipient_token_account(
         &mut self,
@@ -244,9 +244,9 @@ pub struct TransferCpiAccounts<'a, 'b> {
     pub recipient: &'b solana_program::account_info::AccountInfo<'a>,
     /// The mint account for the token to be transferred
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The token namespace account.
+    /// The token authority account.
     pub user_token_account: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The token namespace account.
+    /// The token authority account.
     pub recipient_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// The system program
     pub system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
@@ -264,9 +264,9 @@ pub struct TransferCpi<'a, 'b> {
     pub recipient: &'b solana_program::account_info::AccountInfo<'a>,
     /// The mint account for the token to be transferred
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The token namespace account.
+    /// The token authority account.
     pub user_token_account: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The token namespace account.
+    /// The token authority account.
     pub recipient_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// The system program
     pub system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
@@ -470,7 +470,7 @@ impl<'a, 'b> TransferCpiBuilder<'a, 'b> {
         self.instruction.mint = Some(mint);
         self
     }
-    /// The token namespace account.
+    /// The token authority account.
     #[inline(always)]
     pub fn user_token_account(
         &mut self,
@@ -479,7 +479,7 @@ impl<'a, 'b> TransferCpiBuilder<'a, 'b> {
         self.instruction.user_token_account = Some(user_token_account);
         self
     }
-    /// The token namespace account.
+    /// The token authority account.
     #[inline(always)]
     pub fn recipient_token_account(
         &mut self,

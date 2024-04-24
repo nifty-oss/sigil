@@ -5,6 +5,8 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
+pub(crate) mod r#mint;
 pub(crate) mod r#token_account;
 
+pub use self::r#mint::*;
 pub use self::r#token_account::*;

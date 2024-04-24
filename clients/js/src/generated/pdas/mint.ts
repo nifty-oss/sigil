@@ -12,17 +12,21 @@ import {
   getAddressEncoder,
   getProgramDerivedAddress,
 } from '@solana/addresses';
-import { getStringEncoder } from '@solana/codecs';
+import {
+  getArrayEncoder,
+  getStringEncoder,
+  getU8Encoder,
+} from '@solana/codecs';
 
-export type TokenAccountSeeds = {
-  /** The user of the token account */
-  user: Address;
-  /** The authority of the token account */
+export type MintSeeds = {
+  /** The ticker of the mint */
+  ticker: Array<number>;
+  /** The authority of the mint account */
   authority: Address;
 };
 
-export async function findTokenAccountPda(
-  seeds: TokenAccountSeeds,
+export async function findMintPda(
+  seeds: MintSeeds,
   config: { programAddress?: Address | undefined } = {}
 ): Promise<ProgramDerivedAddress> {
   const {
@@ -31,8 +35,8 @@ export async function findTokenAccountPda(
   return await getProgramDerivedAddress({
     programAddress,
     seeds: [
-      getStringEncoder({ size: 'variable' }).encode('token_account'),
-      getAddressEncoder().encode(seeds.user),
+      getStringEncoder({ size: 'variable' }).encode('mint'),
+      getArrayEncoder(getU8Encoder(), { size: 4 }).encode(seeds.ticker),
       getAddressEncoder().encode(seeds.authority),
     ],
   });

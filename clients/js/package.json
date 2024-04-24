@@ -44,7 +44,6 @@
   },
   "devDependencies": {
     "@ava/typescript": "^4.1.0",
-    "@nifty-oss/asset": "^0.4.0",
     "@solana/eslint-config-solana": "^3.0.0",
     "@solana/webcrypto-ed25519-polyfill": "2.0.0-preview.2",
     "@types/node": "^20.11.26",

@@ -16,7 +16,7 @@ pub struct AddToken {
     pub user: solana_program::pubkey::Pubkey,
     /// The mint account for the token to be added.
     pub mint: solana_program::pubkey::Pubkey,
-    /// The token namespace account.
+    /// The token authority account.
     pub token_account: solana_program::pubkey::Pubkey,
     /// The system program
     pub system_program: Option<solana_program::pubkey::Pubkey>,
@@ -79,7 +79,7 @@ pub struct AddTokenInstructionData {
 
 impl AddTokenInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 2 }
+        Self { discriminator: 0 }
     }
 }
 
@@ -125,7 +125,7 @@ impl AddTokenBuilder {
         self.mint = Some(mint);
         self
     }
-    /// The token namespace account.
+    /// The token authority account.
     #[inline(always)]
     pub fn token_account(&mut self, token_account: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_account = Some(token_account);
@@ -181,7 +181,7 @@ pub struct AddTokenCpiAccounts<'a, 'b> {
     pub user: &'b solana_program::account_info::AccountInfo<'a>,
     /// The mint account for the token to be added.
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The token namespace account.
+    /// The token authority account.
     pub token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// The system program
     pub system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
@@ -197,7 +197,7 @@ pub struct AddTokenCpi<'a, 'b> {
     pub user: &'b solana_program::account_info::AccountInfo<'a>,
     /// The mint account for the token to be added.
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The token namespace account.
+    /// The token authority account.
     pub token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// The system program
     pub system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
@@ -369,7 +369,7 @@ impl<'a, 'b> AddTokenCpiBuilder<'a, 'b> {
         self.instruction.mint = Some(mint);
         self
     }
-    /// The token namespace account.
+    /// The token authority account.
     #[inline(always)]
     pub fn token_account(
         &mut self,

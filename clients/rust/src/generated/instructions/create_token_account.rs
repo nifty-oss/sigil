@@ -12,11 +12,11 @@ use borsh::BorshSerialize;
 pub struct CreateTokenAccount {
     /// The account paying for the storage fees.
     pub payer: solana_program::pubkey::Pubkey,
-    /// The namespace for the token account.
-    pub namespace: solana_program::pubkey::Pubkey,
+    /// The authority for the token account.
+    pub authority: solana_program::pubkey::Pubkey,
     /// The pubkey of the user associated with the token account
     pub user: solana_program::pubkey::Pubkey,
-    /// The token namespace account.
+    /// The token authority account.
     pub token_account: solana_program::pubkey::Pubkey,
     /// The system program
     pub system_program: solana_program::pubkey::Pubkey,
@@ -40,7 +40,7 @@ impl CreateTokenAccount {
             self.payer, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.namespace,
+            self.authority,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -76,7 +76,7 @@ pub struct CreateTokenAccountInstructionData {
 
 impl CreateTokenAccountInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 1 }
+        Self { discriminator: 3 }
     }
 }
 
@@ -91,14 +91,14 @@ pub struct CreateTokenAccountInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[writable, signer]` payer
-///   1. `[]` namespace
+///   1. `[]` authority
 ///   2. `[]` user
 ///   3. `[writable]` token_account
 ///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Default)]
 pub struct CreateTokenAccountBuilder {
     payer: Option<solana_program::pubkey::Pubkey>,
-    namespace: Option<solana_program::pubkey::Pubkey>,
+    authority: Option<solana_program::pubkey::Pubkey>,
     user: Option<solana_program::pubkey::Pubkey>,
     token_account: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
@@ -116,10 +116,10 @@ impl CreateTokenAccountBuilder {
         self.payer = Some(payer);
         self
     }
-    /// The namespace for the token account.
+    /// The authority for the token account.
     #[inline(always)]
-    pub fn namespace(&mut self, namespace: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.namespace = Some(namespace);
+    pub fn authority(&mut self, authority: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.authority = Some(authority);
         self
     }
     /// The pubkey of the user associated with the token account
@@ -128,7 +128,7 @@ impl CreateTokenAccountBuilder {
         self.user = Some(user);
         self
     }
-    /// The token namespace account.
+    /// The token authority account.
     #[inline(always)]
     pub fn token_account(&mut self, token_account: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_account = Some(token_account);
@@ -168,7 +168,7 @@ impl CreateTokenAccountBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = CreateTokenAccount {
             payer: self.payer.expect("payer is not set"),
-            namespace: self.namespace.expect("namespace is not set"),
+            authority: self.authority.expect("authority is not set"),
             user: self.user.expect("user is not set"),
             token_account: self.token_account.expect("token_account is not set"),
             system_program: self
@@ -187,11 +187,11 @@ impl CreateTokenAccountBuilder {
 pub struct CreateTokenAccountCpiAccounts<'a, 'b> {
     /// The account paying for the storage fees.
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The namespace for the token account.
-    pub namespace: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The authority for the token account.
+    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// The pubkey of the user associated with the token account
     pub user: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The token namespace account.
+    /// The token authority account.
     pub token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// The system program
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -203,11 +203,11 @@ pub struct CreateTokenAccountCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The account paying for the storage fees.
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The namespace for the token account.
-    pub namespace: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The authority for the token account.
+    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// The pubkey of the user associated with the token account
     pub user: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The token namespace account.
+    /// The token authority account.
     pub token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// The system program
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -224,7 +224,7 @@ impl<'a, 'b> CreateTokenAccountCpi<'a, 'b> {
         Self {
             __program: program,
             payer: accounts.payer,
-            namespace: accounts.namespace,
+            authority: accounts.authority,
             user: accounts.user,
             token_account: accounts.token_account,
             system_program: accounts.system_program,
@@ -270,7 +270,7 @@ impl<'a, 'b> CreateTokenAccountCpi<'a, 'b> {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.namespace.key,
+            *self.authority.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -306,7 +306,7 @@ impl<'a, 'b> CreateTokenAccountCpi<'a, 'b> {
         let mut account_infos = Vec::with_capacity(5 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.payer.clone());
-        account_infos.push(self.namespace.clone());
+        account_infos.push(self.authority.clone());
         account_infos.push(self.user.clone());
         account_infos.push(self.token_account.clone());
         account_infos.push(self.system_program.clone());
@@ -327,7 +327,7 @@ impl<'a, 'b> CreateTokenAccountCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[writable, signer]` payer
-///   1. `[]` namespace
+///   1. `[]` authority
 ///   2. `[]` user
 ///   3. `[writable]` token_account
 ///   4. `[]` system_program
@@ -340,7 +340,7 @@ impl<'a, 'b> CreateTokenAccountCpiBuilder<'a, 'b> {
         let instruction = Box::new(CreateTokenAccountCpiBuilderInstruction {
             __program: program,
             payer: None,
-            namespace: None,
+            authority: None,
             user: None,
             token_account: None,
             system_program: None,
@@ -355,13 +355,13 @@ impl<'a, 'b> CreateTokenAccountCpiBuilder<'a, 'b> {
         self.instruction.payer = Some(payer);
         self
     }
-    /// The namespace for the token account.
+    /// The authority for the token account.
     #[inline(always)]
-    pub fn namespace(
+    pub fn authority(
         &mut self,
-        namespace: &'b solana_program::account_info::AccountInfo<'a>,
+        authority: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.namespace = Some(namespace);
+        self.instruction.authority = Some(authority);
         self
     }
     /// The pubkey of the user associated with the token account
@@ -370,7 +370,7 @@ impl<'a, 'b> CreateTokenAccountCpiBuilder<'a, 'b> {
         self.instruction.user = Some(user);
         self
     }
-    /// The token namespace account.
+    /// The token authority account.
     #[inline(always)]
     pub fn token_account(
         &mut self,
@@ -446,7 +446,7 @@ impl<'a, 'b> CreateTokenAccountCpiBuilder<'a, 'b> {
 
             payer: self.instruction.payer.expect("payer is not set"),
 
-            namespace: self.instruction.namespace.expect("namespace is not set"),
+            authority: self.instruction.authority.expect("authority is not set"),
 
             user: self.instruction.user.expect("user is not set"),
 
@@ -471,7 +471,7 @@ impl<'a, 'b> CreateTokenAccountCpiBuilder<'a, 'b> {
 struct CreateTokenAccountCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    namespace: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     user: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

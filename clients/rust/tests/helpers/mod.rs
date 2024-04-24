@@ -47,7 +47,6 @@ pub async fn program_context() -> ProgramTestContext {
         nifty_oss_token_lite_client::ID,
         None,
     );
-    test.add_program(&nifty_asset::ID.to_string(), nifty_asset::ID, None);
     test.start_with_context().await
 }
 
@@ -95,7 +94,6 @@ pub async fn create_mint<'a>(
         .payer(payer)
         .namespace(namespace)
         .mint(mint)
-        .nifty_program(nifty_asset::ID)
         .ticker(ticker.clone())
         .max_supply(max_supply)
         .decimals(decimals)

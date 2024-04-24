@@ -1,7 +1,3 @@
-use nifty_asset::{
-    extensions::{Blob, Proxy},
-    state::{Asset, Discriminator},
-};
 use solana_program::{
     program::invoke, rent::Rent, system_instruction, system_program, sysvar::Sysvar,
 };
@@ -12,7 +8,7 @@ use crate::{
     error::TokenLiteError,
     instruction::{accounts::TransferAccounts, TransferArgs},
     require, resize_account,
-    state::{MintMetadata, TokenAccountMut},
+    state::{Mint, TokenAccountMut},
 };
 
 use super::*;
@@ -38,35 +34,10 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
 
     // The mint account must exist: must have data and be owned by the correct program.
     assert_non_empty("mint", mint_info)?;
-    assert_program_owner("mint", mint_info, &nifty_asset::ID)?;
+    assert_program_owner("mint", mint_info, &crate::ID)?;
 
     let data = mint_info.data.borrow_mut();
-
-    // Must be an initialized Nifty asset.
-    require!(
-        data.len() >= Asset::LEN && data[0] == Discriminator::Asset.into(),
-        TokenLiteError::InvalidMint,
-        "asset"
-    );
-
-    // Must have the proxy extension.
-    let proxy = Asset::get::<Proxy>(&data).ok_or(TokenLiteError::InvalidMint)?;
-
-    // The proxy program must match the current program.
-    require!(
-        proxy.program == &crate::ID,
-        TokenLiteError::InvalidMint,
-        "proxy program does not match"
-    );
-
-    // Must have the blob extension that stores the mint data.
-    let blob = Asset::get::<Blob>(&data).ok_or(TokenLiteError::InvalidMint)?;
-
-    let metadata =
-        MintMetadata::try_from_slice(blob.data).map_err(|_| TokenLiteError::InvalidMint)?;
-
-    let ticker: [u8; 4] = metadata.ticker.as_bytes().try_into().unwrap();
-    let namespace = metadata.namespace;
+    let mint = Mint::load(&data);
 
     // Token accounts must exist.
     assert_non_empty("user_token", user_token_account_info)?;
@@ -81,16 +52,16 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
     let mut user_token_account = TokenAccountMut::from_bytes_mut(&mut user_account_data);
     let recipient_token_account = TokenAccount::from_bytes(&recipient_account_data);
 
-    // The token accounts must be associated with the mint via the namespace.
+    // The token accounts must be associated with the mint via the authority.
     require!(
-        user_token_account.header.namespace == namespace,
+        user_token_account.header.authority == mint.authority,
         TokenLiteError::InvalidTokenAccount,
-        "token namespace mismatch"
+        "token authority mismatch"
     );
     require!(
-        recipient_token_account.header.namespace == namespace,
+        recipient_token_account.header.authority == mint.authority,
         TokenLiteError::InvalidTokenAccount,
-        "token namespace mismatch"
+        "token authority mismatch"
     );
     // The token accounts must be associated with the user and recipient passed in.
     require!(
@@ -105,7 +76,7 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
     );
 
     // Look up the amount of tokens in the user's account to make sure they have enough to send.
-    let source_amount = match user_token_account.tokens.get_mut(&ticker) {
+    let source_amount = match user_token_account.tokens.get_mut(&mint.ticker) {
         Some(amount) => amount,
         None => return Err(TokenLiteError::InsufficientFunds.into()),
     };
@@ -116,7 +87,7 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
 
     // If the ticker doesn't exist on the recipient's account, add it.
 
-    match recipient_token_account.tokens.get(&ticker) {
+    match recipient_token_account.tokens.get(&mint.ticker) {
         Some(_) => (),
         None => {
             let tree_is_full = recipient_token_account.tokens.is_full();
@@ -136,7 +107,7 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
             let mut recipient_token_account = TokenAccountMut::from_bytes_mut(&mut account_data);
 
             // New tokens should start at amount 0.
-            recipient_token_account.tokens.insert(ticker, 0);
+            recipient_token_account.tokens.insert(mint.ticker, 0);
         }
     }
 
@@ -145,7 +116,7 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
     let mut token_account = TokenAccountMut::from_bytes_mut(&mut account_data);
 
     // We know it exists here so we can unwrap.
-    let dest_amount = token_account.tokens.get_mut(&ticker).unwrap();
+    let dest_amount = token_account.tokens.get_mut(&mint.ticker).unwrap();
 
     // Update the token amounts.
     *source_amount = source_amount

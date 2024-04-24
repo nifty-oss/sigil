@@ -1,7 +1,3 @@
-use nifty_asset::{
-    extensions::{Blob, Proxy},
-    state::{Asset, Discriminator},
-};
 use solana_program::{
     program::invoke, rent::Rent, system_instruction, system_program, sysvar::Sysvar,
 };
@@ -12,7 +8,7 @@ use crate::{
     error::TokenLiteError,
     instruction::accounts::AddTokenAccounts,
     require, resize_account,
-    state::{MintMetadata, TokenAccountMut},
+    state::{Mint, TokenAccountMut},
 };
 
 use super::*;
@@ -34,42 +30,17 @@ pub fn process_add_token<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
 
     // The mint account must exist: must have data and be owned by the correct program.
     assert_non_empty("mint", mint_info)?;
-    assert_program_owner("mint", mint_info, &nifty_asset::ID)?;
+    assert_program_owner("mint", mint_info, &crate::ID)?;
 
     let data = mint_info.data.borrow_mut();
-
-    // Must be an initialized Nifty asset.
-    require!(
-        data.len() >= Asset::LEN && data[0] == Discriminator::Asset.into(),
-        TokenLiteError::InvalidMint,
-        "asset"
-    );
-
-    // Must have the proxy extension.
-    let proxy = Asset::get::<Proxy>(&data).ok_or(TokenLiteError::InvalidMint)?;
-
-    // The proxy program must match the current program.
-    require!(
-        proxy.program == &crate::ID,
-        TokenLiteError::InvalidMint,
-        "proxy program does not match"
-    );
-
-    // Must have the blob extension that stores the mint data.
-    let blob = Asset::get::<Blob>(&data).ok_or(TokenLiteError::InvalidMint)?;
-
-    let metadata =
-        MintMetadata::try_from_slice(blob.data).map_err(|_| TokenLiteError::InvalidMint)?;
-
-    let ticker: [u8; 4] = metadata.ticker.as_bytes().try_into().unwrap();
-    let namespace = metadata.namespace;
+    let mint = Mint::load(&data);
 
     let account_data = (*token_account_info.data).borrow();
     let token_account = TokenAccount::from_bytes(&account_data);
 
     // The token account must be associated with the mint via the namespace.
     require!(
-        token_account.header.namespace == namespace,
+        token_account.header.authority == mint.authority,
         TokenLiteError::InvalidTokenAccount,
         "token namespace mismatch"
     );
@@ -87,7 +58,7 @@ pub fn process_add_token<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
     // Resize if the tree is full.
     resize_account!(
         tree_is_full,
-        ticker,
+        mint.ticker,
         token_account_info,
         payer_info,
         system_program_info
@@ -98,7 +69,7 @@ pub fn process_add_token<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
     let mut token_namespace = TokenAccountMut::from_bytes_mut(account_data);
 
     // New tokens should start at amount 0.
-    token_namespace.tokens.insert(ticker, 0);
+    token_namespace.tokens.insert(mint.ticker, 0);
 
     Ok(())
 }

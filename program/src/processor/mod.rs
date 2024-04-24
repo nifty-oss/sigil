@@ -4,6 +4,7 @@ use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, msg, pubkey::Pubkey,
     system_program::ID as SYSTEM_PROGRAM_ID,
 };
+use stevia::ZeroCopy;
 
 use crate::assertions::{assert_empty, assert_same_pubkeys, assert_signer};
 use crate::instruction::accounts::{CreateMintAccounts, CreateTokenAccountAccounts};

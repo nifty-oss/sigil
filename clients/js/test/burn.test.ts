@@ -1,33 +1,32 @@
-import { address, appendTransactionInstruction, pipe } from '@solana/web3.js';
+import { appendTransactionInstruction, pipe } from '@solana/web3.js';
 import test from 'ava';
 import {
   fetchTokenAccount,
   findTokenAccountPda,
   getBurnInstruction,
 } from '../src/index.js';
+import { setupAndMint } from './_common.js';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
   generateKeyPairSignerWithSol,
   signAndSendTransaction,
 } from './_setup.js';
-import { setupAndMint } from './_common.js';
-import { ASSET_PROGRAM_ID } from '@nifty-oss/asset';
 
 test('it can burn tokens', async (t) => {
   const client = createDefaultSolanaClient();
 
-  const namespace = await generateKeyPairSignerWithSol(client);
+  const authority = await generateKeyPairSignerWithSol(client);
   const user = await generateKeyPairSignerWithSol(client);
 
   const ticker = 'USDC';
   const mintAmount = 100;
   const burnAmount = 25;
 
-  const mint = await setupAndMint(client, namespace, user, ticker, mintAmount);
+  const mint = await setupAndMint(client, authority, user, ticker, mintAmount);
 
   const [tokenAccount] = await findTokenAccountPda({
-    namespace: namespace.address,
+    authority: authority.address,
     user: user.address,
   });
 
@@ -39,12 +38,11 @@ test('it can burn tokens', async (t) => {
     user,
     mint,
     tokenAccount,
-    niftyProgram: address(ASSET_PROGRAM_ID),
     amount: burnAmount,
   });
 
   await pipe(
-    await createDefaultTransaction(client, namespace),
+    await createDefaultTransaction(client, authority),
     (tx) => appendTransactionInstruction(burnIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );

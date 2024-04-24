@@ -122,9 +122,9 @@ export type TransferInput<
   recipient: Address<TAccountRecipient>;
   /** The mint account for the token to be transferred */
   mint: Address<TAccountMint>;
-  /** The token namespace account. */
+  /** The token authority account. */
   userTokenAccount: Address<TAccountUserTokenAccount>;
-  /** The token namespace account. */
+  /** The token authority account. */
   recipientTokenAccount: Address<TAccountRecipientTokenAccount>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
@@ -229,9 +229,9 @@ export type ParsedTransferInstruction<
     recipient: TAccountMetas[2];
     /** The mint account for the token to be transferred */
     mint: TAccountMetas[3];
-    /** The token namespace account. */
+    /** The token authority account. */
     userTokenAccount: TAccountMetas[4];
-    /** The token namespace account. */
+    /** The token authority account. */
     recipientTokenAccount: TAccountMetas[5];
     /** The system program */
     systemProgram?: TAccountMetas[6] | undefined;

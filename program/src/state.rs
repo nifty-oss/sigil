@@ -1,9 +1,9 @@
-use borsh::{BorshDeserialize, BorshSerialize};
 use bytemuck::{Pod, Zeroable};
 use solana_program::pubkey::Pubkey;
-use stevia::collections::{u8_avl_tree::U8Allocator, U8AVLTree, U8AVLTreeMut};
-
-pub const CONTENT_TYPE: &str = "custom/mint";
+use stevia::{
+    collections::{u8_avl_tree::U8Allocator, U8AVLTree, U8AVLTreeMut},
+    ZeroCopy,
+};
 
 #[repr(u64)]
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -23,17 +23,22 @@ pub type Amount = u32;
 
 pub struct TokenSeeds {
     pub user: Pubkey,
-    pub namespace: Pubkey,
+    pub authority: Pubkey,
 }
 
-/// Seeds: "token_account", <user>, <namespace>
+pub struct MintSeeds<'a> {
+    pub ticker: &'a [u8; 4],
+    pub authority: Pubkey,
+}
+
+/// Seeds: "token_account", <user>, <authority>
 pub struct TokenAccount<'a> {
     pub header: &'a Header,
 
     pub tokens: U8AVLTree<'a, Ticker, Amount>,
 }
 
-/// Seeds: "token_account", <user>, <namespace>
+/// Seeds: "token_account", <user>, <authority>
 pub struct TokenAccountMut<'a> {
     pub header: &'a mut Header,
 
@@ -55,9 +60,9 @@ impl<'a> TokenAccount<'a> {
         Self { header, tokens }
     }
 
-    pub fn find_pda(seeds: TokenSeeds) -> (Pubkey, u8) {
+    pub fn find_pda(seeds: &TokenSeeds) -> (Pubkey, u8) {
         Pubkey::find_program_address(
-            &[Self::PREFIX, seeds.user.as_ref(), seeds.namespace.as_ref()],
+            &[Self::PREFIX, seeds.user.as_ref(), seeds.authority.as_ref()],
             &crate::ID,
         )
     }
@@ -77,7 +82,7 @@ impl<'a> TokenAccountMut<'a> {
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
 pub struct Header {
-    pub namespace: Pubkey,
+    pub authority: Pubkey,
     pub user: Pubkey,
 }
 
@@ -94,16 +99,43 @@ impl Header {
     }
 }
 
-// TODO: ByteMuck? Only 21 bytes.
-#[derive(Clone, Debug, Default, Eq, PartialEq, BorshDeserialize, BorshSerialize)]
-pub struct MintMetadata {
-    pub namespace: Pubkey,
-    pub ticker: String,
+/// Seeds: "mint", <ticker>, <authority>
+#[repr(C)]
+#[derive(Clone, Copy, Pod, Zeroable)]
+pub struct Mint {
+    pub authority: Pubkey,
+    pub ticker: [u8; 4],
+    // First byte is decimals, the rest is padding.
+    data: [u8; 4],
     pub supply: u64,
     pub max_supply: u64,
-    pub decimals: u8,
 }
 
-impl MintMetadata {
-    pub const LEN: usize = std::mem::size_of::<MintMetadata>();
+impl Mint {
+    pub const LEN: usize = std::mem::size_of::<Mint>();
+    pub const PREFIX: &'static [u8] = b"mint";
+    pub const SEEDS_LEN: usize =
+        Self::PREFIX.len() + std::mem::size_of::<[u8; 4]>() + std::mem::size_of::<Pubkey>();
+
+    pub fn decimals(&self) -> u8 {
+        self.data[0]
+    }
+
+    pub fn set_decimals(&mut self, decimals: u8) {
+        *self.data.get_mut(0).unwrap() = decimals;
+    }
+
+    pub fn find_pda(seeds: &MintSeeds) -> (Pubkey, u8) {
+        Pubkey::find_program_address(
+            &[
+                Self::PREFIX,
+                seeds.ticker.as_ref(),
+                seeds.authority.as_ref(),
+            ],
+            &crate::ID,
+        )
+    }
 }
+
+/// Default implementation for zero-copy trait.
+impl ZeroCopy for Mint {}

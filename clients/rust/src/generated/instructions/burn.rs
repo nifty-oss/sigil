@@ -12,12 +12,10 @@ use borsh::BorshSerialize;
 pub struct Burn {
     /// The user of the token account
     pub user: solana_program::pubkey::Pubkey,
-    /// The mint account PDA derived from the ticker and namespace.
+    /// The mint account PDA derived from the ticker and authority.
     pub mint: solana_program::pubkey::Pubkey,
-    /// The token namespace account.
+    /// The token authority account.
     pub token_account: solana_program::pubkey::Pubkey,
-    /// The Nifty Asset program
-    pub nifty_program: solana_program::pubkey::Pubkey,
 }
 
 impl Burn {
@@ -33,7 +31,7 @@ impl Burn {
         args: BurnInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.user, true,
         ));
@@ -42,10 +40,6 @@ impl Burn {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.token_account,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.nifty_program,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
@@ -68,7 +62,7 @@ pub struct BurnInstructionData {
 
 impl BurnInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 4 }
+        Self { discriminator: 1 }
     }
 }
 
@@ -85,13 +79,11 @@ pub struct BurnInstructionArgs {
 ///   0. `[signer]` user
 ///   1. `[writable]` mint
 ///   2. `[writable]` token_account
-///   3. `[]` nifty_program
 #[derive(Default)]
 pub struct BurnBuilder {
     user: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     token_account: Option<solana_program::pubkey::Pubkey>,
-    nifty_program: Option<solana_program::pubkey::Pubkey>,
     amount: Option<u32>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
@@ -106,22 +98,16 @@ impl BurnBuilder {
         self.user = Some(user);
         self
     }
-    /// The mint account PDA derived from the ticker and namespace.
+    /// The mint account PDA derived from the ticker and authority.
     #[inline(always)]
     pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
         self.mint = Some(mint);
         self
     }
-    /// The token namespace account.
+    /// The token authority account.
     #[inline(always)]
     pub fn token_account(&mut self, token_account: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_account = Some(token_account);
-        self
-    }
-    /// The Nifty Asset program
-    #[inline(always)]
-    pub fn nifty_program(&mut self, nifty_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.nifty_program = Some(nifty_program);
         self
     }
     #[inline(always)]
@@ -153,7 +139,6 @@ impl BurnBuilder {
             user: self.user.expect("user is not set"),
             mint: self.mint.expect("mint is not set"),
             token_account: self.token_account.expect("token_account is not set"),
-            nifty_program: self.nifty_program.expect("nifty_program is not set"),
         };
         let args = BurnInstructionArgs {
             amount: self.amount.clone().expect("amount is not set"),
@@ -167,12 +152,10 @@ impl BurnBuilder {
 pub struct BurnCpiAccounts<'a, 'b> {
     /// The user of the token account
     pub user: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The mint account PDA derived from the ticker and namespace.
+    /// The mint account PDA derived from the ticker and authority.
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The token namespace account.
+    /// The token authority account.
     pub token_account: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The Nifty Asset program
-    pub nifty_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `burn` CPI instruction.
@@ -181,12 +164,10 @@ pub struct BurnCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The user of the token account
     pub user: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The mint account PDA derived from the ticker and namespace.
+    /// The mint account PDA derived from the ticker and authority.
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The token namespace account.
+    /// The token authority account.
     pub token_account: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The Nifty Asset program
-    pub nifty_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: BurnInstructionArgs,
 }
@@ -202,7 +183,6 @@ impl<'a, 'b> BurnCpi<'a, 'b> {
             user: accounts.user,
             mint: accounts.mint,
             token_account: accounts.token_account,
-            nifty_program: accounts.nifty_program,
             __args: args,
         }
     }
@@ -239,7 +219,7 @@ impl<'a, 'b> BurnCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.user.key,
             true,
@@ -250,10 +230,6 @@ impl<'a, 'b> BurnCpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.token_account.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.nifty_program.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -272,12 +248,11 @@ impl<'a, 'b> BurnCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(4 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(3 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.user.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.token_account.clone());
-        account_infos.push(self.nifty_program.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -297,7 +272,6 @@ impl<'a, 'b> BurnCpi<'a, 'b> {
 ///   0. `[signer]` user
 ///   1. `[writable]` mint
 ///   2. `[writable]` token_account
-///   3. `[]` nifty_program
 pub struct BurnCpiBuilder<'a, 'b> {
     instruction: Box<BurnCpiBuilderInstruction<'a, 'b>>,
 }
@@ -309,7 +283,6 @@ impl<'a, 'b> BurnCpiBuilder<'a, 'b> {
             user: None,
             mint: None,
             token_account: None,
-            nifty_program: None,
             amount: None,
             __remaining_accounts: Vec::new(),
         });
@@ -321,28 +294,19 @@ impl<'a, 'b> BurnCpiBuilder<'a, 'b> {
         self.instruction.user = Some(user);
         self
     }
-    /// The mint account PDA derived from the ticker and namespace.
+    /// The mint account PDA derived from the ticker and authority.
     #[inline(always)]
     pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.mint = Some(mint);
         self
     }
-    /// The token namespace account.
+    /// The token authority account.
     #[inline(always)]
     pub fn token_account(
         &mut self,
         token_account: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.token_account = Some(token_account);
-        self
-    }
-    /// The Nifty Asset program
-    #[inline(always)]
-    pub fn nifty_program(
-        &mut self,
-        nifty_program: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.nifty_program = Some(nifty_program);
         self
     }
     #[inline(always)]
@@ -405,11 +369,6 @@ impl<'a, 'b> BurnCpiBuilder<'a, 'b> {
                 .instruction
                 .token_account
                 .expect("token_account is not set"),
-
-            nifty_program: self
-                .instruction
-                .nifty_program
-                .expect("nifty_program is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -424,7 +383,6 @@ struct BurnCpiBuilderInstruction<'a, 'b> {
     user: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    nifty_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     amount: Option<u32>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(

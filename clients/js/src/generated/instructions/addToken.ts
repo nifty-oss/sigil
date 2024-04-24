@@ -70,7 +70,7 @@ export type AddTokenInstructionDataArgs = {};
 export function getAddTokenInstructionDataEncoder(): Encoder<AddTokenInstructionDataArgs> {
   return mapEncoder(
     getStructEncoder([['discriminator', getU8Encoder()]]),
-    (value) => ({ ...value, discriminator: 2 })
+    (value) => ({ ...value, discriminator: 0 })
   );
 }
 
@@ -101,7 +101,7 @@ export type AddTokenInput<
   user: Address<TAccountUser>;
   /** The mint account for the token to be added. */
   mint: Address<TAccountMint>;
-  /** The token namespace account. */
+  /** The token authority account. */
   tokenAccount: Address<TAccountTokenAccount>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
@@ -180,7 +180,7 @@ export type ParsedAddTokenInstruction<
     user: TAccountMetas[1];
     /** The mint account for the token to be added. */
     mint: TAccountMetas[2];
-    /** The token namespace account. */
+    /** The token authority account. */
     tokenAccount: TAccountMetas[3];
     /** The system program */
     systemProgram?: TAccountMetas[4] | undefined;

@@ -1,14 +1,9 @@
-use nifty_asset::{
-    extensions::{Blob, Proxy},
-    state::{Asset, Discriminator},
-};
-
 use crate::{
     assertions::{assert_non_empty, assert_program_owner},
     error::TokenLiteError,
     instruction::{accounts::BurnAccounts, BurnArgs},
     require,
-    state::{MintMetadata, TokenAccountMut},
+    state::{Mint, TokenAccountMut},
 };
 
 use super::*;
@@ -25,35 +20,10 @@ pub fn process_burn<'a>(accounts: &'a [AccountInfo<'a>], args: BurnArgs) -> Prog
 
     // The mint account must exist: must have data and be owned by the correct program.
     assert_non_empty("mint", mint_info)?;
-    assert_program_owner("mint", mint_info, &nifty_asset::ID)?;
+    assert_program_owner("mint", mint_info, &crate::ID)?;
 
-    let data = mint_info.data.borrow_mut();
-
-    // Must be an initialized Nifty asset.
-    require!(
-        data.len() >= Asset::LEN && data[0] == Discriminator::Asset.into(),
-        TokenLiteError::InvalidMint,
-        "asset"
-    );
-
-    // Must have the proxy extension.
-    let proxy = Asset::get::<Proxy>(&data).ok_or(TokenLiteError::InvalidMint)?;
-
-    // The proxy program must match the current program.
-    require!(
-        proxy.program == &crate::ID,
-        TokenLiteError::InvalidMint,
-        "proxy program does not match"
-    );
-
-    // Must have the blob extension that stores the mint data.
-    let blob = Asset::get::<Blob>(&data).ok_or(TokenLiteError::InvalidMint)?;
-
-    let metadata =
-        MintMetadata::try_from_slice(blob.data).map_err(|_| TokenLiteError::InvalidMint)?;
-
-    let ticker: [u8; 4] = metadata.ticker.as_bytes().try_into().unwrap();
-    let namespace = metadata.namespace;
+    let mut data = mint_info.data.borrow_mut();
+    let mint = Mint::load_mut(&mut data);
 
     // Token accounts must exist.
     assert_non_empty("token", token_account_info)?;
@@ -64,7 +34,7 @@ pub fn process_burn<'a>(accounts: &'a [AccountInfo<'a>], args: BurnArgs) -> Prog
 
     // The token accounts must be associated with the mint via the namespace.
     require!(
-        token_account.header.namespace == namespace,
+        token_account.header.authority == mint.authority,
         TokenLiteError::InvalidTokenAccount,
         "token namespace mismatch"
     );
@@ -76,7 +46,7 @@ pub fn process_burn<'a>(accounts: &'a [AccountInfo<'a>], args: BurnArgs) -> Prog
     );
 
     // Look up the amount of tokens in the user's account to make sure they have enough to burn.
-    let amount = match token_account.tokens.get_mut(&ticker) {
+    let amount = match token_account.tokens.get_mut(&mint.ticker) {
         Some(amount) => amount,
         None => return Err(TokenLiteError::InsufficientFunds.into()),
     };

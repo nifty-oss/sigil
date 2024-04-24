@@ -3,120 +3,6 @@
   "name": "nifty_oss_token_lite",
   "instructions": [
     {
-      "name": "CreateMint",
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true,
-          "docs": [
-            "The account paying for the storage fees."
-          ]
-        },
-        {
-          "name": "namespace",
-          "isMut": true,
-          "isSigner": true,
-          "docs": [
-            "The namespace for the token account."
-          ]
-        },
-        {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "The mint account PDA derived from the ticker and namespace."
-          ]
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "The system program"
-          ]
-        },
-        {
-          "name": "niftyProgram",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "The Nifty Asset program"
-          ]
-        }
-      ],
-      "args": [
-        {
-          "name": "createMintArgs",
-          "type": {
-            "defined": "CreateMintArgs"
-          }
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 0
-      }
-    },
-    {
-      "name": "CreateTokenAccount",
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true,
-          "docs": [
-            "The account paying for the storage fees."
-          ]
-        },
-        {
-          "name": "namespace",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "The namespace for the token account."
-          ]
-        },
-        {
-          "name": "user",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "The pubkey of the user associated with the token account"
-          ]
-        },
-        {
-          "name": "tokenAccount",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "The token namespace account."
-          ]
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "The system program"
-          ]
-        }
-      ],
-      "args": [
-        {
-          "name": "createArgs",
-          "type": {
-            "defined": "CreateArgs"
-          }
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 1
-      }
-    },
-    {
       "name": "AddToken",
       "accounts": [
         {
@@ -149,7 +35,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "The token namespace account."
+            "The token authority account."
           ]
         },
         {
@@ -165,74 +51,7 @@
       "args": [],
       "discriminant": {
         "type": "u8",
-        "value": 2
-      }
-    },
-    {
-      "name": "MintTo",
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true,
-          "isOptional": true,
-          "docs": [
-            "The account paying for the storage fees."
-          ]
-        },
-        {
-          "name": "namespace",
-          "isMut": true,
-          "isSigner": true,
-          "docs": [
-            "The namespace for the token account."
-          ]
-        },
-        {
-          "name": "mint",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "The mint account PDA derived from the ticker and namespace."
-          ]
-        },
-        {
-          "name": "tokenAccount",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "The token namespace account."
-          ]
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false,
-          "isOptional": true,
-          "docs": [
-            "The system program"
-          ]
-        },
-        {
-          "name": "niftyProgram",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "The Nifty Asset program"
-          ]
-        }
-      ],
-      "args": [
-        {
-          "name": "mintToArgs",
-          "type": {
-            "defined": "MintToArgs"
-          }
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
-        "value": 3
+        "value": 0
       }
     },
     {
@@ -251,7 +70,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "The mint account PDA derived from the ticker and namespace."
+            "The mint account PDA derived from the ticker and authority."
           ]
         },
         {
@@ -259,15 +78,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "The token namespace account."
-          ]
-        },
-        {
-          "name": "niftyProgram",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "The Nifty Asset program"
+            "The token authority account."
           ]
         }
       ],
@@ -276,6 +87,171 @@
           "name": "burnArgs",
           "type": {
             "defined": "BurnArgs"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 1
+      }
+    },
+    {
+      "name": "CreateMint",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The account paying for the storage fees."
+          ]
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The authority for the token account."
+          ]
+        },
+        {
+          "name": "mint",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The mint account PDA derived from the ticker and authority."
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The system program"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "createMintArgs",
+          "type": {
+            "defined": "CreateMintArgs"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 2
+      }
+    },
+    {
+      "name": "CreateTokenAccount",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The account paying for the storage fees."
+          ]
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The authority for the token account."
+          ]
+        },
+        {
+          "name": "user",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The pubkey of the user associated with the token account"
+          ]
+        },
+        {
+          "name": "tokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The token authority account."
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The system program"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "createArgs",
+          "type": {
+            "defined": "CreateArgs"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 3
+      }
+    },
+    {
+      "name": "MintTo",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "isOptional": true,
+          "docs": [
+            "The account paying for the storage fees."
+          ]
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The authority for the token account."
+          ]
+        },
+        {
+          "name": "mint",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The mint account PDA derived from the ticker and authority."
+          ]
+        },
+        {
+          "name": "tokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The token authority account."
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true,
+          "docs": [
+            "The system program"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "mintToArgs",
+          "type": {
+            "defined": "MintToArgs"
           }
         }
       ],
@@ -325,7 +301,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "The token namespace account."
+            "The token authority account."
           ]
         },
         {
@@ -333,7 +309,7 @@
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "The token namespace account."
+            "The token authority account."
           ]
         },
         {
@@ -425,34 +401,6 @@
           {
             "name": "amount",
             "type": "u32"
-          }
-        ]
-      }
-    },
-    {
-      "name": "MintMetadata",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "namespace",
-            "type": "publicKey"
-          },
-          {
-            "name": "ticker",
-            "type": "string"
-          },
-          {
-            "name": "supply",
-            "type": "u64"
-          },
-          {
-            "name": "maxSupply",
-            "type": "u64"
-          },
-          {
-            "name": "decimals",
-            "type": "u8"
           }
         ]
       }

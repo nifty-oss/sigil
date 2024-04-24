@@ -46,20 +46,20 @@ export type MaybeTokenAccount<TAddress extends string = string> = MaybeAccount<
 >;
 
 export type TokenAccountAccountData = {
-  namespace: Address;
+  authority: Address;
   user: Address;
   tree: Tree;
 };
 
 export type TokenAccountAccountDataArgs = {
-  namespace: Address;
+  authority: Address;
   user: Address;
   tree: TreeArgs;
 };
 
 export function getTokenAccountAccountDataEncoder(): Encoder<TokenAccountAccountDataArgs> {
   return getStructEncoder([
-    ['namespace', getAddressEncoder()],
+    ['authority', getAddressEncoder()],
     ['user', getAddressEncoder()],
     ['tree', getTreeEncoder()],
   ]);
@@ -67,7 +67,7 @@ export function getTokenAccountAccountDataEncoder(): Encoder<TokenAccountAccount
 
 export function getTokenAccountAccountDataDecoder(): Decoder<TokenAccountAccountData> {
   return getStructDecoder([
-    ['namespace', getAddressDecoder()],
+    ['authority', getAddressDecoder()],
     ['user', getAddressDecoder()],
     ['tree', getTreeDecoder()],
   ]);

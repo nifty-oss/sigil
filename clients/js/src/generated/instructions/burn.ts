@@ -25,7 +25,6 @@ import {
   IInstruction,
   IInstructionWithAccounts,
   IInstructionWithData,
-  ReadonlyAccount,
   ReadonlySignerAccount,
   WritableAccount,
 } from '@solana/instructions';
@@ -38,7 +37,6 @@ export type BurnInstruction<
   TAccountUser extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
-  TAccountNiftyProgram extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -53,9 +51,6 @@ export type BurnInstruction<
       TAccountTokenAccount extends string
         ? WritableAccount<TAccountTokenAccount>
         : TAccountTokenAccount,
-      TAccountNiftyProgram extends string
-        ? ReadonlyAccount<TAccountNiftyProgram>
-        : TAccountNiftyProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -70,7 +65,7 @@ export function getBurnInstructionDataEncoder(): Encoder<BurnInstructionDataArgs
       ['discriminator', getU8Encoder()],
       ['amount', getU32Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 4 })
+    (value) => ({ ...value, discriminator: 1 })
   );
 }
 
@@ -95,16 +90,13 @@ export type BurnInput<
   TAccountUser extends string = string,
   TAccountMint extends string = string,
   TAccountTokenAccount extends string = string,
-  TAccountNiftyProgram extends string = string,
 > = {
   /** The user of the token account */
   user: TransactionSigner<TAccountUser>;
-  /** The mint account PDA derived from the ticker and namespace. */
+  /** The mint account PDA derived from the ticker and authority. */
   mint: Address<TAccountMint>;
-  /** The token namespace account. */
+  /** The token authority account. */
   tokenAccount: Address<TAccountTokenAccount>;
-  /** The Nifty Asset program */
-  niftyProgram: Address<TAccountNiftyProgram>;
   amount: BurnInstructionDataArgs['amount'];
 };
 
@@ -112,20 +104,13 @@ export function getBurnInstruction<
   TAccountUser extends string,
   TAccountMint extends string,
   TAccountTokenAccount extends string,
-  TAccountNiftyProgram extends string,
 >(
-  input: BurnInput<
-    TAccountUser,
-    TAccountMint,
-    TAccountTokenAccount,
-    TAccountNiftyProgram
-  >
+  input: BurnInput<TAccountUser, TAccountMint, TAccountTokenAccount>
 ): BurnInstruction<
   typeof TOKEN_LITE_PROGRAM_ADDRESS,
   TAccountUser,
   TAccountMint,
-  TAccountTokenAccount,
-  TAccountNiftyProgram
+  TAccountTokenAccount
 > {
   // Program address.
   const programAddress = TOKEN_LITE_PROGRAM_ADDRESS;
@@ -135,7 +120,6 @@ export function getBurnInstruction<
     user: { value: input.user ?? null, isWritable: false },
     mint: { value: input.mint ?? null, isWritable: true },
     tokenAccount: { value: input.tokenAccount ?? null, isWritable: true },
-    niftyProgram: { value: input.niftyProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -151,7 +135,6 @@ export function getBurnInstruction<
       getAccountMeta(accounts.user),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.tokenAccount),
-      getAccountMeta(accounts.niftyProgram),
     ],
     programAddress,
     data: getBurnInstructionDataEncoder().encode(
@@ -161,8 +144,7 @@ export function getBurnInstruction<
     typeof TOKEN_LITE_PROGRAM_ADDRESS,
     TAccountUser,
     TAccountMint,
-    TAccountTokenAccount,
-    TAccountNiftyProgram
+    TAccountTokenAccount
   >;
 
   return instruction;
@@ -176,12 +158,10 @@ export type ParsedBurnInstruction<
   accounts: {
     /** The user of the token account */
     user: TAccountMetas[0];
-    /** The mint account PDA derived from the ticker and namespace. */
+    /** The mint account PDA derived from the ticker and authority. */
     mint: TAccountMetas[1];
-    /** The token namespace account. */
+    /** The token authority account. */
     tokenAccount: TAccountMetas[2];
-    /** The Nifty Asset program */
-    niftyProgram: TAccountMetas[3];
   };
   data: BurnInstructionData;
 };
@@ -194,7 +174,7 @@ export function parseBurnInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedBurnInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 4) {
+  if (instruction.accounts.length < 3) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -210,7 +190,6 @@ export function parseBurnInstruction<
       user: getNextAccount(),
       mint: getNextAccount(),
       tokenAccount: getNextAccount(),
-      niftyProgram: getNextAccount(),
     },
     data: getBurnInstructionDataDecoder().decode(instruction.data),
   };

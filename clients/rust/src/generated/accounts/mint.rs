@@ -5,46 +5,43 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
-use crate::generated::types::Tree;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 use solana_program::pubkey::Pubkey;
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct TokenAccount {
+pub struct Mint {
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
     pub authority: Pubkey,
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
-    )]
-    pub user: Pubkey,
-    pub tree: Tree,
+    pub ticker: [u8; 4],
+    pub decimals: u32,
+    pub supply: u64,
+    pub max_supply: u64,
 }
 
-impl TokenAccount {
+impl Mint {
     /// Prefix values used to generate a PDA for this account.
     ///
     /// Values are positional and appear in the following order:
     ///
-    ///   0. `TokenAccount::PREFIX`
-    ///   1. user (`Pubkey`)
+    ///   0. `Mint::PREFIX`
+    ///   1. ticker (`[u8; 4]`)
     ///   2. authority (`Pubkey`)
-    pub const PREFIX: &'static [u8] = "token_account".as_bytes();
+    pub const PREFIX: &'static [u8] = "mint".as_bytes();
 
     pub fn create_pda(
-        user: Pubkey,
+        ticker: [u8; 4],
         authority: Pubkey,
         bump: u8,
     ) -> Result<solana_program::pubkey::Pubkey, solana_program::pubkey::PubkeyError> {
         solana_program::pubkey::Pubkey::create_program_address(
             &[
-                "token_account".as_bytes(),
-                user.as_ref(),
+                "mint".as_bytes(),
+                ticker.to_string().as_ref(),
                 authority.as_ref(),
                 &[bump],
             ],
@@ -52,11 +49,11 @@ impl TokenAccount {
         )
     }
 
-    pub fn find_pda(user: &Pubkey, authority: &Pubkey) -> (solana_program::pubkey::Pubkey, u8) {
+    pub fn find_pda(ticker: [u8; 4], authority: &Pubkey) -> (solana_program::pubkey::Pubkey, u8) {
         solana_program::pubkey::Pubkey::find_program_address(
             &[
-                "token_account".as_bytes(),
-                user.as_ref(),
+                "mint".as_bytes(),
+                ticker.to_string().as_ref(),
                 authority.as_ref(),
             ],
             &crate::TOKEN_LITE_ID,
@@ -70,7 +67,7 @@ impl TokenAccount {
     }
 }
 
-impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for TokenAccount {
+impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for Mint {
     type Error = std::io::Error;
 
     fn try_from(
