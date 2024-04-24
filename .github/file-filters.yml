@@ -1,0 +1,56 @@
+# This file is used by the dorny/paths-filter action to figure out if a program or
+# client has changed and thus if it should be built or tested. Any changes in the
+# files listed below will trigger the appropriate workflow for that program or client.
+
+# Programs.
+
+program_common: &program_common
+  - '.github/workflows/build-programs.yml'
+  - '.github/workflows/test-programs.yml'
+  - '.github/workflows/main.yml'
+  - '.github/file-filters.yml'
+  - '.github/.env'
+
+token_program: &token_program
+  - *program_common
+  - 'program/**'
+
+programs: &programs
+  - *token_program
+
+# Clients.
+
+client_common: &client_common
+  - *programs
+  - '.github/workflows/test-js.yml'
+  - '.github/workflows/test-rust-client.yml'
+  - '.github/workflows/build-rust-client.yml'
+  - '.github/workflows/main.yml'
+  - '.github/file-filters.yml'
+  - '.github/.env'
+  - 'scripts/generate-idls.cjs'
+  - 'scripts/generate-clients.cjs'
+
+token_js_client: &token_js_client
+  - *client_common
+  - '.github/workflows/test-js-client.yml'
+  - 'clients/js/**'
+
+token_rust_client: &token_rust_client
+  - *client_common
+  - '.github/workflows/test-rust-client.yml'
+  - '.github/workflows/build-rust-client.yml'
+  - 'clients/rust/**'
+
+js_clients: &js_clients
+  - *token_js_client
+
+rust_clients: &rust_clients
+  - *token_rust_client
+
+# Any.
+
+any: &any
+  - *programs
+  - *js_clients
+  - *rust_clients
