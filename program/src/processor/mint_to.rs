@@ -60,7 +60,7 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
         return Err(TokenLiteError::MaximumSupplyReached.into());
     }
 
-    let maybe_ticker = token_account.tokens.get(&mint.ticker);
+    let maybe_ticker = token_account.tokens.get(&mint.ticker());
     let tree_is_full = token_account.tokens.is_full();
 
     drop(account_data);
@@ -86,7 +86,7 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
             let mut recipient_token_account = TokenAccountMut::from_bytes_mut(&mut account_data);
 
             // New tokens should start at amount 0.
-            recipient_token_account.tokens.insert(mint.ticker, 0);
+            recipient_token_account.tokens.insert(mint.ticker(), 0);
         }
     }
 
@@ -95,7 +95,7 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
     let mut token_account = TokenAccountMut::from_bytes_mut(&mut account_data);
 
     // Mint the tokens to the token account.
-    let amount = token_account.tokens.get_mut(&mint.ticker).unwrap();
+    let amount = token_account.tokens.get_mut(&mint.ticker()).unwrap();
     *amount = amount
         .checked_add(args.amount)
         .ok_or(TokenLiteError::NumericalOverflow)?;

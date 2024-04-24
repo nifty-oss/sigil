@@ -1,11 +1,6 @@
 #![cfg(feature = "test-sbf")]
 
 use borsh::BorshDeserialize;
-use nifty_asset::{
-    extensions::{Blob, Proxy},
-    state::{Asset, Discriminator, Standard, State},
-    ZeroCopy,
-};
 use nifty_oss_token_lite::state::{MintMetadata, TokenAccount, TokenSeeds};
 use nifty_oss_token_lite_client::{
     instructions::{AddTokenBuilder, CreateTokenAccountBuilder},

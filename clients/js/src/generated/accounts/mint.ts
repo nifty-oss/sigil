@@ -33,10 +33,10 @@ import {
   getStringEncoder,
   getStructDecoder,
   getStructEncoder,
-  getU32Decoder,
-  getU32Encoder,
   getU64Decoder,
   getU64Encoder,
+  getU8Decoder,
+  getU8Encoder,
 } from '@solana/codecs';
 import { MintSeeds, findMintPda } from '../pdas';
 
@@ -51,26 +51,35 @@ export type MaybeMint<TAddress extends string = string> = MaybeAccount<
 >;
 
 export type MintAccountData = {
-  authority: Address;
-  ticker: string;
+  tag: number;
+  bump: number;
   decimals: number;
+  empty: number;
+  ticker: string;
+  authority: Address;
   supply: bigint;
   maxSupply: bigint;
 };
 
 export type MintAccountDataArgs = {
-  authority: Address;
-  ticker: string;
+  tag: number;
+  bump: number;
   decimals: number;
+  empty: number;
+  ticker: string;
+  authority: Address;
   supply: number | bigint;
   maxSupply: number | bigint;
 };
 
 export function getMintAccountDataEncoder(): Encoder<MintAccountDataArgs> {
   return getStructEncoder([
-    ['authority', getAddressEncoder()],
+    ['tag', getU8Encoder()],
+    ['bump', getU8Encoder()],
+    ['decimals', getU8Encoder()],
+    ['empty', getU8Encoder()],
     ['ticker', getStringEncoder({ size: 4 })],
-    ['decimals', getU32Encoder()],
+    ['authority', getAddressEncoder()],
     ['supply', getU64Encoder()],
     ['maxSupply', getU64Encoder()],
   ]);
@@ -78,9 +87,12 @@ export function getMintAccountDataEncoder(): Encoder<MintAccountDataArgs> {
 
 export function getMintAccountDataDecoder(): Decoder<MintAccountData> {
   return getStructDecoder([
-    ['authority', getAddressDecoder()],
+    ['tag', getU8Decoder()],
+    ['bump', getU8Decoder()],
+    ['decimals', getU8Decoder()],
+    ['empty', getU8Decoder()],
     ['ticker', getStringDecoder({ size: 4 })],
-    ['decimals', getU32Decoder()],
+    ['authority', getAddressDecoder()],
     ['supply', getU64Decoder()],
     ['maxSupply', getU64Decoder()],
   ]);

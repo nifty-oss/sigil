@@ -1,4 +1,4 @@
-use crate::{error::TokenLiteError, state::Key};
+use crate::{error::TokenLiteError, state::Tag};
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
     pubkey::Pubkey,
@@ -120,7 +120,7 @@ pub fn assert_same_pubkeys(
 }
 
 /// Assert that the given account has the expected account key.
-pub fn assert_account_key(account_name: &str, account: &AccountInfo, key: Key) -> ProgramResult {
+pub fn assert_account_key(account_name: &str, account: &AccountInfo, key: Tag) -> ProgramResult {
     let key_number = key as u8;
     if account.data_len() <= 1 || account.try_borrow_data()?[0] != key_number {
         msg!(

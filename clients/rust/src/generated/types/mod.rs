@@ -6,7 +6,9 @@
 //!
 
 pub(crate) mod r#node;
+pub(crate) mod r#tag;
 pub(crate) mod r#tree;
 
 pub use self::r#node::*;
+pub use self::r#tag::*;
 pub use self::r#tree::*;

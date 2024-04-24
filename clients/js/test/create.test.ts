@@ -1,6 +1,7 @@
 import { address, appendTransactionInstruction, pipe } from '@solana/web3.js';
 import test from 'ava';
 import {
+  Tag,
   fetchMint,
   fetchTokenAccount,
   findMintPda,
@@ -35,7 +36,7 @@ test('it can create a new mint account', async (t) => {
     authority,
     decimals: 0,
     maxSupply: 1000,
-    ticker: 'USDC',
+    ticker,
   });
 
   await pipe(
@@ -46,10 +47,12 @@ test('it can create a new mint account', async (t) => {
 
   const account = await fetchMint(client.rpc, mint);
 
+  t.assert(account?.data.tag == Tag.Mint);
+  t.assert(account?.data.decimals === 0);
+  t.assert(account?.data.ticker === ticker);
   t.assert(account?.data.authority === authority.address);
   t.assert(account?.data.supply === 0n);
   t.assert(account?.data.maxSupply === 1000n);
-  t.assert(account?.data.decimals === 0);
 });
 
 test('it can create a new token account', async (t) => {
@@ -98,6 +101,7 @@ test('it can create a new token account', async (t) => {
 
   const account = await fetchTokenAccount(client.rpc, tokenAccount);
 
+  t.assert(account?.data.tag == Tag.TokenAccount);
   t.assert(account?.data.authority === authority.address);
   t.assert(account?.data.user === user.address);
 });

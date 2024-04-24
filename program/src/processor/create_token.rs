@@ -57,6 +57,9 @@ pub fn process_create_token<'a>(
 
     // Now can operate on the struct like a normal Rust struct but the bytes are cast directly
     // without deserializ/serializ(ing).
+    token_authority
+        .header
+        .set_tag(crate::state::Tag::TokenAccount);
     token_authority.header.authority = *authority_info.key;
     token_authority.header.user = *user_info.key;
     token_authority.tokens.initialize(args.capacity);

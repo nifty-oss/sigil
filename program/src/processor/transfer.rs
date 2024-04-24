@@ -76,7 +76,7 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
     );
 
     // Look up the amount of tokens in the user's account to make sure they have enough to send.
-    let source_amount = match user_token_account.tokens.get_mut(&mint.ticker) {
+    let source_amount = match user_token_account.tokens.get_mut(&mint.ticker()) {
         Some(amount) => amount,
         None => return Err(TokenLiteError::InsufficientFunds.into()),
     };
@@ -87,7 +87,7 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
 
     // If the ticker doesn't exist on the recipient's account, add it.
 
-    match recipient_token_account.tokens.get(&mint.ticker) {
+    match recipient_token_account.tokens.get(&mint.ticker()) {
         Some(_) => (),
         None => {
             let tree_is_full = recipient_token_account.tokens.is_full();
@@ -107,7 +107,7 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
             let mut recipient_token_account = TokenAccountMut::from_bytes_mut(&mut account_data);
 
             // New tokens should start at amount 0.
-            recipient_token_account.tokens.insert(mint.ticker, 0);
+            recipient_token_account.tokens.insert(mint.ticker(), 0);
         }
     }
 
@@ -116,7 +116,7 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
     let mut token_account = TokenAccountMut::from_bytes_mut(&mut account_data);
 
     // We know it exists here so we can unwrap.
-    let dest_amount = token_account.tokens.get_mut(&mint.ticker).unwrap();
+    let dest_amount = token_account.tokens.get_mut(&mint.ticker()).unwrap();
 
     // Update the token amounts.
     *source_amount = source_amount

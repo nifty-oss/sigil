@@ -2,7 +2,7 @@ use super::*;
 
 use crate::{
     error::TokenLiteError,
-    state::{Mint, MintSeeds},
+    state::{Mint, MintSeeds, Tag},
 };
 
 pub fn process_create_mint<'a>(
@@ -60,9 +60,14 @@ pub fn process_create_mint<'a>(
     let mut data = (*mint_info.data).borrow_mut();
     let mint = Mint::load_mut(&mut data);
 
-    mint.authority = *authority_info.key;
-    mint.ticker = *ticker;
+    // Setter Data
+    mint.set_bump(bump);
+    mint.set_ticker(*ticker);
+    mint.set_tag(Tag::Mint);
     mint.set_decimals(args.decimals);
+
+    // Fields
+    mint.authority = *authority_info.key;
     mint.supply = 0;
     mint.max_supply = args.max_supply;
 

@@ -69,7 +69,7 @@ pub fn process_add_token<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
     let mut token_namespace = TokenAccountMut::from_bytes_mut(account_data);
 
     // New tokens should start at amount 0.
-    token_namespace.tokens.insert(mint.ticker, 0);
+    token_namespace.tokens.insert(mint.ticker(), 0);
 
     Ok(())
 }

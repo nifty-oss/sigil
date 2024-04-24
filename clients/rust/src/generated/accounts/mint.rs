@@ -12,13 +12,16 @@ use solana_program::pubkey::Pubkey;
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Mint {
+    pub tag: u8,
+    pub bump: u8,
+    pub decimals: u8,
+    pub empty: u8,
+    pub ticker: [u8; 4],
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
     pub authority: Pubkey,
-    pub ticker: [u8; 4],
-    pub decimals: u32,
     pub supply: u64,
     pub max_supply: u64,
 }

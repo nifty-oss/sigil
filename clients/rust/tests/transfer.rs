@@ -3,7 +3,7 @@
 // use borsh::BorshDeserialize;
 // use nifty_asset::{
 //     extensions::{Blob, Proxy},
-//     state::{Asset, Discriminator, Standard, State},
+//     state::{Asset, Tag, Standard, State},
 //     ZeroCopy,
 // };
 // use nifty_oss_token_lite::state::{MintMetadata, TokenAccount, TokenSeeds};

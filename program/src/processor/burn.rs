@@ -46,7 +46,7 @@ pub fn process_burn<'a>(accounts: &'a [AccountInfo<'a>], args: BurnArgs) -> Prog
     );
 
     // Look up the amount of tokens in the user's account to make sure they have enough to burn.
-    let amount = match token_account.tokens.get_mut(&mint.ticker) {
+    let amount = match token_account.tokens.get_mut(&mint.ticker()) {
         Some(amount) => amount,
         None => return Err(TokenLiteError::InsufficientFunds.into()),
     };
@@ -59,6 +59,12 @@ pub fn process_burn<'a>(accounts: &'a [AccountInfo<'a>], args: BurnArgs) -> Prog
     // Burn the requested amount.
     *amount = amount
         .checked_sub(args.amount)
+        .ok_or(TokenLiteError::NumericalOverflow)?;
+
+    // Decrease the mint supply.
+    mint.supply = mint
+        .supply
+        .checked_sub(args.amount as u64)
         .ok_or(TokenLiteError::NumericalOverflow)?;
 
     Ok(())

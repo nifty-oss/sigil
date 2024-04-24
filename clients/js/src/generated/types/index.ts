@@ -7,4 +7,5 @@
  */
 
 export * from './node';
+export * from './tag';
 export * from './tree';

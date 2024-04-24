@@ -27,8 +27,20 @@ kinobi.update(
               name: 'mint',
               data: k.structTypeNode([
                 k.structFieldTypeNode({
-                  name: 'authority',
-                  type: k.publicKeyTypeNode(),
+                  name: 'tag',
+                  type: k.numberTypeNode('u8'),
+                }),
+                k.structFieldTypeNode({
+                  name: 'bump',
+                  type: k.numberTypeNode('u8'),
+                }),
+                k.structFieldTypeNode({
+                  name: 'decimals',
+                  type: k.numberTypeNode('u8'),
+                }),
+                k.structFieldTypeNode({
+                  name: 'empty',
+                  type: k.numberTypeNode('u8'),
                 }),
                 k.structFieldTypeNode({
                   name: 'ticker',
@@ -37,8 +49,8 @@ kinobi.update(
                   }),
                 }),
                 k.structFieldTypeNode({
-                  name: 'decimals',
-                  type: k.numberTypeNode('u32'),
+                  name: 'authority',
+                  type: k.publicKeyTypeNode(),
                 }),
                 k.structFieldTypeNode({
                   name: 'supply',
@@ -53,6 +65,14 @@ kinobi.update(
             k.accountNode({
               name: 'tokenAccount',
               data: k.structTypeNode([
+                k.structFieldTypeNode({
+                  name: 'tag',
+                  type: k.definedTypeLinkNode('Tag'),
+                }),
+                k.structFieldTypeNode({
+                  name: 'empty',
+                  type: k.arrayTypeNode(k.numberTypeNode('u8'), k.fixedSizeNode(7)),
+                }),
                 k.structFieldTypeNode({
                   name: 'authority',
                   type: k.publicKeyTypeNode(),
@@ -101,6 +121,13 @@ kinobi.update(
                   type: k.numberTypeNode('u32'),
                 }),
               ]),
+            }),
+            k.definedTypeNodeFromIdl({
+              name: 'tag',
+              type: {
+                kind: 'enum',
+                variants: [{ name: 'Uninitialized' }, { name: 'Mint' }, { name: 'TokenAccount' }],
+              },
             }),
           ],
         };

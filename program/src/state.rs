@@ -1,22 +1,19 @@
 use bytemuck::{Pod, Zeroable};
+use num_enum::{IntoPrimitive, TryFromPrimitive};
 use solana_program::pubkey::Pubkey;
 use stevia::{
     collections::{u8_avl_tree::U8Allocator, U8AVLTree, U8AVLTreeMut},
     ZeroCopy,
 };
 
-#[repr(u64)]
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-pub enum Key {
+#[repr(u8)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
+pub enum Tag {
     #[default]
     Uninitialized,
+    Mint,
     TokenAccount,
 }
-
-// Can't derive Pod/Zeroable for enums, so we have to do it ourselves manually.
-// Our enum is aligned to 8 bytes, so we can safely use the unsafe impls.
-unsafe impl Zeroable for Key {}
-unsafe impl Pod for Key {}
 
 pub type Ticker = [u8; 4];
 pub type Amount = u32;
@@ -82,6 +79,8 @@ impl<'a> TokenAccountMut<'a> {
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
 pub struct Header {
+    // Tag, empty x 7 bytes.
+    pub data: [u8; 8],
     pub authority: Pubkey,
     pub user: Pubkey,
 }
@@ -89,6 +88,14 @@ pub struct Header {
 impl Header {
     /// Bytes required to store an `Header`.
     pub const LEN: usize = std::mem::size_of::<Header>();
+
+    pub fn tag(&self) -> Tag {
+        Tag::try_from(self.data[0]).unwrap()
+    }
+
+    pub fn set_tag(&mut self, tag: Tag) {
+        *self.data.get_mut(0).unwrap() = tag.into();
+    }
 
     pub fn from_bytes(bytes: &'_ [u8]) -> &'_ Self {
         bytemuck::from_bytes::<Header>(bytes)
@@ -103,10 +110,9 @@ impl Header {
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
 pub struct Mint {
+    // Tag, bump, decimals, empty.
+    data: [u8; 8],
     pub authority: Pubkey,
-    pub ticker: [u8; 4],
-    // First byte is decimals, the rest is padding.
-    data: [u8; 4],
     pub supply: u64,
     pub max_supply: u64,
 }
@@ -117,12 +123,38 @@ impl Mint {
     pub const SEEDS_LEN: usize =
         Self::PREFIX.len() + std::mem::size_of::<[u8; 4]>() + std::mem::size_of::<Pubkey>();
 
+    pub fn tag(&self) -> Tag {
+        Tag::try_from(self.data[0]).unwrap()
+    }
+
+    pub fn bump(&self) -> u8 {
+        self.data[1]
+    }
+
     pub fn decimals(&self) -> u8 {
-        self.data[0]
+        self.data[2]
+    }
+
+    pub fn ticker(&self) -> Ticker {
+        let mut ticker = [0; 4];
+        ticker.copy_from_slice(&self.data[4..8]);
+        ticker
+    }
+
+    pub fn set_tag(&mut self, tag: Tag) {
+        *self.data.get_mut(0).unwrap() = tag.into();
+    }
+
+    pub fn set_bump(&mut self, bump: u8) {
+        *self.data.get_mut(1).unwrap() = bump;
     }
 
     pub fn set_decimals(&mut self, decimals: u8) {
-        *self.data.get_mut(0).unwrap() = decimals;
+        *self.data.get_mut(2).unwrap() = decimals;
+    }
+
+    pub fn set_ticker(&mut self, ticker: Ticker) {
+        self.data[4..8].copy_from_slice(&ticker);
     }
 
     pub fn find_pda(seeds: &MintSeeds) -> (Pubkey, u8) {
