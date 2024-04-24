@@ -23,6 +23,6 @@ thiserror = "^1.0"
 
 [dev-dependencies]
 assert_matches = "1.5.0"
-stevia = { path = "../../../stevia" }
+stevia = { git = "https://github.com/nifty-oss/stevia.git" }
 solana-program-test = "~1.16"
 solana-sdk = "~1.16"
