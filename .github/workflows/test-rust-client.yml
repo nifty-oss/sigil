@@ -1,0 +1,73 @@
+name: Test Rust Client
+
+on:
+  workflow_call:
+    inputs:
+      program_matrix:
+        type: string
+
+env:
+  CACHE: true
+  CARGO_NET_GIT_FETCH_WITH_CLI: 'true'
+
+jobs:
+  test_sdk:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+
+      - name: Load environment variables
+        run: cat .github/.env >> $GITHUB_ENV
+
+      - name: Install Rust
+        uses: nifty-oss/actions/install-rust@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+
+      - name: Install Solana
+        uses: nifty-oss/actions/install-solana@v1
+        with:
+          version: ${{ env.SOLANA_VERSION }}
+          cache: ${{ env.CACHE }}
+
+      - name: Install Node for running zx
+        uses: nifty-oss/actions/install-node-with-pnpm@v1
+        with:
+          folder: ./clients/js
+          cache: ${{ env.CACHE }}
+          key: client-js
+
+      - name: Install Node root dependencies
+        uses: nifty-oss/actions/install-node-dependencies@v1
+        with:
+          folder: '.'
+          cache: ${{ env.CACHE }}
+          key: client-js
+
+      - name: Install Node dependencies
+        uses: nifty-oss/actions/install-node-dependencies@v1
+        with:
+          folder: ./clients/js
+          cache: ${{ env.CACHE }}
+          key: client-js
+
+      - name: Install zx
+        run: npm install -g zx
+
+      - name: Cache Rust client test dependencies
+        uses: ./.github/actions/cache-crate
+        with:
+          folder: ./clients/rust
+          key: rust-client-test
+
+      - name: Download program builds
+        uses: actions/download-artifact@v4
+        with:
+          name: program-builds
+
+      - name: Run tests
+        shell: bash
+        working-directory: '.'
+        run: RUST_LOG=error npx zx ./scripts/client/test-rust.mjs

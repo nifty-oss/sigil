@@ -1,0 +1,71 @@
+name: Test JS client
+
+on:
+  workflow_call:
+
+env:
+  CACHE: true
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['18.x', '20.x']
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+
+      - name: Load environment variables
+        run: cat .github/.env >> $GITHUB_ENV
+
+      - name: Start validator
+        uses: ./.github/actions/start-validator
+        with:
+          node: ${{ matrix.node }}
+          solana: ${{ env.SOLANA_VERSION }}
+          cache: ${{ env.CACHE }}
+
+      - name: Install dependencies
+        uses: nifty-oss/actions/install-node-dependencies@v1
+        with:
+          folder: ./clients/js
+          cache: ${{ env.CACHE }}
+          key: clients-js
+
+      - name: Run tests
+        shell: bash
+        working-directory: '.'
+        run: RUST_LOG=error npx zx ./scripts/client/test-js.mjs
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v4
+
+      - name: Load environment variables
+        run: cat .github/.env >> $GITHUB_ENV
+
+      - name: Install Node.js
+        uses: nifty-oss/actions/install-node-with-pnpm@v1
+        with:
+          version: ${{ env.NODE_VERSION }}
+          cache: ${{ env.CACHE }}
+
+      - name: Install dependencies
+        uses: nifty-oss/actions/install-node-dependencies@v1
+        with:
+          folder: ./clients/js
+          cache: ${{ env.CACHE }}
+          key: clients-js
+
+      - name: Format
+        working-directory: ./clients/js
+        run: pnpm format
+
+      - name: Lint
+        working-directory: ./clients/js
+        run: pnpm lint
