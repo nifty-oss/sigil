@@ -1,4 +1,3 @@
-use nifty_oss_token_lite::state::MintMetadata;
 use nifty_oss_token_lite_client::{instructions::CreateMintBuilder, ID as TokenLiteID};
 use solana_program_test::{BanksClientError, ProgramTest, ProgramTestContext};
 use solana_sdk::{

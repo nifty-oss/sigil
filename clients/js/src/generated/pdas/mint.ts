@@ -12,15 +12,10 @@ import {
   getAddressEncoder,
   getProgramDerivedAddress,
 } from '@solana/addresses';
-import {
-  getArrayEncoder,
-  getStringEncoder,
-  getU8Encoder,
-} from '@solana/codecs';
+import { getBytesEncoder, getStringEncoder } from '@solana/codecs';
 
 export type MintSeeds = {
-  /** The ticker of the mint */
-  ticker: Array<number>;
+  ticker: Uint8Array;
   /** The authority of the mint account */
   authority: Address;
 };
@@ -36,7 +31,7 @@ export async function findMintPda(
     programAddress,
     seeds: [
       getStringEncoder({ size: 'variable' }).encode('mint'),
-      getArrayEncoder(getU8Encoder(), { size: 4 }).encode(seeds.ticker),
+      getBytesEncoder({ size: 4 }).encode(seeds.ticker),
       getAddressEncoder().encode(seeds.authority),
     ],
   });

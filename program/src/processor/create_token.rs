@@ -55,7 +55,7 @@ pub fn process_create_token<'a>(
     // // Get the mutable byte muck version of the account so we can mutate the data directly.
     let mut token_authority = TokenAccountMut::from_bytes_mut(account_data);
 
-    // Now can operate on the struct like a normal Rust struct but the bytes are cast directly
+// Now can operate on the struct like a normal Rust struct but the bytes are cast directly
     // without deserializ/serializ(ing).
     token_authority
         .header

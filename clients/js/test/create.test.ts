@@ -26,7 +26,7 @@ test('it can create a new mint account', async (t) => {
   const ticker = 'USDC';
 
   const [mint] = await findMintPda({
-    ticker: Array.from(ticker).map((c) => c.charCodeAt(0)),
+    ticker: Buffer.from(ticker),
     authority: authority.address,
   });
 
@@ -65,7 +65,7 @@ test('it can create a new token account', async (t) => {
   const ticker = 'USDC';
 
   const [mint] = await findMintPda({
-    ticker: Array.from(ticker).map((c) => c.charCodeAt(0)),
+    ticker: Buffer.from(ticker),
     authority: authority.address,
   });
 
@@ -117,12 +117,12 @@ test('it can add tokens to a token account', async (t) => {
   const ticker2 = 'BONK';
 
   const [mint1] = await findMintPda({
-    ticker: Array.from(ticker1).map((c) => c.charCodeAt(0)),
+    ticker: Buffer.from(ticker1),
     authority: authority.address,
   });
 
   const [mint2] = await findMintPda({
-    ticker: Array.from(ticker2).map((c) => c.charCodeAt(0)),
+    ticker: Buffer.from(ticker2),
     authority: authority.address,
   });
 

@@ -66,11 +66,10 @@ test('it can transfer tokens', async (t) => {
   const transferIx = getTransferInstruction({
     payer: authority,
     user,
-    recipient: recipient.address,
-    mint,
     userTokenAccount,
     recipientTokenAccount,
     systemProgram: address('11111111111111111111111111111111'),
+    ticker: Array.from(ticker).map((c) => c.charCodeAt(0)),
     amount: transferAmount,
   });
 
@@ -87,4 +86,22 @@ test('it can transfer tokens', async (t) => {
     userAccount?.data.tree.nodes[0].amount === mintAmount - transferAmount
   );
   t.assert(recipientAccount?.data.tree.nodes[0].amount === transferAmount);
+
+  const transferBackIx = getTransferInstruction({
+    payer: authority,
+    user: recipient,
+    userTokenAccount: recipientTokenAccount,
+    recipientTokenAccount: userTokenAccount,
+    systemProgram: address('11111111111111111111111111111111'),
+    ticker: Array.from(ticker).map((c) => c.charCodeAt(0)),
+    amount: transferAmount,
+  });
+
+  console.log(
+    await pipe(
+      await createDefaultTransaction(client, authority),
+      (tx) => appendTransactionInstruction(transferBackIx, tx),
+      (tx) => signAndSendTransaction(client, tx)
+    )
+  );
 });

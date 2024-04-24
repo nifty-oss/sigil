@@ -71,7 +71,7 @@ kinobi.update(
                 }),
                 k.structFieldTypeNode({
                   name: 'empty',
-                  type: k.arrayTypeNode(k.numberTypeNode('u8'), k.fixedSizeNode(7)),
+                  type: k.arrayTypeNode(k.numberTypeNode('u8'), k.fixedSizeNode(3)),
                 }),
                 k.structFieldTypeNode({
                   name: 'authority',
@@ -126,7 +126,7 @@ kinobi.update(
               name: 'tag',
               type: {
                 kind: 'enum',
-                variants: [{ name: 'Uninitialized' }, { name: 'Mint' }, { name: 'TokenAccount' }],
+                variants: [{ name: 'Uninitialized' }, { name: 'Mint' }, { name: 'tokenAccount' }],
               },
             }),
           ],
@@ -153,11 +153,7 @@ kinobi.update(
     mint: {
       seeds: [
         k.constantPdaSeedNodeFromString('mint'),
-        k.variablePdaSeedNode(
-          'ticker',
-          k.arrayTypeNode(k.numberTypeNode('u8'), k.fixedSizeNode(4)),
-          'The ticker of the mint',
-        ),
+        k.variablePdaSeedNode('ticker', k.bytesTypeNode(k.fixedSizeNode(4))),
         k.variablePdaSeedNode(
           'authority',
           k.publicKeyTypeNode(),
@@ -165,6 +161,12 @@ kinobi.update(
         ),
       ],
     },
+  }),
+);
+
+kinobi.update(
+  k.updateInstructionsVisitor({
+    transfer: {},
   }),
 );
 

@@ -26,7 +26,7 @@ export const setupAndMint = async (
   amount: number
 ) => {
   const [mint] = await findMintPda({
-    ticker: Array.from(ticker).map((c) => c.charCodeAt(0)),
+    ticker: Buffer.from(ticker),
     authority: authority.address,
   });
 

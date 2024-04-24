@@ -33,29 +33,29 @@ import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type AddTokenInstruction<
   TProgram extends string = typeof TOKEN_LITE_PROGRAM_ADDRESS,
-  TAccountPayer extends string | IAccountMeta<string> = string,
-  TAccountUser extends string | IAccountMeta<string> = string,
-  TAccountMint extends string | IAccountMeta<string> = string,
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
+  TAccountMint extends string | IAccountMeta<string> = string,
+  TAccountUser extends string | IAccountMeta<string> = string,
+  TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
+      TAccountTokenAccount extends string
+        ? WritableAccount<TAccountTokenAccount>
+        : TAccountTokenAccount,
+      TAccountMint extends string
+        ? ReadonlyAccount<TAccountMint>
+        : TAccountMint,
+      TAccountUser extends string
+        ? ReadonlyAccount<TAccountUser>
+        : TAccountUser,
       TAccountPayer extends string
         ? WritableSignerAccount<TAccountPayer> &
             IAccountSignerMeta<TAccountPayer>
         : TAccountPayer,
-      TAccountUser extends string
-        ? ReadonlyAccount<TAccountUser>
-        : TAccountUser,
-      TAccountMint extends string
-        ? ReadonlyAccount<TAccountMint>
-        : TAccountMint,
-      TAccountTokenAccount extends string
-        ? WritableAccount<TAccountTokenAccount>
-        : TAccountTokenAccount,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -89,44 +89,44 @@ export function getAddTokenInstructionDataCodec(): Codec<
 }
 
 export type AddTokenInput<
-  TAccountPayer extends string = string,
-  TAccountUser extends string = string,
-  TAccountMint extends string = string,
   TAccountTokenAccount extends string = string,
+  TAccountMint extends string = string,
+  TAccountUser extends string = string,
+  TAccountPayer extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  /** The account paying for the storage fees. */
-  payer?: TransactionSigner<TAccountPayer>;
-  /** The pubkey of the user associated with the token account */
-  user: Address<TAccountUser>;
-  /** The mint account for the token to be added. */
-  mint: Address<TAccountMint>;
   /** The token authority account. */
   tokenAccount: Address<TAccountTokenAccount>;
+  /** The mint account for the token to be added. */
+  mint: Address<TAccountMint>;
+  /** The pubkey of the user associated with the token account */
+  user: Address<TAccountUser>;
+  /** The account paying for the storage fees. */
+  payer?: TransactionSigner<TAccountPayer>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
 export function getAddTokenInstruction<
-  TAccountPayer extends string,
-  TAccountUser extends string,
-  TAccountMint extends string,
   TAccountTokenAccount extends string,
+  TAccountMint extends string,
+  TAccountUser extends string,
+  TAccountPayer extends string,
   TAccountSystemProgram extends string,
 >(
   input: AddTokenInput<
-    TAccountPayer,
-    TAccountUser,
-    TAccountMint,
     TAccountTokenAccount,
+    TAccountMint,
+    TAccountUser,
+    TAccountPayer,
     TAccountSystemProgram
   >
 ): AddTokenInstruction<
   typeof TOKEN_LITE_PROGRAM_ADDRESS,
-  TAccountPayer,
-  TAccountUser,
-  TAccountMint,
   TAccountTokenAccount,
+  TAccountMint,
+  TAccountUser,
+  TAccountPayer,
   TAccountSystemProgram
 > {
   // Program address.
@@ -134,10 +134,10 @@ export function getAddTokenInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    payer: { value: input.payer ?? null, isWritable: true },
-    user: { value: input.user ?? null, isWritable: false },
-    mint: { value: input.mint ?? null, isWritable: false },
     tokenAccount: { value: input.tokenAccount ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: false },
+    user: { value: input.user ?? null, isWritable: false },
+    payer: { value: input.payer ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -148,20 +148,20 @@ export function getAddTokenInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.user),
-      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.tokenAccount),
+      getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.user),
+      getAccountMeta(accounts.payer),
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
     data: getAddTokenInstructionDataEncoder().encode({}),
   } as AddTokenInstruction<
     typeof TOKEN_LITE_PROGRAM_ADDRESS,
-    TAccountPayer,
-    TAccountUser,
-    TAccountMint,
     TAccountTokenAccount,
+    TAccountMint,
+    TAccountUser,
+    TAccountPayer,
     TAccountSystemProgram
   >;
 
@@ -174,14 +174,14 @@ export type ParsedAddTokenInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    /** The account paying for the storage fees. */
-    payer?: TAccountMetas[0] | undefined;
-    /** The pubkey of the user associated with the token account */
-    user: TAccountMetas[1];
-    /** The mint account for the token to be added. */
-    mint: TAccountMetas[2];
     /** The token authority account. */
-    tokenAccount: TAccountMetas[3];
+    tokenAccount: TAccountMetas[0];
+    /** The mint account for the token to be added. */
+    mint: TAccountMetas[1];
+    /** The pubkey of the user associated with the token account */
+    user: TAccountMetas[2];
+    /** The account paying for the storage fees. */
+    payer?: TAccountMetas[3] | undefined;
     /** The system program */
     systemProgram?: TAccountMetas[4] | undefined;
   };
@@ -215,10 +215,10 @@ export function parseAddTokenInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      payer: getNextOptionalAccount(),
-      user: getNextAccount(),
-      mint: getNextAccount(),
       tokenAccount: getNextAccount(),
+      mint: getNextAccount(),
+      user: getNextAccount(),
+      payer: getNextOptionalAccount(),
       systemProgram: getNextOptionalAccount(),
     },
     data: getAddTokenInstructionDataDecoder().decode(instruction.data),

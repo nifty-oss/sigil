@@ -50,7 +50,7 @@ impl<'a> TokenAccount<'a> {
 
     pub fn from_bytes(bytes: &'a [u8]) -> Self {
         let (header, data) = bytes.split_at(Header::LEN);
-        let header = Header::from_bytes(header);
+        let header = Header::load(header);
 
         let tokens = U8AVLTree::from_bytes(data);
 
@@ -68,7 +68,7 @@ impl<'a> TokenAccount<'a> {
 impl<'a> TokenAccountMut<'a> {
     pub fn from_bytes_mut(bytes: &'a mut [u8]) -> Self {
         let (header, data) = bytes.split_at_mut(Header::LEN);
-        let header = Header::from_bytes_mut(header);
+        let header = Header::load_mut(header);
 
         let tokens = U8AVLTreeMut::from_bytes_mut(data);
 
@@ -79,11 +79,13 @@ impl<'a> TokenAccountMut<'a> {
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
 pub struct Header {
-    // Tag, empty x 7 bytes.
-    pub data: [u8; 8],
+    // Tag, empty x 3 bytes.
+    pub data: [u8; 4],
     pub authority: Pubkey,
     pub user: Pubkey,
 }
+
+impl ZeroCopy for Header {}
 
 impl Header {
     /// Bytes required to store an `Header`.
@@ -94,15 +96,7 @@ impl Header {
     }
 
     pub fn set_tag(&mut self, tag: Tag) {
-        *self.data.get_mut(0).unwrap() = tag.into();
-    }
-
-    pub fn from_bytes(bytes: &'_ [u8]) -> &'_ Self {
-        bytemuck::from_bytes::<Header>(bytes)
-    }
-
-    pub fn from_bytes_mut(bytes: &'_ mut [u8]) -> &'_ mut Self {
-        bytemuck::from_bytes_mut::<Header>(bytes)
+        self.data[0] = tag.into();
     }
 }
 
@@ -120,8 +114,6 @@ pub struct Mint {
 impl Mint {
     pub const LEN: usize = std::mem::size_of::<Mint>();
     pub const PREFIX: &'static [u8] = b"mint";
-    pub const SEEDS_LEN: usize =
-        Self::PREFIX.len() + std::mem::size_of::<[u8; 4]>() + std::mem::size_of::<Pubkey>();
 
     pub fn tag(&self) -> Tag {
         Tag::try_from(self.data[0]).unwrap()
@@ -136,9 +128,7 @@ impl Mint {
     }
 
     pub fn ticker(&self) -> Ticker {
-        let mut ticker = [0; 4];
-        ticker.copy_from_slice(&self.data[4..8]);
-        ticker
+        self.data[4..8].try_into().unwrap()
     }
 
     pub fn set_tag(&mut self, tag: Tag) {

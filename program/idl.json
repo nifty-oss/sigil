@@ -6,20 +6,11 @@
       "name": "AddToken",
       "accounts": [
         {
-          "name": "payer",
+          "name": "tokenAccount",
           "isMut": true,
-          "isSigner": true,
-          "isOptional": true,
-          "docs": [
-            "The account paying for the storage fees."
-          ]
-        },
-        {
-          "name": "user",
-          "isMut": false,
           "isSigner": false,
           "docs": [
-            "The pubkey of the user associated with the token account"
+            "The token authority account."
           ]
         },
         {
@@ -31,11 +22,20 @@
           ]
         },
         {
-          "name": "tokenAccount",
-          "isMut": true,
+          "name": "user",
+          "isMut": false,
           "isSigner": false,
           "docs": [
-            "The token authority account."
+            "The pubkey of the user associated with the token account"
+          ]
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "isOptional": true,
+          "docs": [
+            "The account paying for the storage fees."
           ]
         },
         {
@@ -58,11 +58,11 @@
       "name": "Burn",
       "accounts": [
         {
-          "name": "user",
-          "isMut": false,
-          "isSigner": true,
+          "name": "tokenAccount",
+          "isMut": true,
+          "isSigner": false,
           "docs": [
-            "The user of the token account"
+            "The token authority account."
           ]
         },
         {
@@ -74,11 +74,11 @@
           ]
         },
         {
-          "name": "tokenAccount",
-          "isMut": true,
-          "isSigner": false,
+          "name": "user",
+          "isMut": false,
+          "isSigner": true,
           "docs": [
-            "The token authority account."
+            "The user of the token account"
           ]
         }
       ],
@@ -99,11 +99,11 @@
       "name": "CreateMint",
       "accounts": [
         {
-          "name": "payer",
+          "name": "mint",
           "isMut": true,
-          "isSigner": true,
+          "isSigner": false,
           "docs": [
-            "The account paying for the storage fees."
+            "The mint account PDA derived from the ticker and authority."
           ]
         },
         {
@@ -115,11 +115,11 @@
           ]
         },
         {
-          "name": "mint",
+          "name": "payer",
           "isMut": true,
-          "isSigner": false,
+          "isSigner": true,
           "docs": [
-            "The mint account PDA derived from the ticker and authority."
+            "The account paying for the storage fees."
           ]
         },
         {
@@ -148,11 +148,11 @@
       "name": "CreateTokenAccount",
       "accounts": [
         {
-          "name": "payer",
+          "name": "tokenAccount",
           "isMut": true,
-          "isSigner": true,
+          "isSigner": false,
           "docs": [
-            "The account paying for the storage fees."
+            "The token authority account."
           ]
         },
         {
@@ -172,11 +172,11 @@
           ]
         },
         {
-          "name": "tokenAccount",
+          "name": "payer",
           "isMut": true,
-          "isSigner": false,
+          "isSigner": true,
           "docs": [
-            "The token authority account."
+            "The account paying for the storage fees."
           ]
         },
         {
@@ -205,20 +205,11 @@
       "name": "MintTo",
       "accounts": [
         {
-          "name": "payer",
+          "name": "tokenAccount",
           "isMut": true,
-          "isSigner": true,
-          "isOptional": true,
+          "isSigner": false,
           "docs": [
-            "The account paying for the storage fees."
-          ]
-        },
-        {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true,
-          "docs": [
-            "The authority for the token account."
+            "The token authority account."
           ]
         },
         {
@@ -230,11 +221,20 @@
           ]
         },
         {
-          "name": "tokenAccount",
+          "name": "authority",
           "isMut": true,
-          "isSigner": false,
+          "isSigner": true,
           "docs": [
-            "The token authority account."
+            "The authority for the mint."
+          ]
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "isOptional": true,
+          "docs": [
+            "The account paying for the storage fees."
           ]
         },
         {
@@ -264,39 +264,6 @@
       "name": "Transfer",
       "accounts": [
         {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true,
-          "isOptional": true,
-          "docs": [
-            "The account paying for the storage fees."
-          ]
-        },
-        {
-          "name": "user",
-          "isMut": false,
-          "isSigner": true,
-          "docs": [
-            "The pubkey of the user associated with the token account"
-          ]
-        },
-        {
-          "name": "recipient",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "The recipient account."
-          ]
-        },
-        {
-          "name": "mint",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "The mint account for the token to be transferred"
-          ]
-        },
-        {
           "name": "userTokenAccount",
           "isMut": true,
           "isSigner": false,
@@ -310,6 +277,23 @@
           "isSigner": false,
           "docs": [
             "The token authority account."
+          ]
+        },
+        {
+          "name": "user",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "The pubkey of the user associated with the token account"
+          ]
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "isOptional": true,
+          "docs": [
+            "The account paying for the storage fees."
           ]
         },
         {
@@ -398,6 +382,15 @@
       "type": {
         "kind": "struct",
         "fields": [
+          {
+            "name": "ticker",
+            "type": {
+              "array": [
+                "u8",
+                4
+              ]
+            }
+          },
           {
             "name": "amount",
             "type": "u32"

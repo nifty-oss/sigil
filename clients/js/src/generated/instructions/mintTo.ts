@@ -35,30 +35,30 @@ import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type MintToInstruction<
   TProgram extends string = typeof TOKEN_LITE_PROGRAM_ADDRESS,
-  TAccountPayer extends string | IAccountMeta<string> = string,
-  TAccountAuthority extends string | IAccountMeta<string> = string,
-  TAccountMint extends string | IAccountMeta<string> = string,
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
+  TAccountMint extends string | IAccountMeta<string> = string,
+  TAccountAuthority extends string | IAccountMeta<string> = string,
+  TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountPayer extends string
-        ? WritableSignerAccount<TAccountPayer> &
-            IAccountSignerMeta<TAccountPayer>
-        : TAccountPayer,
+      TAccountTokenAccount extends string
+        ? WritableAccount<TAccountTokenAccount>
+        : TAccountTokenAccount,
+      TAccountMint extends string
+        ? WritableAccount<TAccountMint>
+        : TAccountMint,
       TAccountAuthority extends string
         ? WritableSignerAccount<TAccountAuthority> &
             IAccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
-      TAccountMint extends string
-        ? WritableAccount<TAccountMint>
-        : TAccountMint,
-      TAccountTokenAccount extends string
-        ? WritableAccount<TAccountTokenAccount>
-        : TAccountTokenAccount,
+      TAccountPayer extends string
+        ? WritableSignerAccount<TAccountPayer> &
+            IAccountSignerMeta<TAccountPayer>
+        : TAccountPayer,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -98,45 +98,45 @@ export function getMintToInstructionDataCodec(): Codec<
 }
 
 export type MintToInput<
-  TAccountPayer extends string = string,
-  TAccountAuthority extends string = string,
-  TAccountMint extends string = string,
   TAccountTokenAccount extends string = string,
+  TAccountMint extends string = string,
+  TAccountAuthority extends string = string,
+  TAccountPayer extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  /** The account paying for the storage fees. */
-  payer?: TransactionSigner<TAccountPayer>;
-  /** The authority for the token account. */
-  authority: TransactionSigner<TAccountAuthority>;
-  /** The mint account PDA derived from the ticker and authority. */
-  mint: Address<TAccountMint>;
   /** The token authority account. */
   tokenAccount: Address<TAccountTokenAccount>;
+  /** The mint account PDA derived from the ticker and authority. */
+  mint: Address<TAccountMint>;
+  /** The authority for the mint. */
+  authority: TransactionSigner<TAccountAuthority>;
+  /** The account paying for the storage fees. */
+  payer?: TransactionSigner<TAccountPayer>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
   amount: MintToInstructionDataArgs['amount'];
 };
 
 export function getMintToInstruction<
-  TAccountPayer extends string,
-  TAccountAuthority extends string,
-  TAccountMint extends string,
   TAccountTokenAccount extends string,
+  TAccountMint extends string,
+  TAccountAuthority extends string,
+  TAccountPayer extends string,
   TAccountSystemProgram extends string,
 >(
   input: MintToInput<
-    TAccountPayer,
-    TAccountAuthority,
-    TAccountMint,
     TAccountTokenAccount,
+    TAccountMint,
+    TAccountAuthority,
+    TAccountPayer,
     TAccountSystemProgram
   >
 ): MintToInstruction<
   typeof TOKEN_LITE_PROGRAM_ADDRESS,
-  TAccountPayer,
-  TAccountAuthority,
-  TAccountMint,
   TAccountTokenAccount,
+  TAccountMint,
+  TAccountAuthority,
+  TAccountPayer,
   TAccountSystemProgram
 > {
   // Program address.
@@ -144,10 +144,10 @@ export function getMintToInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    payer: { value: input.payer ?? null, isWritable: true },
-    authority: { value: input.authority ?? null, isWritable: true },
-    mint: { value: input.mint ?? null, isWritable: true },
     tokenAccount: { value: input.tokenAccount ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: true },
+    authority: { value: input.authority ?? null, isWritable: true },
+    payer: { value: input.payer ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -161,10 +161,10 @@ export function getMintToInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.authority),
-      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.tokenAccount),
+      getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.authority),
+      getAccountMeta(accounts.payer),
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
@@ -173,10 +173,10 @@ export function getMintToInstruction<
     ),
   } as MintToInstruction<
     typeof TOKEN_LITE_PROGRAM_ADDRESS,
-    TAccountPayer,
-    TAccountAuthority,
-    TAccountMint,
     TAccountTokenAccount,
+    TAccountMint,
+    TAccountAuthority,
+    TAccountPayer,
     TAccountSystemProgram
   >;
 
@@ -189,14 +189,14 @@ export type ParsedMintToInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    /** The account paying for the storage fees. */
-    payer?: TAccountMetas[0] | undefined;
-    /** The authority for the token account. */
-    authority: TAccountMetas[1];
-    /** The mint account PDA derived from the ticker and authority. */
-    mint: TAccountMetas[2];
     /** The token authority account. */
-    tokenAccount: TAccountMetas[3];
+    tokenAccount: TAccountMetas[0];
+    /** The mint account PDA derived from the ticker and authority. */
+    mint: TAccountMetas[1];
+    /** The authority for the mint. */
+    authority: TAccountMetas[2];
+    /** The account paying for the storage fees. */
+    payer?: TAccountMetas[3] | undefined;
     /** The system program */
     systemProgram?: TAccountMetas[4] | undefined;
   };
@@ -230,10 +230,10 @@ export function parseMintToInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      payer: getNextOptionalAccount(),
-      authority: getNextAccount(),
-      mint: getNextAccount(),
       tokenAccount: getNextAccount(),
+      mint: getNextAccount(),
+      authority: getNextAccount(),
+      payer: getNextOptionalAccount(),
       systemProgram: getNextOptionalAccount(),
     },
     data: getMintToInstructionDataDecoder().decode(instruction.data),

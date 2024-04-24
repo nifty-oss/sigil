@@ -77,7 +77,7 @@ export type TokenAccountAccountDataArgs = {
 export function getTokenAccountAccountDataEncoder(): Encoder<TokenAccountAccountDataArgs> {
   return getStructEncoder([
     ['tag', getTagEncoder()],
-    ['empty', getArrayEncoder(getU8Encoder(), { size: 7 })],
+    ['empty', getArrayEncoder(getU8Encoder(), { size: 3 })],
     ['authority', getAddressEncoder()],
     ['user', getAddressEncoder()],
     ['tree', getTreeEncoder()],
@@ -87,7 +87,7 @@ export function getTokenAccountAccountDataEncoder(): Encoder<TokenAccountAccount
 export function getTokenAccountAccountDataDecoder(): Decoder<TokenAccountAccountData> {
   return getStructDecoder([
     ['tag', getTagDecoder()],
-    ['empty', getArrayDecoder(getU8Decoder(), { size: 7 })],
+    ['empty', getArrayDecoder(getU8Decoder(), { size: 3 })],
     ['authority', getAddressDecoder()],
     ['user', getAddressDecoder()],
     ['tree', getTreeDecoder()],

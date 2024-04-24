@@ -34,23 +34,23 @@ import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type BurnInstruction<
   TProgram extends string = typeof TOKEN_LITE_PROGRAM_ADDRESS,
-  TAccountUser extends string | IAccountMeta<string> = string,
-  TAccountMint extends string | IAccountMeta<string> = string,
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
+  TAccountMint extends string | IAccountMeta<string> = string,
+  TAccountUser extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountUser extends string
-        ? ReadonlySignerAccount<TAccountUser> & IAccountSignerMeta<TAccountUser>
-        : TAccountUser,
-      TAccountMint extends string
-        ? WritableAccount<TAccountMint>
-        : TAccountMint,
       TAccountTokenAccount extends string
         ? WritableAccount<TAccountTokenAccount>
         : TAccountTokenAccount,
+      TAccountMint extends string
+        ? WritableAccount<TAccountMint>
+        : TAccountMint,
+      TAccountUser extends string
+        ? ReadonlySignerAccount<TAccountUser> & IAccountSignerMeta<TAccountUser>
+        : TAccountUser,
       ...TRemainingAccounts,
     ]
   >;
@@ -87,39 +87,39 @@ export function getBurnInstructionDataCodec(): Codec<
 }
 
 export type BurnInput<
-  TAccountUser extends string = string,
-  TAccountMint extends string = string,
   TAccountTokenAccount extends string = string,
+  TAccountMint extends string = string,
+  TAccountUser extends string = string,
 > = {
-  /** The user of the token account */
-  user: TransactionSigner<TAccountUser>;
-  /** The mint account PDA derived from the ticker and authority. */
-  mint: Address<TAccountMint>;
   /** The token authority account. */
   tokenAccount: Address<TAccountTokenAccount>;
+  /** The mint account PDA derived from the ticker and authority. */
+  mint: Address<TAccountMint>;
+  /** The user of the token account */
+  user: TransactionSigner<TAccountUser>;
   amount: BurnInstructionDataArgs['amount'];
 };
 
 export function getBurnInstruction<
-  TAccountUser extends string,
-  TAccountMint extends string,
   TAccountTokenAccount extends string,
+  TAccountMint extends string,
+  TAccountUser extends string,
 >(
-  input: BurnInput<TAccountUser, TAccountMint, TAccountTokenAccount>
+  input: BurnInput<TAccountTokenAccount, TAccountMint, TAccountUser>
 ): BurnInstruction<
   typeof TOKEN_LITE_PROGRAM_ADDRESS,
-  TAccountUser,
+  TAccountTokenAccount,
   TAccountMint,
-  TAccountTokenAccount
+  TAccountUser
 > {
   // Program address.
   const programAddress = TOKEN_LITE_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
-    user: { value: input.user ?? null, isWritable: false },
-    mint: { value: input.mint ?? null, isWritable: true },
     tokenAccount: { value: input.tokenAccount ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: true },
+    user: { value: input.user ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -132,9 +132,9 @@ export function getBurnInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.user),
-      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.tokenAccount),
+      getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.user),
     ],
     programAddress,
     data: getBurnInstructionDataEncoder().encode(
@@ -142,9 +142,9 @@ export function getBurnInstruction<
     ),
   } as BurnInstruction<
     typeof TOKEN_LITE_PROGRAM_ADDRESS,
-    TAccountUser,
+    TAccountTokenAccount,
     TAccountMint,
-    TAccountTokenAccount
+    TAccountUser
   >;
 
   return instruction;
@@ -156,12 +156,12 @@ export type ParsedBurnInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    /** The user of the token account */
-    user: TAccountMetas[0];
+    /** The token authority account. */
+    tokenAccount: TAccountMetas[0];
     /** The mint account PDA derived from the ticker and authority. */
     mint: TAccountMetas[1];
-    /** The token authority account. */
-    tokenAccount: TAccountMetas[2];
+    /** The user of the token account */
+    user: TAccountMetas[2];
   };
   data: BurnInstructionData;
 };
@@ -187,9 +187,9 @@ export function parseBurnInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      user: getNextAccount(),
-      mint: getNextAccount(),
       tokenAccount: getNextAccount(),
+      mint: getNextAccount(),
+      user: getNextAccount(),
     },
     data: getBurnInstructionDataDecoder().decode(instruction.data),
   };

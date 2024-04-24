@@ -26,7 +26,7 @@ test('it can mint tokens to an existing account', async (t) => {
   const mintAmount = 100;
 
   const [mint] = await findMintPda({
-    ticker: Array.from(ticker).map((c) => c.charCodeAt(0)),
+    ticker: Buffer.from(ticker),
     authority: authority.address,
   });
 
@@ -108,7 +108,7 @@ test('it can add a token and mint to it account', async (t) => {
   const mintAmount = 100;
 
   const [mint] = await findMintPda({
-    ticker: Array.from(ticker).map((c) => c.charCodeAt(0)),
+    ticker: Buffer.from(ticker),
     authority: authority.address,
   });
 

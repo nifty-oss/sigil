@@ -10,12 +10,12 @@ use borsh::BorshSerialize;
 
 /// Accounts.
 pub struct CreateMint {
-    /// The account paying for the storage fees.
-    pub payer: solana_program::pubkey::Pubkey,
-    /// The authority for the token account.
-    pub authority: solana_program::pubkey::Pubkey,
     /// The mint account PDA derived from the ticker and authority.
     pub mint: solana_program::pubkey::Pubkey,
+    /// The authority for the token account.
+    pub authority: solana_program::pubkey::Pubkey,
+    /// The account paying for the storage fees.
+    pub payer: solana_program::pubkey::Pubkey,
     /// The system program
     pub system_program: solana_program::pubkey::Pubkey,
 }
@@ -35,14 +35,14 @@ impl CreateMint {
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.payer, true,
+            self.mint, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.authority,
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.mint, false,
+            self.payer, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.system_program,
@@ -84,15 +84,15 @@ pub struct CreateMintInstructionArgs {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable, signer]` payer
+///   0. `[writable]` mint
 ///   1. `[writable, signer]` authority
-///   2. `[writable]` mint
+///   2. `[writable, signer]` payer
 ///   3. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Default)]
 pub struct CreateMintBuilder {
-    payer: Option<solana_program::pubkey::Pubkey>,
-    authority: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
+    authority: Option<solana_program::pubkey::Pubkey>,
+    payer: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     ticker: Option<String>,
     max_supply: Option<u64>,
@@ -104,10 +104,10 @@ impl CreateMintBuilder {
     pub fn new() -> Self {
         Self::default()
     }
-    /// The account paying for the storage fees.
+    /// The mint account PDA derived from the ticker and authority.
     #[inline(always)]
-    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.payer = Some(payer);
+    pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.mint = Some(mint);
         self
     }
     /// The authority for the token account.
@@ -116,10 +116,10 @@ impl CreateMintBuilder {
         self.authority = Some(authority);
         self
     }
-    /// The mint account PDA derived from the ticker and authority.
+    /// The account paying for the storage fees.
     #[inline(always)]
-    pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.mint = Some(mint);
+    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.payer = Some(payer);
         self
     }
     /// `[optional account, default to '11111111111111111111111111111111']`
@@ -165,9 +165,9 @@ impl CreateMintBuilder {
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = CreateMint {
-            payer: self.payer.expect("payer is not set"),
-            authority: self.authority.expect("authority is not set"),
             mint: self.mint.expect("mint is not set"),
+            authority: self.authority.expect("authority is not set"),
+            payer: self.payer.expect("payer is not set"),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
@@ -184,12 +184,12 @@ impl CreateMintBuilder {
 
 /// `create_mint` CPI accounts.
 pub struct CreateMintCpiAccounts<'a, 'b> {
-    /// The account paying for the storage fees.
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The authority for the token account.
-    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// The mint account PDA derived from the ticker and authority.
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The authority for the token account.
+    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The account paying for the storage fees.
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
     /// The system program
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
@@ -198,12 +198,12 @@ pub struct CreateMintCpiAccounts<'a, 'b> {
 pub struct CreateMintCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The account paying for the storage fees.
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The authority for the token account.
-    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// The mint account PDA derived from the ticker and authority.
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The authority for the token account.
+    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The account paying for the storage fees.
+    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
     /// The system program
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
@@ -218,9 +218,9 @@ impl<'a, 'b> CreateMintCpi<'a, 'b> {
     ) -> Self {
         Self {
             __program: program,
-            payer: accounts.payer,
-            authority: accounts.authority,
             mint: accounts.mint,
+            authority: accounts.authority,
+            payer: accounts.payer,
             system_program: accounts.system_program,
             __args: args,
         }
@@ -260,16 +260,16 @@ impl<'a, 'b> CreateMintCpi<'a, 'b> {
     ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.payer.key,
-            true,
+            *self.mint.key,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.authority.key,
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.mint.key,
-            false,
+            *self.payer.key,
+            true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.system_program.key,
@@ -293,9 +293,9 @@ impl<'a, 'b> CreateMintCpi<'a, 'b> {
         };
         let mut account_infos = Vec::with_capacity(4 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.payer.clone());
-        account_infos.push(self.authority.clone());
         account_infos.push(self.mint.clone());
+        account_infos.push(self.authority.clone());
+        account_infos.push(self.payer.clone());
         account_infos.push(self.system_program.clone());
         remaining_accounts
             .iter()
@@ -313,9 +313,9 @@ impl<'a, 'b> CreateMintCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable, signer]` payer
+///   0. `[writable]` mint
 ///   1. `[writable, signer]` authority
-///   2. `[writable]` mint
+///   2. `[writable, signer]` payer
 ///   3. `[]` system_program
 pub struct CreateMintCpiBuilder<'a, 'b> {
     instruction: Box<CreateMintCpiBuilderInstruction<'a, 'b>>,
@@ -325,9 +325,9 @@ impl<'a, 'b> CreateMintCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(CreateMintCpiBuilderInstruction {
             __program: program,
-            payer: None,
-            authority: None,
             mint: None,
+            authority: None,
+            payer: None,
             system_program: None,
             ticker: None,
             max_supply: None,
@@ -336,10 +336,10 @@ impl<'a, 'b> CreateMintCpiBuilder<'a, 'b> {
         });
         Self { instruction }
     }
-    /// The account paying for the storage fees.
+    /// The mint account PDA derived from the ticker and authority.
     #[inline(always)]
-    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.payer = Some(payer);
+    pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.mint = Some(mint);
         self
     }
     /// The authority for the token account.
@@ -351,10 +351,10 @@ impl<'a, 'b> CreateMintCpiBuilder<'a, 'b> {
         self.instruction.authority = Some(authority);
         self
     }
-    /// The mint account PDA derived from the ticker and authority.
+    /// The account paying for the storage fees.
     #[inline(always)]
-    pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.mint = Some(mint);
+    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.payer = Some(payer);
         self
     }
     /// The system program
@@ -438,11 +438,11 @@ impl<'a, 'b> CreateMintCpiBuilder<'a, 'b> {
         let instruction = CreateMintCpi {
             __program: self.instruction.__program,
 
-            payer: self.instruction.payer.expect("payer is not set"),
+            mint: self.instruction.mint.expect("mint is not set"),
 
             authority: self.instruction.authority.expect("authority is not set"),
 
-            mint: self.instruction.mint.expect("mint is not set"),
+            payer: self.instruction.payer.expect("payer is not set"),
 
             system_program: self
                 .instruction
@@ -459,9 +459,9 @@ impl<'a, 'b> CreateMintCpiBuilder<'a, 'b> {
 
 struct CreateMintCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ticker: Option<String>,
     max_supply: Option<u64>,
