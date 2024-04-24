@@ -47,8 +47,6 @@ pub fn process_create_mint<'a>(
         &[bump],
     ];
 
-    msg!("signer seeds length: {}", signer_seeds.len());
-
     // Create the mint account.
     create_account(
         mint_info,
@@ -58,8 +56,6 @@ pub fn process_create_mint<'a>(
         &crate::ID,
         Some(&[signer_seeds]),
     )?;
-
-    msg!("Mint account created.");
 
     let mut data = (*mint_info.data).borrow_mut();
     let mint = Mint::load_mut(&mut data);

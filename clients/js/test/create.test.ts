@@ -1,6 +1,7 @@
 import { address, appendTransactionInstruction, pipe } from '@solana/web3.js';
 import test from 'ava';
 import {
+  fetchMint,
   fetchTokenAccount,
   findMintPda,
   findTokenAccountPda,
@@ -43,7 +44,12 @@ test('it can create a new mint account', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  t.pass();
+  const account = await fetchMint(client.rpc, mint);
+
+  t.assert(account?.data.authority === authority.address);
+  t.assert(account?.data.supply === 0n);
+  t.assert(account?.data.maxSupply === 1000n);
+  t.assert(account?.data.decimals === 0);
 });
 
 test('it can create a new token account', async (t) => {
