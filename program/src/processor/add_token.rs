@@ -64,6 +64,8 @@ pub fn process_add_token<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
         system_program_info
     );
 
+    msg!("account size: {}", token_account_info.data_len());
+
     // Get a mutable reference to the account data.
     let account_data = &mut (*token_account_info.data).borrow_mut();
     let mut token_namespace = TokenAccountMut::from_bytes_mut(account_data);

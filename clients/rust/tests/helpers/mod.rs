@@ -1,4 +1,6 @@
-use nifty_oss_token_lite_client::{instructions::CreateMintBuilder, ID as TokenLiteID};
+use nifty_oss_token_lite_client::{
+    accounts::Mint, instructions::CreateMintBuilder, ID as TokenLiteID,
+};
 use solana_program_test::{BanksClientError, ProgramTest, ProgramTestContext};
 use solana_sdk::{
     pubkey::Pubkey,
@@ -41,7 +43,7 @@ pub async fn airdrop(
 }
 
 pub async fn program_context() -> ProgramTestContext {
-    let mut test = ProgramTest::new(
+    let test = ProgramTest::new(
         "nifty_oss_token_lite",
         nifty_oss_token_lite_client::ID,
         None,
@@ -51,16 +53,18 @@ pub async fn program_context() -> ProgramTestContext {
 
 pub struct CreateMintParams<'a> {
     pub payer_signer: &'a Keypair,
-    pub namespace_signer: &'a Keypair,
-    pub ticker: String,
-    pub namespace: Pubkey,
-    pub max_supply: u64,
-    pub decimals: u8,
+    pub authority_signer: &'a Keypair,
+    pub metadata: &'a TestMetadata,
 }
 
 pub struct TestMint {
     pub mint: Pubkey,
-    pub metadata: MintMetadata,
+}
+
+pub struct TestMetadata {
+    pub ticker: String,
+    pub max_supply: u64,
+    pub decimals: u8,
 }
 
 pub async fn create_mint<'a>(
@@ -69,51 +73,40 @@ pub async fn create_mint<'a>(
 ) -> Result<TestMint> {
     let CreateMintParams {
         payer_signer,
-        namespace_signer,
-        ticker,
-        namespace,
-        max_supply,
-        decimals,
+        authority_signer,
+        metadata:
+            TestMetadata {
+                ticker,
+                max_supply,
+                decimals,
+                ..
+            },
     } = params;
 
     let payer = payer_signer.pubkey();
-
-    let mut seeds = Vec::with_capacity(32);
-    seeds.extend(ticker.as_bytes().iter());
-    seeds.extend(namespace.as_ref()[..28].iter());
-    let seeds: &[u8; 32] = seeds.as_slice().try_into().unwrap();
+    let authority = authority_signer.pubkey();
 
     let (mint, _) = Pubkey::find_program_address(
-        // Seeds should be 32 bytes long, so we take the first 28 bytes of the namespace.
-        &[seeds],
+        &[&Mint::PREFIX, ticker.as_bytes(), &authority.as_ref()],
         &TokenLiteID,
     );
 
     let ix = CreateMintBuilder::new()
         .payer(payer)
-        .namespace(namespace)
+        .authority(authority)
         .mint(mint)
         .ticker(ticker.clone())
-        .max_supply(max_supply)
-        .decimals(decimals)
+        .max_supply(*max_supply)
+        .decimals(*decimals)
         .instruction();
 
     let tx = Transaction::new_signed_with_payer(
         &[ix],
         Some(&payer),
-        &[payer_signer, namespace_signer],
+        &[payer_signer, authority_signer],
         context.last_blockhash,
     );
     context.banks_client.process_transaction(tx).await.unwrap();
 
-    Ok(TestMint {
-        mint,
-        metadata: MintMetadata {
-            namespace,
-            ticker,
-            supply: 0,
-            max_supply,
-            decimals,
-        },
-    })
+    Ok(TestMint { mint })
 }
