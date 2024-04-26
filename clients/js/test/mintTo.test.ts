@@ -1,13 +1,12 @@
 import { address, appendTransactionInstruction, pipe } from '@solana/web3.js';
-import { ASSET_PROGRAM_ID } from '@nifty-oss/asset';
 import test from 'ava';
 import {
-  getCreateMintInstruction,
-  findMintAccountPda,
-  getCreateTokenAccountInstruction,
+  fetchTokenAccount,
+  findMintPda,
   findTokenAccountPda,
   getAddTokenInstruction,
-  fetchTokenAccount,
+  getCreateMintInstruction,
+  getCreateTokenAccountInstruction,
   getMintToInstruction,
 } from '../src/index.js';
 import {
@@ -20,42 +19,41 @@ import {
 test('it can mint tokens to an existing account', async (t) => {
   const client = createDefaultSolanaClient();
 
-  const namespace = await generateKeyPairSignerWithSol(client);
+  const authority = await generateKeyPairSignerWithSol(client);
   const user = await generateKeyPairSignerWithSol(client);
 
   const ticker = 'USDC';
   const mintAmount = 100;
 
-  const [mint] = await findMintAccountPda({
-    ticker,
-    namespace: namespace.address,
+  const [mint] = await findMintPda({
+    ticker: Buffer.from(ticker),
+    authority: authority.address,
   });
 
   const createMintIx = getCreateMintInstruction({
-    payer: namespace,
+    payer: authority,
     mint,
-    namespace,
-    niftyProgram: address(ASSET_PROGRAM_ID),
+    authority,
     decimals: 0,
     maxSupply: 1000,
     ticker: 'USDC',
   });
 
   const [tokenAccount] = await findTokenAccountPda({
-    namespace: namespace.address,
+    authority: authority.address,
     user: user.address,
   });
 
   const createTokenAccountIx = getCreateTokenAccountInstruction({
-    payer: namespace,
+    payer: authority,
     user: user.address,
-    namespace: namespace.address,
+    authority: authority.address,
     tokenAccount,
     capacity: 0,
   });
 
   await pipe(
-    await createDefaultTransaction(client, namespace),
+    await createDefaultTransaction(client, authority),
     (tx) => appendTransactionInstruction(createMintIx, tx),
     (tx) => appendTransactionInstruction(createTokenAccountIx, tx),
     (tx) => signAndSendTransaction(client, tx)
@@ -70,7 +68,7 @@ test('it can mint tokens to an existing account', async (t) => {
   });
 
   await pipe(
-    await createDefaultTransaction(client, namespace),
+    await createDefaultTransaction(client, authority),
     (tx) => appendTransactionInstruction(addTokenIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
@@ -81,16 +79,15 @@ test('it can mint tokens to an existing account', async (t) => {
   t.assert(account?.data.tree.nodes[0].amount === 0);
 
   const mintToIx = getMintToInstruction({
-    payer: namespace,
-    namespace,
+    payer: authority,
+    authority,
     mint,
     tokenAccount,
     amount: mintAmount,
-    niftyProgram: address(ASSET_PROGRAM_ID),
   });
 
   await pipe(
-    await createDefaultTransaction(client, namespace),
+    await createDefaultTransaction(client, authority),
     (tx) => appendTransactionInstruction(mintToIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
@@ -104,62 +101,60 @@ test('it can mint tokens to an existing account', async (t) => {
 test('it can add a token and mint to it account', async (t) => {
   const client = createDefaultSolanaClient();
 
-  const namespace = await generateKeyPairSignerWithSol(client);
+  const authority = await generateKeyPairSignerWithSol(client);
   const user = await generateKeyPairSignerWithSol(client);
 
   const ticker = 'USDC';
   const mintAmount = 100;
 
-  const [mint] = await findMintAccountPda({
-    ticker,
-    namespace: namespace.address,
+  const [mint] = await findMintPda({
+    ticker: Buffer.from(ticker),
+    authority: authority.address,
   });
 
   const createMintIx = getCreateMintInstruction({
-    payer: namespace,
+    payer: authority,
     mint,
-    namespace,
-    niftyProgram: address(ASSET_PROGRAM_ID),
+    authority,
     decimals: 0,
     maxSupply: 1000,
     ticker: 'USDC',
   });
 
   const [tokenAccount] = await findTokenAccountPda({
-    namespace: namespace.address,
+    authority: authority.address,
     user: user.address,
   });
 
   const createTokenAccountIx = getCreateTokenAccountInstruction({
-    payer: namespace,
+    payer: authority,
     user: user.address,
-    namespace: namespace.address,
+    authority: authority.address,
     tokenAccount,
     capacity: 0,
   });
 
   await pipe(
-    await createDefaultTransaction(client, namespace),
+    await createDefaultTransaction(client, authority),
     (tx) => appendTransactionInstruction(createMintIx, tx),
     (tx) => appendTransactionInstruction(createTokenAccountIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  // We do not add the token prior to minting. The mint instruction should
+  // We do not need to add the token prior to minting. The mint instruction should
   // add it for us.
 
   const mintToIx = getMintToInstruction({
-    payer: namespace,
-    namespace,
+    payer: authority,
+    authority,
     mint,
     tokenAccount,
     amount: mintAmount,
-    niftyProgram: address(ASSET_PROGRAM_ID),
     systemProgram: address('11111111111111111111111111111111'),
   });
 
   await pipe(
-    await createDefaultTransaction(client, namespace),
+    await createDefaultTransaction(client, authority),
     (tx) => appendTransactionInstruction(mintToIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );

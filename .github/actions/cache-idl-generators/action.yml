@@ -1,0 +1,22 @@
+name: Cache IDL generators
+
+inputs:
+  path:
+    description: Path(s) to cache
+    required: true
+    default: "./.crates/"
+  key:
+    description: A unique key prefix for the cache
+    required: true
+    default: "idl-generators"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Cache IDL generators
+      uses: actions/cache@v4
+      with:
+        path: ./.crates/
+        key: ${{ runner.os }}-${{ inputs.key }}-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ inputs.key }}

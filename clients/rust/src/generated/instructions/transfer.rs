@@ -10,18 +10,14 @@ use borsh::BorshSerialize;
 
 /// Accounts.
 pub struct Transfer {
-    /// The account paying for the storage fees.
-    pub payer: Option<solana_program::pubkey::Pubkey>,
+    /// The token authority account.
+    pub user_token_account: solana_program::pubkey::Pubkey,
+    /// The token authority account.
+    pub recipient_token_account: solana_program::pubkey::Pubkey,
     /// The pubkey of the user associated with the token account
     pub user: solana_program::pubkey::Pubkey,
-    /// The recipient account.
-    pub recipient: solana_program::pubkey::Pubkey,
-    /// The mint account for the token to be transferred
-    pub mint: solana_program::pubkey::Pubkey,
-    /// The token namespace account.
-    pub user_token_account: solana_program::pubkey::Pubkey,
-    /// The token namespace account.
-    pub recipient_token_account: solana_program::pubkey::Pubkey,
+    /// The account paying for the storage fees.
+    pub payer: Option<solana_program::pubkey::Pubkey>,
     /// The system program
     pub system_program: Option<solana_program::pubkey::Pubkey>,
 }
@@ -39,25 +35,7 @@ impl Transfer {
         args: TransferInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
-        if let Some(payer) = self.payer {
-            accounts.push(solana_program::instruction::AccountMeta::new(payer, true));
-        } else {
-            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::TOKEN_LITE_ID,
-                false,
-            ));
-        }
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.user, true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.recipient,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.mint, false,
-        ));
+        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.user_token_account,
             false,
@@ -66,6 +44,17 @@ impl Transfer {
             self.recipient_token_account,
             false,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.user, true,
+        ));
+        if let Some(payer) = self.payer {
+            accounts.push(solana_program::instruction::AccountMeta::new(payer, true));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TOKEN_LITE_ID,
+                false,
+            ));
+        }
         if let Some(system_program) = self.system_program {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
                 system_program,
@@ -104,6 +93,7 @@ impl TransferInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransferInstructionArgs {
+    pub ticker: [u8; 4],
     pub amount: u32,
 }
 
@@ -111,22 +101,19 @@ pub struct TransferInstructionArgs {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable, signer, optional]` payer
-///   1. `[signer]` user
-///   2. `[]` recipient
-///   3. `[]` mint
-///   4. `[writable]` user_token_account
-///   5. `[writable]` recipient_token_account
-///   6. `[optional]` system_program
+///   0. `[writable]` user_token_account
+///   1. `[writable]` recipient_token_account
+///   2. `[signer]` user
+///   3. `[writable, signer, optional]` payer
+///   4. `[optional]` system_program
 #[derive(Default)]
 pub struct TransferBuilder {
-    payer: Option<solana_program::pubkey::Pubkey>,
-    user: Option<solana_program::pubkey::Pubkey>,
-    recipient: Option<solana_program::pubkey::Pubkey>,
-    mint: Option<solana_program::pubkey::Pubkey>,
     user_token_account: Option<solana_program::pubkey::Pubkey>,
     recipient_token_account: Option<solana_program::pubkey::Pubkey>,
+    user: Option<solana_program::pubkey::Pubkey>,
+    payer: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
+    ticker: Option<[u8; 4]>,
     amount: Option<u32>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
@@ -135,32 +122,7 @@ impl TransferBuilder {
     pub fn new() -> Self {
         Self::default()
     }
-    /// `[optional account]`
-    /// The account paying for the storage fees.
-    #[inline(always)]
-    pub fn payer(&mut self, payer: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
-        self.payer = payer;
-        self
-    }
-    /// The pubkey of the user associated with the token account
-    #[inline(always)]
-    pub fn user(&mut self, user: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.user = Some(user);
-        self
-    }
-    /// The recipient account.
-    #[inline(always)]
-    pub fn recipient(&mut self, recipient: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.recipient = Some(recipient);
-        self
-    }
-    /// The mint account for the token to be transferred
-    #[inline(always)]
-    pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.mint = Some(mint);
-        self
-    }
-    /// The token namespace account.
+    /// The token authority account.
     #[inline(always)]
     pub fn user_token_account(
         &mut self,
@@ -169,13 +131,26 @@ impl TransferBuilder {
         self.user_token_account = Some(user_token_account);
         self
     }
-    /// The token namespace account.
+    /// The token authority account.
     #[inline(always)]
     pub fn recipient_token_account(
         &mut self,
         recipient_token_account: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
         self.recipient_token_account = Some(recipient_token_account);
+        self
+    }
+    /// The pubkey of the user associated with the token account
+    #[inline(always)]
+    pub fn user(&mut self, user: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.user = Some(user);
+        self
+    }
+    /// `[optional account]`
+    /// The account paying for the storage fees.
+    #[inline(always)]
+    pub fn payer(&mut self, payer: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.payer = payer;
         self
     }
     /// `[optional account]`
@@ -186,6 +161,11 @@ impl TransferBuilder {
         system_program: Option<solana_program::pubkey::Pubkey>,
     ) -> &mut Self {
         self.system_program = system_program;
+        self
+    }
+    #[inline(always)]
+    pub fn ticker(&mut self, ticker: [u8; 4]) -> &mut Self {
+        self.ticker = Some(ticker);
         self
     }
     #[inline(always)]
@@ -214,19 +194,18 @@ impl TransferBuilder {
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = Transfer {
-            payer: self.payer,
-            user: self.user.expect("user is not set"),
-            recipient: self.recipient.expect("recipient is not set"),
-            mint: self.mint.expect("mint is not set"),
             user_token_account: self
                 .user_token_account
                 .expect("user_token_account is not set"),
             recipient_token_account: self
                 .recipient_token_account
                 .expect("recipient_token_account is not set"),
+            user: self.user.expect("user is not set"),
+            payer: self.payer,
             system_program: self.system_program,
         };
         let args = TransferInstructionArgs {
+            ticker: self.ticker.clone().expect("ticker is not set"),
             amount: self.amount.clone().expect("amount is not set"),
         };
 
@@ -236,18 +215,14 @@ impl TransferBuilder {
 
 /// `transfer` CPI accounts.
 pub struct TransferCpiAccounts<'a, 'b> {
-    /// The account paying for the storage fees.
-    pub payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    /// The token authority account.
+    pub user_token_account: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The token authority account.
+    pub recipient_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// The pubkey of the user associated with the token account
     pub user: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The recipient account.
-    pub recipient: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The mint account for the token to be transferred
-    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The token namespace account.
-    pub user_token_account: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The token namespace account.
-    pub recipient_token_account: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The account paying for the storage fees.
+    pub payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The system program
     pub system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
@@ -256,18 +231,14 @@ pub struct TransferCpiAccounts<'a, 'b> {
 pub struct TransferCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The account paying for the storage fees.
-    pub payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    /// The token authority account.
+    pub user_token_account: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The token authority account.
+    pub recipient_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// The pubkey of the user associated with the token account
     pub user: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The recipient account.
-    pub recipient: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The mint account for the token to be transferred
-    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The token namespace account.
-    pub user_token_account: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The token namespace account.
-    pub recipient_token_account: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The account paying for the storage fees.
+    pub payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The system program
     pub system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
@@ -282,12 +253,10 @@ impl<'a, 'b> TransferCpi<'a, 'b> {
     ) -> Self {
         Self {
             __program: program,
-            payer: accounts.payer,
-            user: accounts.user,
-            recipient: accounts.recipient,
-            mint: accounts.mint,
             user_token_account: accounts.user_token_account,
             recipient_token_account: accounts.recipient_token_account,
+            user: accounts.user,
+            payer: accounts.payer,
             system_program: accounts.system_program,
             __args: args,
         }
@@ -325,7 +294,19 @@ impl<'a, 'b> TransferCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.user_token_account.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.recipient_token_account.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.user.key,
+            true,
+        ));
         if let Some(payer) = self.payer {
             accounts.push(solana_program::instruction::AccountMeta::new(
                 *payer.key, true,
@@ -336,26 +317,6 @@ impl<'a, 'b> TransferCpi<'a, 'b> {
                 false,
             ));
         }
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.user.key,
-            true,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.recipient.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.mint.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.user_token_account.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.recipient_token_account.key,
-            false,
-        ));
         if let Some(system_program) = self.system_program {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
                 *system_program.key,
@@ -383,16 +344,14 @@ impl<'a, 'b> TransferCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(7 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(5 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
+        account_infos.push(self.user_token_account.clone());
+        account_infos.push(self.recipient_token_account.clone());
+        account_infos.push(self.user.clone());
         if let Some(payer) = self.payer {
             account_infos.push(payer.clone());
         }
-        account_infos.push(self.user.clone());
-        account_infos.push(self.recipient.clone());
-        account_infos.push(self.mint.clone());
-        account_infos.push(self.user_token_account.clone());
-        account_infos.push(self.recipient_token_account.clone());
         if let Some(system_program) = self.system_program {
             account_infos.push(system_program.clone());
         }
@@ -412,13 +371,11 @@ impl<'a, 'b> TransferCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable, signer, optional]` payer
-///   1. `[signer]` user
-///   2. `[]` recipient
-///   3. `[]` mint
-///   4. `[writable]` user_token_account
-///   5. `[writable]` recipient_token_account
-///   6. `[optional]` system_program
+///   0. `[writable]` user_token_account
+///   1. `[writable]` recipient_token_account
+///   2. `[signer]` user
+///   3. `[writable, signer, optional]` payer
+///   4. `[optional]` system_program
 pub struct TransferCpiBuilder<'a, 'b> {
     instruction: Box<TransferCpiBuilderInstruction<'a, 'b>>,
 }
@@ -427,17 +384,40 @@ impl<'a, 'b> TransferCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(TransferCpiBuilderInstruction {
             __program: program,
-            payer: None,
-            user: None,
-            recipient: None,
-            mint: None,
             user_token_account: None,
             recipient_token_account: None,
+            user: None,
+            payer: None,
             system_program: None,
+            ticker: None,
             amount: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
+    }
+    /// The token authority account.
+    #[inline(always)]
+    pub fn user_token_account(
+        &mut self,
+        user_token_account: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.user_token_account = Some(user_token_account);
+        self
+    }
+    /// The token authority account.
+    #[inline(always)]
+    pub fn recipient_token_account(
+        &mut self,
+        recipient_token_account: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.recipient_token_account = Some(recipient_token_account);
+        self
+    }
+    /// The pubkey of the user associated with the token account
+    #[inline(always)]
+    pub fn user(&mut self, user: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.user = Some(user);
+        self
     }
     /// `[optional account]`
     /// The account paying for the storage fees.
@@ -449,45 +429,6 @@ impl<'a, 'b> TransferCpiBuilder<'a, 'b> {
         self.instruction.payer = payer;
         self
     }
-    /// The pubkey of the user associated with the token account
-    #[inline(always)]
-    pub fn user(&mut self, user: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.user = Some(user);
-        self
-    }
-    /// The recipient account.
-    #[inline(always)]
-    pub fn recipient(
-        &mut self,
-        recipient: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.recipient = Some(recipient);
-        self
-    }
-    /// The mint account for the token to be transferred
-    #[inline(always)]
-    pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.mint = Some(mint);
-        self
-    }
-    /// The token namespace account.
-    #[inline(always)]
-    pub fn user_token_account(
-        &mut self,
-        user_token_account: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.user_token_account = Some(user_token_account);
-        self
-    }
-    /// The token namespace account.
-    #[inline(always)]
-    pub fn recipient_token_account(
-        &mut self,
-        recipient_token_account: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.recipient_token_account = Some(recipient_token_account);
-        self
-    }
     /// `[optional account]`
     /// The system program
     #[inline(always)]
@@ -496,6 +437,11 @@ impl<'a, 'b> TransferCpiBuilder<'a, 'b> {
         system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ) -> &mut Self {
         self.instruction.system_program = system_program;
+        self
+    }
+    #[inline(always)]
+    pub fn ticker(&mut self, ticker: [u8; 4]) -> &mut Self {
+        self.instruction.ticker = Some(ticker);
         self
     }
     #[inline(always)]
@@ -545,18 +491,11 @@ impl<'a, 'b> TransferCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = TransferInstructionArgs {
+            ticker: self.instruction.ticker.clone().expect("ticker is not set"),
             amount: self.instruction.amount.clone().expect("amount is not set"),
         };
         let instruction = TransferCpi {
             __program: self.instruction.__program,
-
-            payer: self.instruction.payer,
-
-            user: self.instruction.user.expect("user is not set"),
-
-            recipient: self.instruction.recipient.expect("recipient is not set"),
-
-            mint: self.instruction.mint.expect("mint is not set"),
 
             user_token_account: self
                 .instruction
@@ -567,6 +506,10 @@ impl<'a, 'b> TransferCpiBuilder<'a, 'b> {
                 .instruction
                 .recipient_token_account
                 .expect("recipient_token_account is not set"),
+
+            user: self.instruction.user.expect("user is not set"),
+
+            payer: self.instruction.payer,
 
             system_program: self.instruction.system_program,
             __args: args,
@@ -580,13 +523,12 @@ impl<'a, 'b> TransferCpiBuilder<'a, 'b> {
 
 struct TransferCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    user: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    recipient: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     user_token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     recipient_token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    user: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    ticker: Option<[u8; 4]>,
     amount: Option<u32>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(

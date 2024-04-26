@@ -11,7 +11,7 @@ pub fn process_create_token<'a>(
 
     let payer_info = ctx.accounts.payer;
     let user_info = ctx.accounts.user;
-    let namespace_info = ctx.accounts.namespace;
+    let authority_info = ctx.accounts.authority;
     let token_account_info = ctx.accounts.token_account;
     let system_program_info = ctx.accounts.system_program;
 
@@ -24,7 +24,7 @@ pub fn process_create_token<'a>(
         &[
             b"token_account",
             user_info.key.as_ref(),
-            namespace_info.key.as_ref(),
+            authority_info.key.as_ref(),
         ],
         &crate::ID,
     );
@@ -35,7 +35,7 @@ pub fn process_create_token<'a>(
     let signer_seeds: &[&[u8]] = &[
         b"token_account",
         user_info.key.as_ref(),
-        namespace_info.key.as_ref(),
+        authority_info.key.as_ref(),
         &[bump],
     ];
 
@@ -53,13 +53,16 @@ pub fn process_create_token<'a>(
     let account_data = &mut (*token_account_info.data).borrow_mut();
 
     // // Get the mutable byte muck version of the account so we can mutate the data directly.
-    let mut token_namespace = TokenAccountMut::from_bytes_mut(account_data);
+    let mut token_authority = TokenAccountMut::from_bytes_mut(account_data);
 
-    // Now can operate on the struct like a normal Rust struct but the bytes are cast directly
+// Now can operate on the struct like a normal Rust struct but the bytes are cast directly
     // without deserializ/serializ(ing).
-    token_namespace.header.namespace = *namespace_info.key;
-    token_namespace.header.user = *user_info.key;
-    token_namespace.tokens.initialize(args.capacity);
+    token_authority
+        .header
+        .set_tag(crate::state::Tag::TokenAccount);
+    token_authority.header.authority = *authority_info.key;
+    token_authority.header.user = *user_info.key;
+    token_authority.tokens.initialize(args.capacity);
 
     // No need to serialize the data back into the account, it's already there.
 

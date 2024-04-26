@@ -20,10 +20,10 @@ test-bpf = []
 borsh = "^0.10"
 bytemuck = "1.14.0"
 shank = "^0.4.2"
-nifty-asset = "0.4.0"
 num-derive = "^0.3"
 num-traits = "^0.2"
-stevia = { path = "../../stevia" }
+num_enum = "0.7.2"
+stevia = { git = "https://github.com/nifty-oss/stevia.git" }
 solana-program = "1.16.27"
 thiserror = "^1.0"
 nifty-asset-interface = "0.4.0"

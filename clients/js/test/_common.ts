@@ -2,14 +2,14 @@ import {
   TransactionSigner,
   address,
   appendTransactionInstruction,
+  getStringEncoder,
   pipe,
 } from '@solana/web3.js';
-import { ASSET_PROGRAM_ID } from '@nifty-oss/asset';
 import {
-  getCreateMintInstruction,
-  findMintAccountPda,
-  getCreateTokenAccountInstruction,
+  findMintPda,
   findTokenAccountPda,
+  getCreateMintInstruction,
+  getCreateTokenAccountInstruction,
   getMintToInstruction,
 } from '../src/index.js';
 import {
@@ -20,51 +20,49 @@ import {
 
 export const setupAndMint = async (
   client: Client,
-  namespace: TransactionSigner,
+  authority: TransactionSigner,
   user: TransactionSigner,
   ticker: string,
   amount: number
 ) => {
-  const [mint] = await findMintAccountPda({
-    ticker,
-    namespace: namespace.address,
+  const [mint] = await findMintPda({
+    ticker: Buffer.from(ticker),
+    authority: authority.address,
   });
 
   const createMintIx = getCreateMintInstruction({
-    payer: namespace,
+    payer: authority,
     mint,
-    namespace,
-    niftyProgram: address(ASSET_PROGRAM_ID),
+    authority,
     decimals: 0,
     maxSupply: 1000,
     ticker: 'USDC',
   });
 
   const [tokenAccount] = await findTokenAccountPda({
-    namespace: namespace.address,
+    authority: authority.address,
     user: user.address,
   });
 
   const createTokenAccountIx = getCreateTokenAccountInstruction({
-    payer: namespace,
+    payer: authority,
     user: user.address,
-    namespace: namespace.address,
+    authority: authority.address,
     tokenAccount,
     capacity: 0,
   });
 
   const mintToIx = getMintToInstruction({
-    payer: namespace,
-    namespace,
+    payer: authority,
+    authority,
     mint,
     tokenAccount,
     amount,
     systemProgram: address('11111111111111111111111111111111'),
-    niftyProgram: address(ASSET_PROGRAM_ID),
   });
 
   await pipe(
-    await createDefaultTransaction(client, namespace),
+    await createDefaultTransaction(client, authority),
     (tx) => appendTransactionInstruction(createMintIx, tx),
     (tx) => appendTransactionInstruction(createTokenAccountIx, tx),
     (tx) => appendTransactionInstruction(mintToIx, tx),

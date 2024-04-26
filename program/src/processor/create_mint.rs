@@ -1,16 +1,9 @@
-use borsh::BorshSerialize;
-use nifty_asset::{
-    extensions::{BlobBuilder, ExtensionBuilder, ProxyBuilder},
-    instructions::{CreateCpi, CreateInstructionArgs},
-    types::{ExtensionInput, ExtensionType, Standard},
-};
+use super::*;
 
 use crate::{
     error::TokenLiteError,
-    state::{MintMetadata, CONTENT_TYPE},
+    state::{Mint, MintSeeds, Tag},
 };
-
-use super::*;
 
 pub fn process_create_mint<'a>(
     accounts: &'a [AccountInfo<'a>],
@@ -20,98 +13,63 @@ pub fn process_create_mint<'a>(
     let ctx = CreateMintAccounts::context(accounts)?;
 
     let payer_info = ctx.accounts.payer;
-    let namespace_info = ctx.accounts.namespace;
-    let mint_account_info = ctx.accounts.mint;
+    let authority_info = ctx.accounts.authority;
+    let mint_info = ctx.accounts.mint;
     let system_program_info = ctx.accounts.system_program;
-    let nifty_program_info = ctx.accounts.nifty_program;
 
     // Account validation.
     assert_signer("payer", payer_info)?;
-    assert_signer("namespace", namespace_info)?;
+    assert_signer("authority", authority_info)?;
 
-    assert_empty("mint_account", mint_account_info)?;
+    assert_empty("mint_account", mint_info)?;
 
     assert_same_pubkeys("sys_prog", system_program_info, &SYSTEM_PROGRAM_ID)?;
-    assert_same_pubkeys("nifty_program", nifty_program_info, &nifty_asset::ID)?;
 
-    let ticker_bytes = args.ticker.as_bytes();
+    let ticker: &[u8; 4] = args
+        .ticker
+        .as_bytes()
+        .try_into()
+        .map_err(|_| TokenLiteError::InvalidTicker)?;
 
-    if ticker_bytes.len() != 4 {
-        return Err(TokenLiteError::InvalidTicker.into());
-    }
-
-    // Seeds should be 32 bytes long, so we take the first 28 bytes of the namespace.
-    let mut seeds = Vec::with_capacity(32);
-    seeds.extend(ticker_bytes.iter());
-    seeds.extend(namespace_info.key.as_ref()[..28].iter());
-    let seeds: &[u8; 32] = seeds.as_slice().try_into().unwrap();
-
-    let (mint_account_pubkey, bump) = Pubkey::find_program_address(&[seeds], &crate::ID);
+    let seeds = MintSeeds {
+        ticker,
+        authority: *authority_info.key,
+    };
+    let (mint_pubkey, bump) = Mint::find_pda(&seeds);
 
     // Correct mint PDA.
-    assert_same_pubkeys("mint_account", mint_account_info, &mint_account_pubkey)?;
+    assert_same_pubkeys("mint_account", mint_info, &mint_pubkey)?;
 
-    let signer_seeds: &[&[u8]] = &[seeds, &[bump]];
+    let signer_seeds: &[&[u8]] = &[
+        Mint::PREFIX,
+        seeds.ticker,
+        seeds.authority.as_ref(),
+        &[bump],
+    ];
 
-    let metadata = MintMetadata {
-        namespace: *namespace_info.key,
-        ticker: args.ticker.clone(),
-        supply: 0,
-        max_supply: args.max_supply,
-        decimals: args.decimals,
-    }
-    .try_to_vec()?;
+    // Create the mint account.
+    create_account(
+        mint_info,
+        payer_info,
+        system_program_info,
+        Mint::LEN,
+        &crate::ID,
+        Some(&[signer_seeds]),
+    )?;
 
-    let data = BlobBuilder::with_capacity(MintMetadata::LEN)
-        .set_data(CONTENT_TYPE, &metadata)
-        .data();
+    let mut data = (*mint_info.data).borrow_mut();
+    let mint = Mint::load_mut(&mut data);
 
-    let blob = ExtensionInput {
-        extension_type: ExtensionType::Blob,
-        length: data.len() as u32,
-        data: Some(data),
-    };
+    // Setter Data
+    mint.set_bump(bump);
+    mint.set_ticker(*ticker);
+    mint.set_tag(Tag::Mint);
+    mint.set_decimals(args.decimals);
 
-    // Proxy extension for the Nifty mint asset.
-    let data = ProxyBuilder::with_capacity(100)
-        .set(
-            &crate::ID,
-            seeds,
-            bump,
-            // "proxy" authority
-            Some(ctx.accounts.namespace.key),
-        )
-        .data();
-
-    let proxy = ExtensionInput {
-        extension_type: ExtensionType::Proxy,
-        length: data.len() as u32,
-        data: Some(data),
-    };
-
-    // Take the ticker bytes and the namespace pubkey and create a string from them: "namespace:ticker".
-    let name = format!("{}:{}", namespace_info.key, args.ticker);
-
-    let args = CreateInstructionArgs {
-        name,
-        standard: Standard::Proxied,
-        mutable: true,
-        extensions: Some(vec![proxy, blob]),
-    };
-
-    // Create the mint account by CPI'ing into the Nifty program.
-    CreateCpi {
-        __program: nifty_program_info,
-        asset: mint_account_info,
-        authority: (namespace_info, false),
-        owner: namespace_info,
-        group: None,
-        group_authority: None,
-        payer: Some(payer_info),
-        system_program: Some(system_program_info),
-        __args: args,
-    }
-    .invoke_signed(&[signer_seeds])?;
+    // Fields
+    mint.authority = *authority_info.key;
+    mint.supply = 0;
+    mint.max_supply = args.max_supply;
 
     Ok(())
 }

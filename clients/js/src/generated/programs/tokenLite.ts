@@ -42,15 +42,16 @@ export function getTokenLiteProgram(): TokenLiteProgram {
 }
 
 export enum TokenLiteAccount {
+  Mint,
   TokenAccount,
 }
 
 export enum TokenLiteInstruction {
+  AddToken,
+  Burn,
   CreateMint,
   CreateTokenAccount,
-  AddToken,
   MintTo,
-  Burn,
   Transfer,
 }
 
@@ -60,19 +61,19 @@ export function identifyTokenLiteInstruction(
   const data =
     instruction instanceof Uint8Array ? instruction : instruction.data;
   if (memcmp(data, getU8Encoder().encode(0), 0)) {
-    return TokenLiteInstruction.CreateMint;
-  }
-  if (memcmp(data, getU8Encoder().encode(1), 0)) {
-    return TokenLiteInstruction.CreateTokenAccount;
-  }
-  if (memcmp(data, getU8Encoder().encode(2), 0)) {
     return TokenLiteInstruction.AddToken;
   }
+  if (memcmp(data, getU8Encoder().encode(1), 0)) {
+    return TokenLiteInstruction.Burn;
+  }
+  if (memcmp(data, getU8Encoder().encode(2), 0)) {
+    return TokenLiteInstruction.CreateMint;
+  }
   if (memcmp(data, getU8Encoder().encode(3), 0)) {
-    return TokenLiteInstruction.MintTo;
+    return TokenLiteInstruction.CreateTokenAccount;
   }
   if (memcmp(data, getU8Encoder().encode(4), 0)) {
-    return TokenLiteInstruction.Burn;
+    return TokenLiteInstruction.MintTo;
   }
   if (memcmp(data, getU8Encoder().encode(5), 0)) {
     return TokenLiteInstruction.Transfer;
@@ -86,20 +87,20 @@ export type ParsedTokenLiteInstruction<
   TProgram extends string = 'BpPMgxYawb8Qiguavj3JccMdp7bTZWemSqJmDeYTsTD9',
 > =
   | ({
+      instructionType: TokenLiteInstruction.AddToken;
+    } & ParsedAddTokenInstruction<TProgram>)
+  | ({
+      instructionType: TokenLiteInstruction.Burn;
+    } & ParsedBurnInstruction<TProgram>)
+  | ({
       instructionType: TokenLiteInstruction.CreateMint;
     } & ParsedCreateMintInstruction<TProgram>)
   | ({
       instructionType: TokenLiteInstruction.CreateTokenAccount;
     } & ParsedCreateTokenAccountInstruction<TProgram>)
   | ({
-      instructionType: TokenLiteInstruction.AddToken;
-    } & ParsedAddTokenInstruction<TProgram>)
-  | ({
       instructionType: TokenLiteInstruction.MintTo;
     } & ParsedMintToInstruction<TProgram>)
-  | ({
-      instructionType: TokenLiteInstruction.Burn;
-    } & ParsedBurnInstruction<TProgram>)
   | ({
       instructionType: TokenLiteInstruction.Transfer;
     } & ParsedTransferInstruction<TProgram>);

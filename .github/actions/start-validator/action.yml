@@ -1,0 +1,49 @@
+name: Start validator
+
+inputs:
+  artifacts:
+    description: The name of the artifact to download program builds. Set to `false` to skip downloading
+    required: true
+    default: "program-builds"
+  command:
+    description: The command to start the validator
+    required: true
+    default: "pnpm validator:start"
+  node:
+    description: The Node.js version to install
+    required: true
+    default: "18.x"
+  solana:
+    description: The Solana version to install
+    required: true
+    default: "stable"
+  cache:
+    description: Whether we should use caches to speed things up
+    required: true
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Download program builds
+      if: inputs.artifacts != 'false'
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifacts }}
+
+    - name: Install Solana
+      uses: nifty-oss/actions/install-solana@v1
+      with:
+        version: ${{ inputs.solana }}
+        cache: ${{ inputs.cache }}
+
+    - name: Install Node.js
+      uses: nifty-oss/actions/install-node-with-pnpm@v1
+      with:
+        version: ${{ inputs.node }}
+        cache: ${{ inputs.cache }}
+        dependencies: true
+
+    - name: Start validator
+      run: ${{ inputs.command }}
+      shell: bash

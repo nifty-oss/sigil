@@ -29,11 +29,24 @@ import {
   Decoder,
   Encoder,
   combineCodec,
+  getArrayDecoder,
+  getArrayEncoder,
   getStructDecoder,
   getStructEncoder,
+  getU8Decoder,
+  getU8Encoder,
 } from '@solana/codecs';
 import { TokenAccountSeeds, findTokenAccountPda } from '../pdas';
-import { Tree, TreeArgs, getTreeDecoder, getTreeEncoder } from '../types';
+import {
+  Tag,
+  TagArgs,
+  Tree,
+  TreeArgs,
+  getTagDecoder,
+  getTagEncoder,
+  getTreeDecoder,
+  getTreeEncoder,
+} from '../types';
 
 export type TokenAccount<TAddress extends string = string> = Account<
   TokenAccountAccountData,
@@ -46,20 +59,26 @@ export type MaybeTokenAccount<TAddress extends string = string> = MaybeAccount<
 >;
 
 export type TokenAccountAccountData = {
-  namespace: Address;
+  tag: Tag;
+  empty: Array<number>;
+  authority: Address;
   user: Address;
   tree: Tree;
 };
 
 export type TokenAccountAccountDataArgs = {
-  namespace: Address;
+  tag: TagArgs;
+  empty: Array<number>;
+  authority: Address;
   user: Address;
   tree: TreeArgs;
 };
 
 export function getTokenAccountAccountDataEncoder(): Encoder<TokenAccountAccountDataArgs> {
   return getStructEncoder([
-    ['namespace', getAddressEncoder()],
+    ['tag', getTagEncoder()],
+    ['empty', getArrayEncoder(getU8Encoder(), { size: 3 })],
+    ['authority', getAddressEncoder()],
     ['user', getAddressEncoder()],
     ['tree', getTreeEncoder()],
   ]);
@@ -67,7 +86,9 @@ export function getTokenAccountAccountDataEncoder(): Encoder<TokenAccountAccount
 
 export function getTokenAccountAccountDataDecoder(): Decoder<TokenAccountAccountData> {
   return getStructDecoder([
-    ['namespace', getAddressDecoder()],
+    ['tag', getTagDecoder()],
+    ['empty', getArrayDecoder(getU8Decoder(), { size: 3 })],
+    ['authority', getAddressDecoder()],
     ['user', getAddressDecoder()],
     ['tree', getTreeDecoder()],
   ]);

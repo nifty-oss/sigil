@@ -5,6 +5,7 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
+use crate::generated::types::Tag;
 use crate::generated::types::Tree;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
@@ -13,11 +14,13 @@ use solana_program::pubkey::Pubkey;
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TokenAccount {
+    pub tag: Tag,
+    pub empty: [u8; 3],
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
-    pub namespace: Pubkey,
+    pub authority: Pubkey,
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
@@ -33,31 +36,31 @@ impl TokenAccount {
     ///
     ///   0. `TokenAccount::PREFIX`
     ///   1. user (`Pubkey`)
-    ///   2. namespace (`Pubkey`)
+    ///   2. authority (`Pubkey`)
     pub const PREFIX: &'static [u8] = "token_account".as_bytes();
 
     pub fn create_pda(
         user: Pubkey,
-        namespace: Pubkey,
+        authority: Pubkey,
         bump: u8,
     ) -> Result<solana_program::pubkey::Pubkey, solana_program::pubkey::PubkeyError> {
         solana_program::pubkey::Pubkey::create_program_address(
             &[
                 "token_account".as_bytes(),
                 user.as_ref(),
-                namespace.as_ref(),
+                authority.as_ref(),
                 &[bump],
             ],
             &crate::TOKEN_LITE_ID,
         )
     }
 
-    pub fn find_pda(user: &Pubkey, namespace: &Pubkey) -> (solana_program::pubkey::Pubkey, u8) {
+    pub fn find_pda(user: &Pubkey, authority: &Pubkey) -> (solana_program::pubkey::Pubkey, u8) {
         solana_program::pubkey::Pubkey::find_program_address(
             &[
                 "token_account".as_bytes(),
                 user.as_ref(),
-                namespace.as_ref(),
+                authority.as_ref(),
             ],
             &crate::TOKEN_LITE_ID,
         )

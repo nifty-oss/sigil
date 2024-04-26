@@ -17,8 +17,8 @@ import { getStringEncoder } from '@solana/codecs';
 export type TokenAccountSeeds = {
   /** The user of the token account */
   user: Address;
-  /** The namespace of the token account */
-  namespace: Address;
+  /** The authority of the token account */
+  authority: Address;
 };
 
 export async function findTokenAccountPda(
@@ -33,7 +33,7 @@ export async function findTokenAccountPda(
     seeds: [
       getStringEncoder({ size: 'variable' }).encode('token_account'),
       getAddressEncoder().encode(seeds.user),
-      getAddressEncoder().encode(seeds.namespace),
+      getAddressEncoder().encode(seeds.authority),
     ],
   });
 }

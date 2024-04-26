@@ -12,6 +12,8 @@ import {
   Decoder,
   Encoder,
   combineCodec,
+  getArrayDecoder,
+  getArrayEncoder,
   getStructDecoder,
   getStructEncoder,
   getU32Decoder,
@@ -36,37 +38,29 @@ import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type TransferInstruction<
   TProgram extends string = typeof TOKEN_LITE_PROGRAM_ADDRESS,
-  TAccountPayer extends string | IAccountMeta<string> = string,
-  TAccountUser extends string | IAccountMeta<string> = string,
-  TAccountRecipient extends string | IAccountMeta<string> = string,
-  TAccountMint extends string | IAccountMeta<string> = string,
   TAccountUserTokenAccount extends string | IAccountMeta<string> = string,
   TAccountRecipientTokenAccount extends string | IAccountMeta<string> = string,
+  TAccountUser extends string | IAccountMeta<string> = string,
+  TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountPayer extends string
-        ? WritableSignerAccount<TAccountPayer> &
-            IAccountSignerMeta<TAccountPayer>
-        : TAccountPayer,
-      TAccountUser extends string
-        ? ReadonlySignerAccount<TAccountUser> & IAccountSignerMeta<TAccountUser>
-        : TAccountUser,
-      TAccountRecipient extends string
-        ? ReadonlyAccount<TAccountRecipient>
-        : TAccountRecipient,
-      TAccountMint extends string
-        ? ReadonlyAccount<TAccountMint>
-        : TAccountMint,
       TAccountUserTokenAccount extends string
         ? WritableAccount<TAccountUserTokenAccount>
         : TAccountUserTokenAccount,
       TAccountRecipientTokenAccount extends string
         ? WritableAccount<TAccountRecipientTokenAccount>
         : TAccountRecipientTokenAccount,
+      TAccountUser extends string
+        ? ReadonlySignerAccount<TAccountUser> & IAccountSignerMeta<TAccountUser>
+        : TAccountUser,
+      TAccountPayer extends string
+        ? WritableSignerAccount<TAccountPayer> &
+            IAccountSignerMeta<TAccountPayer>
+        : TAccountPayer,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -74,14 +68,22 @@ export type TransferInstruction<
     ]
   >;
 
-export type TransferInstructionData = { discriminator: number; amount: number };
+export type TransferInstructionData = {
+  discriminator: number;
+  ticker: Array<number>;
+  amount: number;
+};
 
-export type TransferInstructionDataArgs = { amount: number };
+export type TransferInstructionDataArgs = {
+  ticker: Array<number>;
+  amount: number;
+};
 
 export function getTransferInstructionDataEncoder(): Encoder<TransferInstructionDataArgs> {
   return mapEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
+      ['ticker', getArrayEncoder(getU8Encoder(), { size: 4 })],
       ['amount', getU32Encoder()],
     ]),
     (value) => ({ ...value, discriminator: 5 })
@@ -91,6 +93,7 @@ export function getTransferInstructionDataEncoder(): Encoder<TransferInstruction
 export function getTransferInstructionDataDecoder(): Decoder<TransferInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
+    ['ticker', getArrayDecoder(getU8Decoder(), { size: 4 })],
     ['amount', getU32Decoder()],
   ]);
 }
@@ -106,57 +109,46 @@ export function getTransferInstructionDataCodec(): Codec<
 }
 
 export type TransferInput<
-  TAccountPayer extends string = string,
-  TAccountUser extends string = string,
-  TAccountRecipient extends string = string,
-  TAccountMint extends string = string,
   TAccountUserTokenAccount extends string = string,
   TAccountRecipientTokenAccount extends string = string,
+  TAccountUser extends string = string,
+  TAccountPayer extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  /** The account paying for the storage fees. */
-  payer?: TransactionSigner<TAccountPayer>;
+  /** The token authority account. */
+  userTokenAccount: Address<TAccountUserTokenAccount>;
+  /** The token authority account. */
+  recipientTokenAccount: Address<TAccountRecipientTokenAccount>;
   /** The pubkey of the user associated with the token account */
   user: TransactionSigner<TAccountUser>;
-  /** The recipient account. */
-  recipient: Address<TAccountRecipient>;
-  /** The mint account for the token to be transferred */
-  mint: Address<TAccountMint>;
-  /** The token namespace account. */
-  userTokenAccount: Address<TAccountUserTokenAccount>;
-  /** The token namespace account. */
-  recipientTokenAccount: Address<TAccountRecipientTokenAccount>;
+  /** The account paying for the storage fees. */
+  payer?: TransactionSigner<TAccountPayer>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
+  ticker: TransferInstructionDataArgs['ticker'];
   amount: TransferInstructionDataArgs['amount'];
 };
 
 export function getTransferInstruction<
-  TAccountPayer extends string,
-  TAccountUser extends string,
-  TAccountRecipient extends string,
-  TAccountMint extends string,
   TAccountUserTokenAccount extends string,
   TAccountRecipientTokenAccount extends string,
+  TAccountUser extends string,
+  TAccountPayer extends string,
   TAccountSystemProgram extends string,
 >(
   input: TransferInput<
-    TAccountPayer,
-    TAccountUser,
-    TAccountRecipient,
-    TAccountMint,
     TAccountUserTokenAccount,
     TAccountRecipientTokenAccount,
+    TAccountUser,
+    TAccountPayer,
     TAccountSystemProgram
   >
 ): TransferInstruction<
   typeof TOKEN_LITE_PROGRAM_ADDRESS,
-  TAccountPayer,
-  TAccountUser,
-  TAccountRecipient,
-  TAccountMint,
   TAccountUserTokenAccount,
   TAccountRecipientTokenAccount,
+  TAccountUser,
+  TAccountPayer,
   TAccountSystemProgram
 > {
   // Program address.
@@ -164,10 +156,6 @@ export function getTransferInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    payer: { value: input.payer ?? null, isWritable: true },
-    user: { value: input.user ?? null, isWritable: false },
-    recipient: { value: input.recipient ?? null, isWritable: false },
-    mint: { value: input.mint ?? null, isWritable: false },
     userTokenAccount: {
       value: input.userTokenAccount ?? null,
       isWritable: true,
@@ -176,6 +164,8 @@ export function getTransferInstruction<
       value: input.recipientTokenAccount ?? null,
       isWritable: true,
     },
+    user: { value: input.user ?? null, isWritable: false },
+    payer: { value: input.payer ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -189,12 +179,10 @@ export function getTransferInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.user),
-      getAccountMeta(accounts.recipient),
-      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.userTokenAccount),
       getAccountMeta(accounts.recipientTokenAccount),
+      getAccountMeta(accounts.user),
+      getAccountMeta(accounts.payer),
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
@@ -203,12 +191,10 @@ export function getTransferInstruction<
     ),
   } as TransferInstruction<
     typeof TOKEN_LITE_PROGRAM_ADDRESS,
-    TAccountPayer,
-    TAccountUser,
-    TAccountRecipient,
-    TAccountMint,
     TAccountUserTokenAccount,
     TAccountRecipientTokenAccount,
+    TAccountUser,
+    TAccountPayer,
     TAccountSystemProgram
   >;
 
@@ -221,20 +207,16 @@ export type ParsedTransferInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    /** The account paying for the storage fees. */
-    payer?: TAccountMetas[0] | undefined;
+    /** The token authority account. */
+    userTokenAccount: TAccountMetas[0];
+    /** The token authority account. */
+    recipientTokenAccount: TAccountMetas[1];
     /** The pubkey of the user associated with the token account */
-    user: TAccountMetas[1];
-    /** The recipient account. */
-    recipient: TAccountMetas[2];
-    /** The mint account for the token to be transferred */
-    mint: TAccountMetas[3];
-    /** The token namespace account. */
-    userTokenAccount: TAccountMetas[4];
-    /** The token namespace account. */
-    recipientTokenAccount: TAccountMetas[5];
+    user: TAccountMetas[2];
+    /** The account paying for the storage fees. */
+    payer?: TAccountMetas[3] | undefined;
     /** The system program */
-    systemProgram?: TAccountMetas[6] | undefined;
+    systemProgram?: TAccountMetas[4] | undefined;
   };
   data: TransferInstructionData;
 };
@@ -247,7 +229,7 @@ export function parseTransferInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedTransferInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 7) {
+  if (instruction.accounts.length < 5) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -266,12 +248,10 @@ export function parseTransferInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      payer: getNextOptionalAccount(),
-      user: getNextAccount(),
-      recipient: getNextAccount(),
-      mint: getNextAccount(),
       userTokenAccount: getNextAccount(),
       recipientTokenAccount: getNextAccount(),
+      user: getNextAccount(),
+      payer: getNextOptionalAccount(),
       systemProgram: getNextOptionalAccount(),
     },
     data: getTransferInstructionDataDecoder().decode(instruction.data),
