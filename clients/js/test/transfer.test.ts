@@ -2,11 +2,13 @@ import { address, appendTransactionInstruction, pipe } from '@solana/web3.js';
 import test from 'ava';
 import {
   fetchTokenAccount,
+  findMintPda,
   findTokenAccountPda,
+  getCreateMintInstruction,
   getCreateTokenAccountInstruction,
+  getMintToInstruction,
   getTransferInstruction,
 } from '../src/index.js';
-import { setupAndMint } from './_common.js';
 import {
   createDefaultSolanaClient,
   createDefaultTransaction,
@@ -26,7 +28,10 @@ test('it can transfer tokens', async (t) => {
   const mintAmount = 100;
   const transferAmount = 25;
 
-  const mint = await setupAndMint(client, authority, user, ticker, mintAmount);
+  const [mint] = await findMintPda({
+    ticker: Buffer.from(ticker),
+    authority: authority.address,
+  });
 
   const [userTokenAccount] = await findTokenAccountPda({
     authority: authority.address,
@@ -38,8 +43,25 @@ test('it can transfer tokens', async (t) => {
     user: recipient.address,
   });
 
-  // Create recipient token account.
-  const createTokenAccountIx = getCreateTokenAccountInstruction({
+  // Create the mint account.
+  const createMintIx = getCreateMintInstruction({
+    payer: authority,
+    mint,
+    authority,
+    decimals: 0,
+    maxSupply: 1000,
+    ticker: 'USDC',
+  });
+
+  // Create the user token accounts.
+  const createUserTokenAccountIx = getCreateTokenAccountInstruction({
+    payer: authority,
+    user: user.address,
+    authority: authority.address,
+    tokenAccount: userTokenAccount,
+    capacity: 0,
+  });
+  const createRecipientTokenAccountIx = getCreateTokenAccountInstruction({
     payer: authority,
     user: recipient.address,
     authority: authority.address,
@@ -49,7 +71,25 @@ test('it can transfer tokens', async (t) => {
 
   await pipe(
     await createDefaultTransaction(client, authority),
-    (tx) => appendTransactionInstruction(createTokenAccountIx, tx),
+    (tx) => appendTransactionInstruction(createMintIx, tx),
+    (tx) => appendTransactionInstruction(createUserTokenAccountIx, tx),
+    (tx) => appendTransactionInstruction(createRecipientTokenAccountIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
+  );
+
+  // Mint some tokens to the user account. The ticker is added to the user account.
+  const mintToIx = getMintToInstruction({
+    payer: authority,
+    authority,
+    mint,
+    tokenAccount: userTokenAccount,
+    amount: mintAmount,
+    systemProgram: address('11111111111111111111111111111111'),
+  });
+
+  await pipe(
+    await createDefaultTransaction(client, authority),
+    (tx) => appendTransactionInstruction(mintToIx, tx),
     (tx) => signAndSendTransaction(client, tx)
   );
 
@@ -97,11 +137,9 @@ test('it can transfer tokens', async (t) => {
     amount: transferAmount,
   });
 
-  console.log(
-    await pipe(
-      await createDefaultTransaction(client, authority),
-      (tx) => appendTransactionInstruction(transferBackIx, tx),
-      (tx) => signAndSendTransaction(client, tx)
-    )
+  await pipe(
+    await createDefaultTransaction(client, authority),
+    (tx) => appendTransactionInstruction(transferBackIx, tx),
+    (tx) => signAndSendTransaction(client, tx)
   );
 });
