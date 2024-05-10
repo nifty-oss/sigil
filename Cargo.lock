@@ -2123,26 +2123,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nifty-oss-token-lite-client"
-version = "0.0.0"
-dependencies = [
- "assert_matches",
- "borsh 0.10.3",
- "kaigan",
- "nifty-asset",
- "num-derive 0.3.3",
- "num-traits",
- "serde",
- "serde_with 3.7.0",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "stevia",
- "thiserror",
- "token-lite",
-]
-
-[[package]]
 name = "nix"
 version = "0.26.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5046,6 +5026,26 @@ dependencies = [
  "solana-program",
  "stevia",
  "thiserror",
+]
+
+[[package]]
+name = "token-lite-client"
+version = "0.0.0"
+dependencies = [
+ "assert_matches",
+ "borsh 0.10.3",
+ "kaigan",
+ "nifty-asset",
+ "num-derive 0.3.3",
+ "num-traits",
+ "serde",
+ "serde_with 3.7.0",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "stevia",
+ "thiserror",
+ "token-lite",
 ]
 
 [[package]]

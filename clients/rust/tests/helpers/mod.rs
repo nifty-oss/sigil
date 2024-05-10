@@ -1,6 +1,3 @@
-use nifty_oss_token_lite_client::{
-    accounts::Mint, instructions::CreateMintBuilder, ID as TokenLiteID,
-};
 use solana_program_test::{BanksClientError, ProgramTest, ProgramTestContext};
 use solana_sdk::{
     pubkey::Pubkey,
@@ -8,6 +5,7 @@ use solana_sdk::{
     system_instruction,
     transaction::Transaction,
 };
+use token_lite_client::{accounts::Mint, instructions::CreateMintBuilder, ID as TokenLiteID};
 
 type Result<T> = std::result::Result<T, BanksClientError>;
 
@@ -43,11 +41,7 @@ pub async fn airdrop(
 }
 
 pub async fn program_context() -> ProgramTestContext {
-    let test = ProgramTest::new(
-        "nifty_oss_token_lite",
-        nifty_oss_token_lite_client::ID,
-        None,
-    );
+    let test = ProgramTest::new("token_lite", token_lite_client::ID, None);
     test.start_with_context().await
 }
 
