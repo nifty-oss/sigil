@@ -1,5 +1,5 @@
 [package]
-name = "nifty-oss-token-lite"
+name = "token-lite"
 version = "0.0.0"
 edition = "2021"
 readme = "./README.md"

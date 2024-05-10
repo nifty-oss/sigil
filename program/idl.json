@@ -1,6 +1,6 @@
 {
   "version": "0.0.0",
-  "name": "nifty_oss_token_lite",
+  "name": "token_lite",
   "instructions": [
     {
       "name": "AddToken",
