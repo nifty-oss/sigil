@@ -1,12 +1,6 @@
-use crate::{
-    assertions::{assert_non_empty, assert_program_owner},
-    error::TokenLiteError,
-    instruction::{accounts::BurnAccounts, BurnArgs},
-    require,
-    state::{Mint, TokenAccountMut},
-};
-
 use super::*;
+
+use crate::instruction::{accounts::BurnAccounts, BurnArgs};
 
 pub fn process_burn<'a>(accounts: &'a [AccountInfo<'a>], args: BurnArgs) -> ProgramResult {
     // Accounts.

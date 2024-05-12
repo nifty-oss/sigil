@@ -1,17 +1,6 @@
-use solana_program::{
-    program::invoke, rent::Rent, system_instruction, system_program, sysvar::Sysvar,
-};
-use stevia::collections::u8_avl_tree::U8Node;
-
-use crate::{
-    assertions::{assert_non_empty, assert_program_owner},
-    error::TokenLiteError,
-    instruction::{accounts::MintToAccounts, MintToArgs},
-    require, resize_account,
-    state::{Mint, TokenAccountMut},
-};
-
 use super::*;
+
+use crate::instruction::{accounts::MintToAccounts, MintToArgs};
 
 pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) -> ProgramResult {
     // Accounts.
@@ -30,7 +19,7 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
     assert_signer("authority", authority_info)?;
 
     if let Some(sys_prog_info) = system_program_info {
-        assert_same_pubkeys("sys_prog", sys_prog_info, &system_program::ID)?;
+        assert_same_pubkeys("sys_prog", sys_prog_info, &SYSTEM_PROGRAM_ID)?;
     }
 
     // The mint and token accounts must exist: must have data and be owned by the correct program.

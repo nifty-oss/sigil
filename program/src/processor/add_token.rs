@@ -1,17 +1,6 @@
-use solana_program::{
-    program::invoke, rent::Rent, system_instruction, system_program, sysvar::Sysvar,
-};
-use stevia::collections::u8_avl_tree::U8Node;
-
-use crate::{
-    assertions::{assert_non_empty, assert_program_owner},
-    error::TokenLiteError,
-    instruction::accounts::AddTokenAccounts,
-    require, resize_account,
-    state::{Mint, TokenAccountMut},
-};
-
 use super::*;
+
+use crate::instruction::accounts::AddTokenAccounts;
 
 pub fn process_add_token<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
     // Accounts.
@@ -25,7 +14,7 @@ pub fn process_add_token<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
 
     // Correct system program, if passed in.
     if let Some(sys_prog_info) = ctx.accounts.system_program {
-        assert_same_pubkeys("sys_prog", sys_prog_info, &system_program::ID)?;
+        assert_same_pubkeys("sys_prog", sys_prog_info, &SYSTEM_PROGRAM_ID)?;
     }
 
     // The mint account must exist: must have data and be owned by the correct program.

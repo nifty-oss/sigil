@@ -1,17 +1,6 @@
-use solana_program::{
-    program::invoke, rent::Rent, system_instruction, system_program, sysvar::Sysvar,
-};
-use stevia::collections::u8_avl_tree::U8Node;
-
-use crate::{
-    assertions::{assert_non_empty, assert_program_owner},
-    error::TokenLiteError,
-    instruction::{accounts::TransferAccounts, TransferArgs},
-    require, resize_account,
-    state::TokenAccountMut,
-};
-
 use super::*;
+
+use crate::instruction::{accounts::TransferAccounts, TransferArgs};
 
 pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs) -> ProgramResult {
     // Accounts.
@@ -29,7 +18,7 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
         assert_signer("payer", payer_info)?;
     }
     if let Some(sys_prog_info) = ctx.accounts.system_program {
-        assert_same_pubkeys("sys_prog", sys_prog_info, &system_program::ID)?;
+        assert_same_pubkeys("sys_prog", sys_prog_info, &SYSTEM_PROGRAM_ID)?;
     }
 
     // Token accounts must exist.

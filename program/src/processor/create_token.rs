@@ -1,6 +1,6 @@
-use crate::state::TokenAccountMut;
-
 use super::*;
+
+use crate::instruction::{accounts::CreateTokenAccountAccounts, CreateArgs};
 
 pub fn process_create_token<'a>(
     accounts: &'a [AccountInfo<'a>],

@@ -1,9 +1,6 @@
 use super::*;
 
-use crate::{
-    error::TokenLiteError,
-    state::{Mint, MintSeeds, Tag},
-};
+use crate::instruction::{accounts::CreateMintAccounts, CreateMintArgs};
 
 pub fn process_create_mint<'a>(
     accounts: &'a [AccountInfo<'a>],
