@@ -86,7 +86,7 @@ export function getTransferInstructionDataEncoder(): Encoder<TransferInstruction
       ['ticker', getArrayEncoder(getU8Encoder(), { size: 4 })],
       ['amount', getU32Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 5 })
+    (value) => ({ ...value, discriminator: 6 })
   );
 }
 

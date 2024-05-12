@@ -39,6 +39,8 @@ export const enum TokenLiteProgramErrorCode {
   INSUFFICIENT_FUNDS = 0xe, // 14
   /** MaximumSupplyReached: Maximum supply reached */
   MAXIMUM_SUPPLY_REACHED = 0xf, // 15
+  /** MintHasSupply: Cannot close mint account with supply */
+  MINT_HAS_SUPPLY = 0x10, // 16
 }
 
 export class TokenLiteProgramError extends Error {
@@ -125,6 +127,10 @@ if (__DEV__) {
     [TokenLiteProgramErrorCode.MAXIMUM_SUPPLY_REACHED]: [
       'MaximumSupplyReached',
       `Maximum supply reached`,
+    ],
+    [TokenLiteProgramErrorCode.MINT_HAS_SUPPLY]: [
+      'MintHasSupply',
+      `Cannot close mint account with supply`,
     ],
   };
 }

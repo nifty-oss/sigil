@@ -9,57 +9,50 @@ use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
 /// Accounts.
-pub struct CreateTokenAccount {
-    /// The token authority account.
-    pub token_account: solana_program::pubkey::Pubkey,
-    /// The authority for the token account.
+pub struct CloseMint {
+    /// The mint account PDA derived from the ticker and authority.
+    pub mint: solana_program::pubkey::Pubkey,
+    /// The authority for the mint.
     pub authority: solana_program::pubkey::Pubkey,
-    /// The pubkey of the user associated with the token account
-    pub user: solana_program::pubkey::Pubkey,
-    /// The account paying for the storage fees.
-    pub payer: solana_program::pubkey::Pubkey,
+    /// The account receiving refunded rent SOL.
+    pub recipient: Option<solana_program::pubkey::Pubkey>,
     /// The system program
     pub system_program: solana_program::pubkey::Pubkey,
 }
 
-impl CreateTokenAccount {
-    pub fn instruction(
-        &self,
-        args: CreateTokenAccountInstructionArgs,
-    ) -> solana_program::instruction::Instruction {
-        self.instruction_with_remaining_accounts(args, &[])
+impl CloseMint {
+    pub fn instruction(&self) -> solana_program::instruction::Instruction {
+        self.instruction_with_remaining_accounts(&[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: CreateTokenAccountInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.token_account,
-            false,
+            self.mint, false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             self.authority,
-            false,
+            true,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.user, false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.payer, true,
-        ));
+        if let Some(recipient) = self.recipient {
+            accounts.push(solana_program::instruction::AccountMeta::new(
+                recipient, true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TOKEN_LITE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.system_program,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = CreateTokenAccountInstructionData::new()
-            .try_to_vec()
-            .unwrap();
-        let mut args = args.try_to_vec().unwrap();
-        data.append(&mut args);
+        let data = CloseMintInstructionData::new().try_to_vec().unwrap();
 
         solana_program::instruction::Instruction {
             program_id: crate::TOKEN_LITE_ID,
@@ -70,68 +63,54 @@ impl CreateTokenAccount {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct CreateTokenAccountInstructionData {
+pub struct CloseMintInstructionData {
     discriminator: u8,
 }
 
-impl CreateTokenAccountInstructionData {
+impl CloseMintInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 4 }
+        Self { discriminator: 2 }
     }
 }
 
-#[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct CreateTokenAccountInstructionArgs {
-    pub capacity: u8,
-}
-
-/// Instruction builder for `CreateTokenAccount`.
+/// Instruction builder for `CloseMint`.
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` token_account
-///   1. `[]` authority
-///   2. `[]` user
-///   3. `[writable, signer]` payer
-///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   0. `[writable]` mint
+///   1. `[writable, signer]` authority
+///   2. `[writable, signer, optional]` recipient
+///   3. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Default)]
-pub struct CreateTokenAccountBuilder {
-    token_account: Option<solana_program::pubkey::Pubkey>,
+pub struct CloseMintBuilder {
+    mint: Option<solana_program::pubkey::Pubkey>,
     authority: Option<solana_program::pubkey::Pubkey>,
-    user: Option<solana_program::pubkey::Pubkey>,
-    payer: Option<solana_program::pubkey::Pubkey>,
+    recipient: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
-    capacity: Option<u8>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl CreateTokenAccountBuilder {
+impl CloseMintBuilder {
     pub fn new() -> Self {
         Self::default()
     }
-    /// The token authority account.
+    /// The mint account PDA derived from the ticker and authority.
     #[inline(always)]
-    pub fn token_account(&mut self, token_account: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.token_account = Some(token_account);
+    pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.mint = Some(mint);
         self
     }
-    /// The authority for the token account.
+    /// The authority for the mint.
     #[inline(always)]
     pub fn authority(&mut self, authority: solana_program::pubkey::Pubkey) -> &mut Self {
         self.authority = Some(authority);
         self
     }
-    /// The pubkey of the user associated with the token account
+    /// `[optional account]`
+    /// The account receiving refunded rent SOL.
     #[inline(always)]
-    pub fn user(&mut self, user: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.user = Some(user);
-        self
-    }
-    /// The account paying for the storage fees.
-    #[inline(always)]
-    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.payer = Some(payer);
+    pub fn recipient(&mut self, recipient: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.recipient = recipient;
         self
     }
     /// `[optional account, default to '11111111111111111111111111111111']`
@@ -139,11 +118,6 @@ impl CreateTokenAccountBuilder {
     #[inline(always)]
     pub fn system_program(&mut self, system_program: solana_program::pubkey::Pubkey) -> &mut Self {
         self.system_program = Some(system_program);
-        self
-    }
-    #[inline(always)]
-    pub fn capacity(&mut self, capacity: u8) -> &mut Self {
-        self.capacity = Some(capacity);
         self
     }
     /// Add an aditional account to the instruction.
@@ -166,69 +140,56 @@ impl CreateTokenAccountBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = CreateTokenAccount {
-            token_account: self.token_account.expect("token_account is not set"),
+        let accounts = CloseMint {
+            mint: self.mint.expect("mint is not set"),
             authority: self.authority.expect("authority is not set"),
-            user: self.user.expect("user is not set"),
-            payer: self.payer.expect("payer is not set"),
+            recipient: self.recipient,
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
         };
-        let args = CreateTokenAccountInstructionArgs {
-            capacity: self.capacity.clone().expect("capacity is not set"),
-        };
 
-        accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
+        accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
     }
 }
 
-/// `create_token_account` CPI accounts.
-pub struct CreateTokenAccountCpiAccounts<'a, 'b> {
-    /// The token authority account.
-    pub token_account: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The authority for the token account.
+/// `close_mint` CPI accounts.
+pub struct CloseMintCpiAccounts<'a, 'b> {
+    /// The mint account PDA derived from the ticker and authority.
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The authority for the mint.
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The pubkey of the user associated with the token account
-    pub user: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The account paying for the storage fees.
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The account receiving refunded rent SOL.
+    pub recipient: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The system program
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `create_token_account` CPI instruction.
-pub struct CreateTokenAccountCpi<'a, 'b> {
+/// `close_mint` CPI instruction.
+pub struct CloseMintCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The token authority account.
-    pub token_account: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The authority for the token account.
+    /// The mint account PDA derived from the ticker and authority.
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The authority for the mint.
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The pubkey of the user associated with the token account
-    pub user: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The account paying for the storage fees.
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The account receiving refunded rent SOL.
+    pub recipient: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The system program
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The arguments for the instruction.
-    pub __args: CreateTokenAccountInstructionArgs,
 }
 
-impl<'a, 'b> CreateTokenAccountCpi<'a, 'b> {
+impl<'a, 'b> CloseMintCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: CreateTokenAccountCpiAccounts<'a, 'b>,
-        args: CreateTokenAccountInstructionArgs,
+        accounts: CloseMintCpiAccounts<'a, 'b>,
     ) -> Self {
         Self {
             __program: program,
-            token_account: accounts.token_account,
+            mint: accounts.mint,
             authority: accounts.authority,
-            user: accounts.user,
-            payer: accounts.payer,
+            recipient: accounts.recipient,
             system_program: accounts.system_program,
-            __args: args,
         }
     }
     #[inline(always)]
@@ -264,23 +225,26 @@ impl<'a, 'b> CreateTokenAccountCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.token_account.key,
+            *self.mint.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_program::instruction::AccountMeta::new(
             *self.authority.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.user.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.payer.key,
             true,
         ));
+        if let Some(recipient) = self.recipient {
+            accounts.push(solana_program::instruction::AccountMeta::new(
+                *recipient.key,
+                true,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::TOKEN_LITE_ID,
+                false,
+            ));
+        }
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.system_program.key,
             false,
@@ -292,23 +256,20 @@ impl<'a, 'b> CreateTokenAccountCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = CreateTokenAccountInstructionData::new()
-            .try_to_vec()
-            .unwrap();
-        let mut args = self.__args.try_to_vec().unwrap();
-        data.append(&mut args);
+        let data = CloseMintInstructionData::new().try_to_vec().unwrap();
 
         let instruction = solana_program::instruction::Instruction {
             program_id: crate::TOKEN_LITE_ID,
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(5 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(4 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.token_account.clone());
+        account_infos.push(self.mint.clone());
         account_infos.push(self.authority.clone());
-        account_infos.push(self.user.clone());
-        account_infos.push(self.payer.clone());
+        if let Some(recipient) = self.recipient {
+            account_infos.push(recipient.clone());
+        }
         account_infos.push(self.system_program.clone());
         remaining_accounts
             .iter()
@@ -322,43 +283,37 @@ impl<'a, 'b> CreateTokenAccountCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `CreateTokenAccount` via CPI.
+/// Instruction builder for `CloseMint` via CPI.
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` token_account
-///   1. `[]` authority
-///   2. `[]` user
-///   3. `[writable, signer]` payer
-///   4. `[]` system_program
-pub struct CreateTokenAccountCpiBuilder<'a, 'b> {
-    instruction: Box<CreateTokenAccountCpiBuilderInstruction<'a, 'b>>,
+///   0. `[writable]` mint
+///   1. `[writable, signer]` authority
+///   2. `[writable, signer, optional]` recipient
+///   3. `[]` system_program
+pub struct CloseMintCpiBuilder<'a, 'b> {
+    instruction: Box<CloseMintCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> CreateTokenAccountCpiBuilder<'a, 'b> {
+impl<'a, 'b> CloseMintCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(CreateTokenAccountCpiBuilderInstruction {
+        let instruction = Box::new(CloseMintCpiBuilderInstruction {
             __program: program,
-            token_account: None,
+            mint: None,
             authority: None,
-            user: None,
-            payer: None,
+            recipient: None,
             system_program: None,
-            capacity: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
     }
-    /// The token authority account.
+    /// The mint account PDA derived from the ticker and authority.
     #[inline(always)]
-    pub fn token_account(
-        &mut self,
-        token_account: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.token_account = Some(token_account);
+    pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.mint = Some(mint);
         self
     }
-    /// The authority for the token account.
+    /// The authority for the mint.
     #[inline(always)]
     pub fn authority(
         &mut self,
@@ -367,16 +322,14 @@ impl<'a, 'b> CreateTokenAccountCpiBuilder<'a, 'b> {
         self.instruction.authority = Some(authority);
         self
     }
-    /// The pubkey of the user associated with the token account
+    /// `[optional account]`
+    /// The account receiving refunded rent SOL.
     #[inline(always)]
-    pub fn user(&mut self, user: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.user = Some(user);
-        self
-    }
-    /// The account paying for the storage fees.
-    #[inline(always)]
-    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.payer = Some(payer);
+    pub fn recipient(
+        &mut self,
+        recipient: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.recipient = recipient;
         self
     }
     /// The system program
@@ -386,11 +339,6 @@ impl<'a, 'b> CreateTokenAccountCpiBuilder<'a, 'b> {
         system_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.system_program = Some(system_program);
-        self
-    }
-    #[inline(always)]
-    pub fn capacity(&mut self, capacity: u8) -> &mut Self {
-        self.instruction.capacity = Some(capacity);
         self
     }
     /// Add an additional account to the instruction.
@@ -434,32 +382,19 @@ impl<'a, 'b> CreateTokenAccountCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = CreateTokenAccountInstructionArgs {
-            capacity: self
-                .instruction
-                .capacity
-                .clone()
-                .expect("capacity is not set"),
-        };
-        let instruction = CreateTokenAccountCpi {
+        let instruction = CloseMintCpi {
             __program: self.instruction.__program,
 
-            token_account: self
-                .instruction
-                .token_account
-                .expect("token_account is not set"),
+            mint: self.instruction.mint.expect("mint is not set"),
 
             authority: self.instruction.authority.expect("authority is not set"),
 
-            user: self.instruction.user.expect("user is not set"),
-
-            payer: self.instruction.payer.expect("payer is not set"),
+            recipient: self.instruction.recipient,
 
             system_program: self
                 .instruction
                 .system_program
                 .expect("system_program is not set"),
-            __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
             signers_seeds,
@@ -468,14 +403,12 @@ impl<'a, 'b> CreateTokenAccountCpiBuilder<'a, 'b> {
     }
 }
 
-struct CreateTokenAccountCpiBuilderInstruction<'a, 'b> {
+struct CloseMintCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    user: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    recipient: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    capacity: Option<u8>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

@@ -14,8 +14,6 @@ import {
   combineCodec,
   getStructDecoder,
   getStructEncoder,
-  getU32Decoder,
-  getU32Encoder,
   getU8Decoder,
   getU8Encoder,
   mapEncoder,
@@ -33,21 +31,19 @@ import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
 import { TOKEN_LITE_PROGRAM_ADDRESS } from '../programs';
 import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
-export type MintToInstruction<
+export type CloseMintInstruction<
   TProgram extends string = typeof TOKEN_LITE_PROGRAM_ADDRESS,
-  TAccountTokenAccount extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountAuthority extends string | IAccountMeta<string> = string,
-  TAccountPayer extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends string | IAccountMeta<string> = string,
+  TAccountRecipient extends string | IAccountMeta<string> = string,
+  TAccountSystemProgram extends
+    | string
+    | IAccountMeta<string> = '11111111111111111111111111111111',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountTokenAccount extends string
-        ? WritableAccount<TAccountTokenAccount>
-        : TAccountTokenAccount,
       TAccountMint extends string
         ? WritableAccount<TAccountMint>
         : TAccountMint,
@@ -55,10 +51,10 @@ export type MintToInstruction<
         ? WritableSignerAccount<TAccountAuthority> &
             IAccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
-      TAccountPayer extends string
-        ? WritableSignerAccount<TAccountPayer> &
-            IAccountSignerMeta<TAccountPayer>
-        : TAccountPayer,
+      TAccountRecipient extends string
+        ? WritableSignerAccount<TAccountRecipient> &
+            IAccountSignerMeta<TAccountRecipient>
+        : TAccountRecipient,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -66,77 +62,64 @@ export type MintToInstruction<
     ]
   >;
 
-export type MintToInstructionData = { discriminator: number; amount: number };
+export type CloseMintInstructionData = { discriminator: number };
 
-export type MintToInstructionDataArgs = { amount: number };
+export type CloseMintInstructionDataArgs = {};
 
-export function getMintToInstructionDataEncoder(): Encoder<MintToInstructionDataArgs> {
+export function getCloseMintInstructionDataEncoder(): Encoder<CloseMintInstructionDataArgs> {
   return mapEncoder(
-    getStructEncoder([
-      ['discriminator', getU8Encoder()],
-      ['amount', getU32Encoder()],
-    ]),
-    (value) => ({ ...value, discriminator: 5 })
+    getStructEncoder([['discriminator', getU8Encoder()]]),
+    (value) => ({ ...value, discriminator: 2 })
   );
 }
 
-export function getMintToInstructionDataDecoder(): Decoder<MintToInstructionData> {
-  return getStructDecoder([
-    ['discriminator', getU8Decoder()],
-    ['amount', getU32Decoder()],
-  ]);
+export function getCloseMintInstructionDataDecoder(): Decoder<CloseMintInstructionData> {
+  return getStructDecoder([['discriminator', getU8Decoder()]]);
 }
 
-export function getMintToInstructionDataCodec(): Codec<
-  MintToInstructionDataArgs,
-  MintToInstructionData
+export function getCloseMintInstructionDataCodec(): Codec<
+  CloseMintInstructionDataArgs,
+  CloseMintInstructionData
 > {
   return combineCodec(
-    getMintToInstructionDataEncoder(),
-    getMintToInstructionDataDecoder()
+    getCloseMintInstructionDataEncoder(),
+    getCloseMintInstructionDataDecoder()
   );
 }
 
-export type MintToInput<
-  TAccountTokenAccount extends string = string,
+export type CloseMintInput<
   TAccountMint extends string = string,
   TAccountAuthority extends string = string,
-  TAccountPayer extends string = string,
+  TAccountRecipient extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  /** The token authority account. */
-  tokenAccount: Address<TAccountTokenAccount>;
   /** The mint account PDA derived from the ticker and authority. */
   mint: Address<TAccountMint>;
   /** The authority for the mint. */
   authority: TransactionSigner<TAccountAuthority>;
-  /** The account paying for the storage fees. */
-  payer?: TransactionSigner<TAccountPayer>;
+  /** The account receiving refunded rent SOL. */
+  recipient?: TransactionSigner<TAccountRecipient>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
-  amount: MintToInstructionDataArgs['amount'];
 };
 
-export function getMintToInstruction<
-  TAccountTokenAccount extends string,
+export function getCloseMintInstruction<
   TAccountMint extends string,
   TAccountAuthority extends string,
-  TAccountPayer extends string,
+  TAccountRecipient extends string,
   TAccountSystemProgram extends string,
 >(
-  input: MintToInput<
-    TAccountTokenAccount,
+  input: CloseMintInput<
     TAccountMint,
     TAccountAuthority,
-    TAccountPayer,
+    TAccountRecipient,
     TAccountSystemProgram
   >
-): MintToInstruction<
+): CloseMintInstruction<
   typeof TOKEN_LITE_PROGRAM_ADDRESS,
-  TAccountTokenAccount,
   TAccountMint,
   TAccountAuthority,
-  TAccountPayer,
+  TAccountRecipient,
   TAccountSystemProgram
 > {
   // Program address.
@@ -144,10 +127,9 @@ export function getMintToInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    tokenAccount: { value: input.tokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: true },
     authority: { value: input.authority ?? null, isWritable: true },
-    payer: { value: input.payer ?? null, isWritable: true },
+    recipient: { value: input.recipient ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -155,63 +137,60 @@ export function getMintToInstruction<
     ResolvedAccount
   >;
 
-  // Original args.
-  const args = { ...input };
+  // Resolve default values.
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.tokenAccount),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.authority),
-      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.recipient),
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
-    data: getMintToInstructionDataEncoder().encode(
-      args as MintToInstructionDataArgs
-    ),
-  } as MintToInstruction<
+    data: getCloseMintInstructionDataEncoder().encode({}),
+  } as CloseMintInstruction<
     typeof TOKEN_LITE_PROGRAM_ADDRESS,
-    TAccountTokenAccount,
     TAccountMint,
     TAccountAuthority,
-    TAccountPayer,
+    TAccountRecipient,
     TAccountSystemProgram
   >;
 
   return instruction;
 }
 
-export type ParsedMintToInstruction<
+export type ParsedCloseMintInstruction<
   TProgram extends string = typeof TOKEN_LITE_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    /** The token authority account. */
-    tokenAccount: TAccountMetas[0];
     /** The mint account PDA derived from the ticker and authority. */
-    mint: TAccountMetas[1];
+    mint: TAccountMetas[0];
     /** The authority for the mint. */
-    authority: TAccountMetas[2];
-    /** The account paying for the storage fees. */
-    payer?: TAccountMetas[3] | undefined;
+    authority: TAccountMetas[1];
+    /** The account receiving refunded rent SOL. */
+    recipient?: TAccountMetas[2] | undefined;
     /** The system program */
-    systemProgram?: TAccountMetas[4] | undefined;
+    systemProgram: TAccountMetas[3];
   };
-  data: MintToInstructionData;
+  data: CloseMintInstructionData;
 };
 
-export function parseMintToInstruction<
+export function parseCloseMintInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedMintToInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 5) {
+): ParsedCloseMintInstruction<TProgram, TAccountMetas> {
+  if (instruction.accounts.length < 4) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -230,12 +209,11 @@ export function parseMintToInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      tokenAccount: getNextAccount(),
       mint: getNextAccount(),
       authority: getNextAccount(),
-      payer: getNextOptionalAccount(),
-      systemProgram: getNextOptionalAccount(),
+      recipient: getNextOptionalAccount(),
+      systemProgram: getNextAccount(),
     },
-    data: getMintToInstructionDataDecoder().decode(instruction.data),
+    data: getCloseMintInstructionDataDecoder().decode(instruction.data),
   };
 }

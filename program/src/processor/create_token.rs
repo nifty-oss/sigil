@@ -64,7 +64,5 @@ pub fn process_create_token<'a>(
     token_authority.header.user = *user_info.key;
     token_authority.tokens.initialize(args.capacity);
 
-    // No need to serialize the data back into the account, it's already there.
-
     Ok(())
 }

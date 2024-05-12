@@ -56,6 +56,9 @@ pub enum TokenLiteError {
     /// 15 - Maximum supply reached
     #[error("Maximum supply reached")]
     MaximumSupplyReached,
+    /// 16 - Maximum supply reached
+    #[error("Cannot close mint account with supply")]
+    MintHasSupply,
 }
 
 impl PrintProgramError for TokenLiteError {

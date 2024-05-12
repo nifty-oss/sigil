@@ -17,6 +17,7 @@ import {
 import {
   ParsedAddTokenInstruction,
   ParsedBurnInstruction,
+  ParsedCloseMintInstruction,
   ParsedCreateMintInstruction,
   ParsedCreateTokenAccountInstruction,
   ParsedMintToInstruction,
@@ -49,6 +50,7 @@ export enum TokenLiteAccount {
 export enum TokenLiteInstruction {
   AddToken,
   Burn,
+  CloseMint,
   CreateMint,
   CreateTokenAccount,
   MintTo,
@@ -67,15 +69,18 @@ export function identifyTokenLiteInstruction(
     return TokenLiteInstruction.Burn;
   }
   if (memcmp(data, getU8Encoder().encode(2), 0)) {
-    return TokenLiteInstruction.CreateMint;
+    return TokenLiteInstruction.CloseMint;
   }
   if (memcmp(data, getU8Encoder().encode(3), 0)) {
-    return TokenLiteInstruction.CreateTokenAccount;
+    return TokenLiteInstruction.CreateMint;
   }
   if (memcmp(data, getU8Encoder().encode(4), 0)) {
-    return TokenLiteInstruction.MintTo;
+    return TokenLiteInstruction.CreateTokenAccount;
   }
   if (memcmp(data, getU8Encoder().encode(5), 0)) {
+    return TokenLiteInstruction.MintTo;
+  }
+  if (memcmp(data, getU8Encoder().encode(6), 0)) {
     return TokenLiteInstruction.Transfer;
   }
   throw new Error(
@@ -92,6 +97,9 @@ export type ParsedTokenLiteInstruction<
   | ({
       instructionType: TokenLiteInstruction.Burn;
     } & ParsedBurnInstruction<TProgram>)
+  | ({
+      instructionType: TokenLiteInstruction.CloseMint;
+    } & ParsedCloseMintInstruction<TProgram>)
   | ({
       instructionType: TokenLiteInstruction.CreateMint;
     } & ParsedCreateMintInstruction<TProgram>)

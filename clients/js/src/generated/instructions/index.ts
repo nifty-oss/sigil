@@ -8,6 +8,7 @@
 
 export * from './addToken';
 export * from './burn';
+export * from './closeMint';
 export * from './createMint';
 export * from './createTokenAccount';
 export * from './mintTo';

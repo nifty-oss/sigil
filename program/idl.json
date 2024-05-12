@@ -96,6 +96,49 @@
       }
     },
     {
+      "name": "CloseMint",
+      "accounts": [
+        {
+          "name": "mint",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The mint account PDA derived from the ticker and authority."
+          ]
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "The authority for the mint."
+          ]
+        },
+        {
+          "name": "recipient",
+          "isMut": true,
+          "isSigner": true,
+          "isOptional": true,
+          "docs": [
+            "The account receiving refunded rent SOL."
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The system program"
+          ]
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 2
+      }
+    },
+    {
       "name": "CreateMint",
       "accounts": [
         {
@@ -141,7 +184,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 2
+        "value": 3
       }
     },
     {
@@ -198,7 +241,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 3
+        "value": 4
       }
     },
     {
@@ -257,7 +300,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 4
+        "value": 5
       }
     },
     {
@@ -316,7 +359,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 5
+        "value": 6
       }
     }
   ],
@@ -479,6 +522,11 @@
       "code": 15,
       "name": "MaximumSupplyReached",
       "msg": "Maximum supply reached"
+    },
+    {
+      "code": 16,
+      "name": "MintHasSupply",
+      "msg": "Cannot close mint account with supply"
     }
   ],
   "metadata": {
