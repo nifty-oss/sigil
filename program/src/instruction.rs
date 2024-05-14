@@ -57,7 +57,6 @@ pub enum Instruction {
     #[account(0, writable, name="mint", desc = "The mint account PDA derived from the ticker and authority.")]
     #[account(1, writable, signer, name="authority", desc = "The authority for the mint.")]
     #[account(2, optional, writable, signer, name="recipient", desc = "The account receiving refunded rent SOL.")]
-    #[account(3, name="system_program", desc = "The system program")]
     CloseMint,
 
     /// Create a new mint account from a ticker and a authority.

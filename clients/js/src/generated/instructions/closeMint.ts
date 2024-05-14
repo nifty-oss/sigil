@@ -23,7 +23,6 @@ import {
   IInstruction,
   IInstructionWithAccounts,
   IInstructionWithData,
-  ReadonlyAccount,
   WritableAccount,
   WritableSignerAccount,
 } from '@solana/instructions';
@@ -36,9 +35,6 @@ export type CloseMintInstruction<
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountAuthority extends string | IAccountMeta<string> = string,
   TAccountRecipient extends string | IAccountMeta<string> = string,
-  TAccountSystemProgram extends
-    | string
-    | IAccountMeta<string> = '11111111111111111111111111111111',
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -55,9 +51,6 @@ export type CloseMintInstruction<
         ? WritableSignerAccount<TAccountRecipient> &
             IAccountSignerMeta<TAccountRecipient>
         : TAccountRecipient,
-      TAccountSystemProgram extends string
-        ? ReadonlyAccount<TAccountSystemProgram>
-        : TAccountSystemProgram,
       ...TRemainingAccounts,
     ]
   >;
@@ -91,7 +84,6 @@ export type CloseMintInput<
   TAccountMint extends string = string,
   TAccountAuthority extends string = string,
   TAccountRecipient extends string = string,
-  TAccountSystemProgram extends string = string,
 > = {
   /** The mint account PDA derived from the ticker and authority. */
   mint: Address<TAccountMint>;
@@ -99,28 +91,19 @@ export type CloseMintInput<
   authority: TransactionSigner<TAccountAuthority>;
   /** The account receiving refunded rent SOL. */
   recipient?: TransactionSigner<TAccountRecipient>;
-  /** The system program */
-  systemProgram?: Address<TAccountSystemProgram>;
 };
 
 export function getCloseMintInstruction<
   TAccountMint extends string,
   TAccountAuthority extends string,
   TAccountRecipient extends string,
-  TAccountSystemProgram extends string,
 >(
-  input: CloseMintInput<
-    TAccountMint,
-    TAccountAuthority,
-    TAccountRecipient,
-    TAccountSystemProgram
-  >
+  input: CloseMintInput<TAccountMint, TAccountAuthority, TAccountRecipient>
 ): CloseMintInstruction<
   typeof TOKEN_LITE_PROGRAM_ADDRESS,
   TAccountMint,
   TAccountAuthority,
-  TAccountRecipient,
-  TAccountSystemProgram
+  TAccountRecipient
 > {
   // Program address.
   const programAddress = TOKEN_LITE_PROGRAM_ADDRESS;
@@ -130,18 +113,11 @@ export function getCloseMintInstruction<
     mint: { value: input.mint ?? null, isWritable: true },
     authority: { value: input.authority ?? null, isWritable: true },
     recipient: { value: input.recipient ?? null, isWritable: true },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
     ResolvedAccount
   >;
-
-  // Resolve default values.
-  if (!accounts.systemProgram.value) {
-    accounts.systemProgram.value =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
-  }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
@@ -149,7 +125,6 @@ export function getCloseMintInstruction<
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.authority),
       getAccountMeta(accounts.recipient),
-      getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
     data: getCloseMintInstructionDataEncoder().encode({}),
@@ -157,8 +132,7 @@ export function getCloseMintInstruction<
     typeof TOKEN_LITE_PROGRAM_ADDRESS,
     TAccountMint,
     TAccountAuthority,
-    TAccountRecipient,
-    TAccountSystemProgram
+    TAccountRecipient
   >;
 
   return instruction;
@@ -176,8 +150,6 @@ export type ParsedCloseMintInstruction<
     authority: TAccountMetas[1];
     /** The account receiving refunded rent SOL. */
     recipient?: TAccountMetas[2] | undefined;
-    /** The system program */
-    systemProgram: TAccountMetas[3];
   };
   data: CloseMintInstructionData;
 };
@@ -190,7 +162,7 @@ export function parseCloseMintInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedCloseMintInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 4) {
+  if (instruction.accounts.length < 3) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -212,7 +184,6 @@ export function parseCloseMintInstruction<
       mint: getNextAccount(),
       authority: getNextAccount(),
       recipient: getNextOptionalAccount(),
-      systemProgram: getNextAccount(),
     },
     data: getCloseMintInstructionDataDecoder().decode(instruction.data),
   };

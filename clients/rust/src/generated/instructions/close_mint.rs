@@ -16,8 +16,6 @@ pub struct CloseMint {
     pub authority: solana_program::pubkey::Pubkey,
     /// The account receiving refunded rent SOL.
     pub recipient: Option<solana_program::pubkey::Pubkey>,
-    /// The system program
-    pub system_program: solana_program::pubkey::Pubkey,
 }
 
 impl CloseMint {
@@ -29,7 +27,7 @@ impl CloseMint {
         &self,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.mint, false,
         ));
@@ -47,10 +45,6 @@ impl CloseMint {
                 false,
             ));
         }
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.system_program,
-            false,
-        ));
         accounts.extend_from_slice(remaining_accounts);
         let data = CloseMintInstructionData::new().try_to_vec().unwrap();
 
@@ -80,13 +74,11 @@ impl CloseMintInstructionData {
 ///   0. `[writable]` mint
 ///   1. `[writable, signer]` authority
 ///   2. `[writable, signer, optional]` recipient
-///   3. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Default)]
 pub struct CloseMintBuilder {
     mint: Option<solana_program::pubkey::Pubkey>,
     authority: Option<solana_program::pubkey::Pubkey>,
     recipient: Option<solana_program::pubkey::Pubkey>,
-    system_program: Option<solana_program::pubkey::Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -113,13 +105,6 @@ impl CloseMintBuilder {
         self.recipient = recipient;
         self
     }
-    /// `[optional account, default to '11111111111111111111111111111111']`
-    /// The system program
-    #[inline(always)]
-    pub fn system_program(&mut self, system_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.system_program = Some(system_program);
-        self
-    }
     /// Add an aditional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -144,9 +129,6 @@ impl CloseMintBuilder {
             mint: self.mint.expect("mint is not set"),
             authority: self.authority.expect("authority is not set"),
             recipient: self.recipient,
-            system_program: self
-                .system_program
-                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
         };
 
         accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
@@ -161,8 +143,6 @@ pub struct CloseMintCpiAccounts<'a, 'b> {
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// The account receiving refunded rent SOL.
     pub recipient: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    /// The system program
-    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `close_mint` CPI instruction.
@@ -175,8 +155,6 @@ pub struct CloseMintCpi<'a, 'b> {
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
     /// The account receiving refunded rent SOL.
     pub recipient: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    /// The system program
-    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 impl<'a, 'b> CloseMintCpi<'a, 'b> {
@@ -189,7 +167,6 @@ impl<'a, 'b> CloseMintCpi<'a, 'b> {
             mint: accounts.mint,
             authority: accounts.authority,
             recipient: accounts.recipient,
-            system_program: accounts.system_program,
         }
     }
     #[inline(always)]
@@ -225,7 +202,7 @@ impl<'a, 'b> CloseMintCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.mint.key,
             false,
@@ -245,10 +222,6 @@ impl<'a, 'b> CloseMintCpi<'a, 'b> {
                 false,
             ));
         }
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.system_program.key,
-            false,
-        ));
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -263,14 +236,13 @@ impl<'a, 'b> CloseMintCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(4 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(3 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.authority.clone());
         if let Some(recipient) = self.recipient {
             account_infos.push(recipient.clone());
         }
-        account_infos.push(self.system_program.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -290,7 +262,6 @@ impl<'a, 'b> CloseMintCpi<'a, 'b> {
 ///   0. `[writable]` mint
 ///   1. `[writable, signer]` authority
 ///   2. `[writable, signer, optional]` recipient
-///   3. `[]` system_program
 pub struct CloseMintCpiBuilder<'a, 'b> {
     instruction: Box<CloseMintCpiBuilderInstruction<'a, 'b>>,
 }
@@ -302,7 +273,6 @@ impl<'a, 'b> CloseMintCpiBuilder<'a, 'b> {
             mint: None,
             authority: None,
             recipient: None,
-            system_program: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -330,15 +300,6 @@ impl<'a, 'b> CloseMintCpiBuilder<'a, 'b> {
         recipient: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ) -> &mut Self {
         self.instruction.recipient = recipient;
-        self
-    }
-    /// The system program
-    #[inline(always)]
-    pub fn system_program(
-        &mut self,
-        system_program: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.system_program = Some(system_program);
         self
     }
     /// Add an additional account to the instruction.
@@ -390,11 +351,6 @@ impl<'a, 'b> CloseMintCpiBuilder<'a, 'b> {
             authority: self.instruction.authority.expect("authority is not set"),
 
             recipient: self.instruction.recipient,
-
-            system_program: self
-                .instruction
-                .system_program
-                .expect("system_program is not set"),
         };
         instruction.invoke_signed_with_remaining_accounts(
             signers_seeds,
@@ -408,7 +364,6 @@ struct CloseMintCpiBuilderInstruction<'a, 'b> {
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     recipient: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

@@ -122,14 +122,6 @@
           "docs": [
             "The account receiving refunded rent SOL."
           ]
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "The system program"
-          ]
         }
       ],
       "args": [],
