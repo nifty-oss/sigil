@@ -22,7 +22,7 @@ on:
 
 env:
   CACHE: true
-  CARGO_NET_GIT_FETCH_WITH_CLI: 'true'
+  CARGO_NET_GIT_FETCH_WITH_CLI: "true"
 
 jobs:
   build_sdk:
@@ -68,5 +68,5 @@ jobs:
         with:
           name: rust-client-builds
           # First wildcard ensures exported paths are consistently under the clients folder.
-          path: ./targe*/release/*nifty-oss-token-lite-client*
+          path: ./targe*/release/*token_lite_client*
           if-no-files-found: error

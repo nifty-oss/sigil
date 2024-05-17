@@ -1,7 +1,5 @@
 #![cfg(feature = "test-sbf")]
 
-use nifty_oss_token_lite::state::{Mint, TokenAccount, TokenSeeds};
-use nifty_oss_token_lite_client::instructions::{AddTokenBuilder, CreateTokenAccountBuilder};
 use solana_program_test::tokio;
 use solana_sdk::{
     signature::{Keypair, Signer},
@@ -9,6 +7,8 @@ use solana_sdk::{
     transaction::Transaction,
 };
 use stevia::{collections::u8_avl_tree::U8Node, ZeroCopy};
+use token_lite::state::{Mint, TokenAccount, TokenSeeds};
+use token_lite_client::instructions::{AddTokenBuilder, CreateTokenAccountBuilder};
 
 pub mod helpers;
 

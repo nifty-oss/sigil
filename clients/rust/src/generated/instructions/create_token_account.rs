@@ -76,7 +76,7 @@ pub struct CreateTokenAccountInstructionData {
 
 impl CreateTokenAccountInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 3 }
+        Self { discriminator: 4 }
     }
 }
 

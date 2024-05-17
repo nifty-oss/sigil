@@ -78,7 +78,7 @@ export function getCreateTokenAccountInstructionDataEncoder(): Encoder<CreateTok
       ['discriminator', getU8Encoder()],
       ['capacity', getU8Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 3 })
+    (value) => ({ ...value, discriminator: 4 })
   );
 }
 

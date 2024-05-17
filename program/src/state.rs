@@ -80,7 +80,7 @@ impl<'a> TokenAccountMut<'a> {
 #[derive(Clone, Copy, Pod, Zeroable)]
 pub struct Header {
     // Tag, empty x 3 bytes.
-    pub data: [u8; 4],
+    data: [u8; 4],
     pub authority: Pubkey,
     pub user: Pubkey,
 }

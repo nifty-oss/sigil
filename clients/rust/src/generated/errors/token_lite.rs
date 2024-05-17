@@ -58,6 +58,9 @@ pub enum TokenLiteError {
     /// 15 (0xF) - Maximum supply reached
     #[error("Maximum supply reached")]
     MaximumSupplyReached,
+    /// 16 (0x10) - Cannot close mint account with supply
+    #[error("Cannot close mint account with supply")]
+    MintHasSupply,
 }
 
 impl solana_program::program_error::PrintProgramError for TokenLiteError {

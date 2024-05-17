@@ -1,5 +1,5 @@
 [package]
-name = "nifty-oss-token-lite-client"
+name = "token-lite-client"
 version = "0.0.0"
 edition = "2021"
 readme = "README.md"
@@ -15,7 +15,7 @@ kaigan = { version = "0.2.5", features = ["serde"] }
 nifty-asset = "0.4.0"
 num-derive = "^0.3"
 num-traits = "^0.2"
-nifty-oss-token-lite = { path = "../../program" }
+token-lite = { path = "../../program" }
 serde = { version = "^1.0", features = ["derive"], optional = true }
 serde_with = { version = "^3.0", optional = true }
 solana-program = "~1.16"

@@ -52,6 +52,13 @@ pub enum Instruction {
     #[account(2, signer, name="user", desc = "The user of the token account")]
     Burn(BurnArgs),
 
+    /// Create a new mint account from a ticker and an authority.
+    /// The authority must sign the transaction to sign off on minting new tokens.
+    #[account(0, writable, name="mint", desc = "The mint account PDA derived from the ticker and authority.")]
+    #[account(1, writable, signer, name="authority", desc = "The authority for the mint.")]
+    #[account(2, optional, writable, signer, name="recipient", desc = "The account receiving refunded rent SOL.")]
+    CloseMint,
+
     /// Create a new mint account from a ticker and a authority.
     /// The authority authority must sign the transaction to sign off on creation of a new mint account
     /// in their authority.

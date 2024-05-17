@@ -87,7 +87,7 @@ export function getCreateMintInstructionDataEncoder(): Encoder<CreateMintInstruc
       ['maxSupply', getU64Encoder()],
       ['decimals', getU8Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 2 })
+    (value) => ({ ...value, discriminator: 3 })
   );
 }
 
