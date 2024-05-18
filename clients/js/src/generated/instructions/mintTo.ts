@@ -30,11 +30,11 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import { TOKEN_LITE_PROGRAM_ADDRESS } from '../programs';
+import { SIGIL_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type MintToInstruction<
-  TProgram extends string = typeof TOKEN_LITE_PROGRAM_ADDRESS,
+  TProgram extends string = typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountAuthority extends string | IAccountMeta<string> = string,
@@ -132,7 +132,7 @@ export function getMintToInstruction<
     TAccountSystemProgram
   >
 ): MintToInstruction<
-  typeof TOKEN_LITE_PROGRAM_ADDRESS,
+  typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
   TAccountTokenAccount,
   TAccountMint,
   TAccountAuthority,
@@ -140,7 +140,7 @@ export function getMintToInstruction<
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress = TOKEN_LITE_PROGRAM_ADDRESS;
+  const programAddress = SIGIL_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -172,7 +172,7 @@ export function getMintToInstruction<
       args as MintToInstructionDataArgs
     ),
   } as MintToInstruction<
-    typeof TOKEN_LITE_PROGRAM_ADDRESS,
+    typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
     TAccountTokenAccount,
     TAccountMint,
     TAccountAuthority,
@@ -184,7 +184,7 @@ export function getMintToInstruction<
 }
 
 export type ParsedMintToInstruction<
-  TProgram extends string = typeof TOKEN_LITE_PROGRAM_ADDRESS,
+  TProgram extends string = typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
@@ -223,7 +223,7 @@ export function parseMintToInstruction<
   };
   const getNextOptionalAccount = () => {
     const accountMeta = getNextAccount();
-    return accountMeta.address === TOKEN_LITE_PROGRAM_ADDRESS
+    return accountMeta.address === SIGIL_PROGRAM_PROGRAM_ADDRESS
       ? undefined
       : accountMeta;
   };

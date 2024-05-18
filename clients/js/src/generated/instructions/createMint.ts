@@ -32,11 +32,11 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import { TOKEN_LITE_PROGRAM_ADDRESS } from '../programs';
+import { SIGIL_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type CreateMintInstruction<
-  TProgram extends string = typeof TOKEN_LITE_PROGRAM_ADDRESS,
+  TProgram extends string = typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountAuthority extends string | IAccountMeta<string> = string,
   TAccountPayer extends string | IAccountMeta<string> = string,
@@ -142,14 +142,14 @@ export function getCreateMintInstruction<
     TAccountSystemProgram
   >
 ): CreateMintInstruction<
-  typeof TOKEN_LITE_PROGRAM_ADDRESS,
+  typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
   TAccountMint,
   TAccountAuthority,
   TAccountPayer,
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress = TOKEN_LITE_PROGRAM_ADDRESS;
+  const programAddress = SIGIL_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -185,7 +185,7 @@ export function getCreateMintInstruction<
       args as CreateMintInstructionDataArgs
     ),
   } as CreateMintInstruction<
-    typeof TOKEN_LITE_PROGRAM_ADDRESS,
+    typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
     TAccountMint,
     TAccountAuthority,
     TAccountPayer,
@@ -196,7 +196,7 @@ export function getCreateMintInstruction<
 }
 
 export type ParsedCreateMintInstruction<
-  TProgram extends string = typeof TOKEN_LITE_PROGRAM_ADDRESS,
+  TProgram extends string = typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;

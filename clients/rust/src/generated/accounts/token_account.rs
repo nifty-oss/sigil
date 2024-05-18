@@ -51,7 +51,7 @@ impl TokenAccount {
                 authority.as_ref(),
                 &[bump],
             ],
-            &crate::TOKEN_LITE_ID,
+            &crate::SIGIL_PROGRAM_ID,
         )
     }
 
@@ -62,7 +62,7 @@ impl TokenAccount {
                 user.as_ref(),
                 authority.as_ref(),
             ],
-            &crate::TOKEN_LITE_ID,
+            &crate::SIGIL_PROGRAM_ID,
         )
     }
 

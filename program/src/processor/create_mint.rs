@@ -26,7 +26,7 @@ pub fn process_create_mint<'a>(
         .ticker
         .as_bytes()
         .try_into()
-        .map_err(|_| TokenLiteError::InvalidTicker)?;
+        .map_err(|_| SigilError::InvalidTicker)?;
 
     let seeds = MintSeeds {
         ticker,

@@ -25,7 +25,7 @@ pub fn process_close_mint<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult 
     // Mint supply must be zero.
     require!(
         mint.supply == 0,
-        TokenLiteError::MintHasSupply,
+        SigilError::MintHasSupply,
         "mint still has supply"
     );
 

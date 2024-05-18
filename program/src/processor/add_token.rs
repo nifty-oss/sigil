@@ -30,14 +30,14 @@ pub fn process_add_token<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
     // The token account must be associated with the mint via the namespace.
     require!(
         token_account.header.authority == mint.authority,
-        TokenLiteError::InvalidTokenAccount,
+        SigilError::InvalidTokenAccount,
         "token namespace mismatch"
     );
 
     // The token account must be associated with the user passed in.
     require!(
         &token_account.header.user == user_info.key,
-        TokenLiteError::InvalidTokenAccount,
+        SigilError::InvalidTokenAccount,
         "token user mismatch"
     );
 

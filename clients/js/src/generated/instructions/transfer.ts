@@ -33,11 +33,11 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import { TOKEN_LITE_PROGRAM_ADDRESS } from '../programs';
+import { SIGIL_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type TransferInstruction<
-  TProgram extends string = typeof TOKEN_LITE_PROGRAM_ADDRESS,
+  TProgram extends string = typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
   TAccountUserTokenAccount extends string | IAccountMeta<string> = string,
   TAccountRecipientTokenAccount extends string | IAccountMeta<string> = string,
   TAccountUser extends string | IAccountMeta<string> = string,
@@ -144,7 +144,7 @@ export function getTransferInstruction<
     TAccountSystemProgram
   >
 ): TransferInstruction<
-  typeof TOKEN_LITE_PROGRAM_ADDRESS,
+  typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
   TAccountUserTokenAccount,
   TAccountRecipientTokenAccount,
   TAccountUser,
@@ -152,7 +152,7 @@ export function getTransferInstruction<
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress = TOKEN_LITE_PROGRAM_ADDRESS;
+  const programAddress = SIGIL_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -190,7 +190,7 @@ export function getTransferInstruction<
       args as TransferInstructionDataArgs
     ),
   } as TransferInstruction<
-    typeof TOKEN_LITE_PROGRAM_ADDRESS,
+    typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
     TAccountUserTokenAccount,
     TAccountRecipientTokenAccount,
     TAccountUser,
@@ -202,7 +202,7 @@ export function getTransferInstruction<
 }
 
 export type ParsedTransferInstruction<
-  TProgram extends string = typeof TOKEN_LITE_PROGRAM_ADDRESS,
+  TProgram extends string = typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
@@ -241,7 +241,7 @@ export function parseTransferInstruction<
   };
   const getNextOptionalAccount = () => {
     const accountMeta = getNextAccount();
-    return accountMeta.address === TOKEN_LITE_PROGRAM_ADDRESS
+    return accountMeta.address === SIGIL_PROGRAM_PROGRAM_ADDRESS
       ? undefined
       : accountMeta;
   };

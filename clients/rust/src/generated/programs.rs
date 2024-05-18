@@ -7,5 +7,5 @@
 
 use solana_program::{pubkey, pubkey::Pubkey};
 
-/// `token_lite` program ID.
-pub const TOKEN_LITE_ID: Pubkey = pubkey!("BpPMgxYawb8Qiguavj3JccMdp7bTZWemSqJmDeYTsTD9");
+/// `sigil_program` program ID.
+pub const SIGIL_PROGRAM_ID: Pubkey = pubkey!("BpPMgxYawb8Qiguavj3JccMdp7bTZWemSqJmDeYTsTD9");

@@ -10,7 +10,7 @@ use crate::{
     assertions::{
         assert_empty, assert_non_empty, assert_program_owner, assert_same_pubkeys, assert_signer,
     },
-    error::TokenLiteError,
+    error::SigilError,
     instruction::Instruction,
     require, resize_account,
     state::{Mint, MintSeeds, Tag, TokenAccount, TokenAccountMut},
