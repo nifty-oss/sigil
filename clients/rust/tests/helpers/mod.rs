@@ -41,7 +41,7 @@ pub async fn airdrop(
 }
 
 pub async fn program_context() -> ProgramTestContext {
-    let test = ProgramTest::new("sigil_program", sigil_client::ID, None);
+    let test = ProgramTest::new("sigil", sigil_client::ID, None);
     test.start_with_context().await
 }
 
