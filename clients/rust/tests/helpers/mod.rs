@@ -81,7 +81,7 @@ pub async fn create_mint<'a>(
     let authority = authority_signer.pubkey();
 
     let (mint, _) = Pubkey::find_program_address(
-        &[&Mint::PREFIX, ticker.as_bytes(), &authority.as_ref()],
+        &[Mint::PREFIX, ticker.as_bytes(), authority.as_ref()],
         &SigilID,
     );
 
