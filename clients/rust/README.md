@@ -1,6 +1,6 @@
 # Rust client
 
-A generated Rust library for the Token Lite program.
+A generated Rust library for the Sigil token program.
 
 ## Getting started
 

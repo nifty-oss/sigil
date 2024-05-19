@@ -1,6 +1,6 @@
 # JavaScript client
 
-A generated JavaScript library for the Token Lite program.
+A generated JavaScript library for the Sigil token program.
 
 ## Getting started
 

@@ -38,7 +38,7 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
     // The token account must be associated with the mint via the authority.
     require!(
         token_account.header.authority == mint.authority,
-        TokenLiteError::InvalidTokenAccount,
+        SigilError::InvalidTokenAccount,
         "token authority mismatch"
     );
 
@@ -46,10 +46,10 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
     let new_amount = mint
         .supply
         .checked_add(args.amount as u64)
-        .ok_or(TokenLiteError::NumericalOverflow)?;
+        .ok_or(SigilError::NumericalOverflow)?;
 
     if new_amount > mint.max_supply {
-        return Err(TokenLiteError::MaximumSupplyReached.into());
+        return Err(SigilError::MaximumSupplyReached.into());
     }
 
     let maybe_ticker = token_account.tokens.get(&ticker);
@@ -90,7 +90,7 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
     let amount = token_account.tokens.get_mut(&ticker).unwrap();
     *amount = amount
         .checked_add(args.amount)
-        .ok_or(TokenLiteError::NumericalOverflow)?;
+        .ok_or(SigilError::NumericalOverflow)?;
 
     // Update the mint supply.
     mint.supply = new_amount;

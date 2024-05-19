@@ -68,5 +68,5 @@ jobs:
         with:
           name: rust-client-builds
           # First wildcard ensures exported paths are consistently under the clients folder.
-          path: ./targe*/release/*token_lite_client*
+          path: ./targe*/release/*sigil_client*
           if-no-files-found: error

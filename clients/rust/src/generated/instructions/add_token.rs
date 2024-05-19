@@ -46,7 +46,7 @@ impl AddToken {
             accounts.push(solana_program::instruction::AccountMeta::new(payer, true));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::TOKEN_LITE_ID,
+                crate::SIGIL_ID,
                 false,
             ));
         }
@@ -57,7 +57,7 @@ impl AddToken {
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::TOKEN_LITE_ID,
+                crate::SIGIL_ID,
                 false,
             ));
         }
@@ -65,7 +65,7 @@ impl AddToken {
         let data = AddTokenInstructionData::new().try_to_vec().unwrap();
 
         solana_program::instruction::Instruction {
-            program_id: crate::TOKEN_LITE_ID,
+            program_id: crate::SIGIL_ID,
             accounts,
             data,
         }
@@ -269,7 +269,7 @@ impl<'a, 'b> AddTokenCpi<'a, 'b> {
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::TOKEN_LITE_ID,
+                crate::SIGIL_ID,
                 false,
             ));
         }
@@ -280,7 +280,7 @@ impl<'a, 'b> AddTokenCpi<'a, 'b> {
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::TOKEN_LITE_ID,
+                crate::SIGIL_ID,
                 false,
             ));
         }
@@ -294,7 +294,7 @@ impl<'a, 'b> AddTokenCpi<'a, 'b> {
         let data = AddTokenInstructionData::new().try_to_vec().unwrap();
 
         let instruction = solana_program::instruction::Instruction {
-            program_id: crate::TOKEN_LITE_ID,
+            program_id: crate::SIGIL_ID,
             accounts,
             data,
         };

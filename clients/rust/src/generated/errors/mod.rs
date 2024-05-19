@@ -5,6 +5,6 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
-pub(crate) mod token_lite;
+pub(crate) mod sigil;
 
-pub use self::token_lite::TokenLiteError;
+pub use self::sigil::SigilError;

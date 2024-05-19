@@ -1,7 +1,7 @@
 {
-  "name": "@nifty-oss/token-lite",
-  "version": "0.0.0",
-  "description": "JavaScript client for the Token Lite program",
+  "name": "@nifty-oss/sigil",
+  "version": "0.1.0",
+  "description": "JavaScript client for the Sigil token program",
   "sideEffects": false,
   "module": "./dist/src/index.js",
   "main": "./dist/src/index.cjs",
@@ -70,5 +70,5 @@
       }
     }
   },
-  "packageManager": "pnpm@9.0.6"
+  "packageManager": "pnpm@9.1.0"
 }

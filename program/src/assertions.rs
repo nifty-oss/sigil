@@ -3,7 +3,7 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-use crate::{error::TokenLiteError, state::Tag};
+use crate::{error::SigilError, state::Tag};
 
 /// Assert that the given account is owned by the given program.
 pub fn assert_program_owner(
@@ -19,7 +19,7 @@ pub fn assert_program_owner(
             owner,
             account.owner
         );
-        Err(TokenLiteError::InvalidProgramOwner.into())
+        Err(SigilError::InvalidProgramOwner.into())
     } else {
         Ok(())
     }
@@ -40,7 +40,7 @@ pub fn assert_pda(
             account.key,
             key,
         );
-        return Err(TokenLiteError::InvalidPda.into());
+        return Err(SigilError::InvalidPda.into());
     }
     Ok(bump)
 }
@@ -53,7 +53,7 @@ pub fn assert_empty(account_name: &str, account: &AccountInfo) -> ProgramResult 
             account_name,
             account.key,
         );
-        Err(TokenLiteError::ExpectedEmptyAccount.into())
+        Err(SigilError::ExpectedEmptyAccount.into())
     } else {
         Ok(())
     }
@@ -67,7 +67,7 @@ pub fn assert_non_empty(account_name: &str, account: &AccountInfo) -> ProgramRes
             account_name,
             account.key,
         );
-        Err(TokenLiteError::ExpectedNonEmptyAccount.into())
+        Err(SigilError::ExpectedNonEmptyAccount.into())
     } else {
         Ok(())
     }
@@ -81,7 +81,7 @@ pub fn assert_signer(account_name: &str, account: &AccountInfo) -> ProgramResult
             account_name,
             account.key,
         );
-        Err(TokenLiteError::ExpectedSignerAccount.into())
+        Err(SigilError::ExpectedSignerAccount.into())
     } else {
         Ok(())
     }
@@ -95,7 +95,7 @@ pub fn assert_writable(account_name: &str, account: &AccountInfo) -> ProgramResu
             account_name,
             account.key,
         );
-        Err(TokenLiteError::ExpectedWritableAccount.into())
+        Err(SigilError::ExpectedWritableAccount.into())
     } else {
         Ok(())
     }
@@ -114,7 +114,7 @@ pub fn assert_same_pubkeys(
             account.key,
             expected
         );
-        Err(TokenLiteError::AccountMismatch.into())
+        Err(SigilError::AccountMismatch.into())
     } else {
         Ok(())
     }
@@ -131,7 +131,7 @@ pub fn assert_account_key(account_name: &str, account: &AccountInfo, key: Tag) -
             key_number,
             account.try_borrow_data()?[0]
         );
-        Err(TokenLiteError::InvalidAccountKey.into())
+        Err(SigilError::InvalidAccountKey.into())
     } else {
         Ok(())
     }

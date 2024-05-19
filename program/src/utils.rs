@@ -9,7 +9,7 @@ use solana_program::{
     sysvar::Sysvar,
 };
 
-use crate::error::TokenLiteError;
+use crate::error::SigilError;
 
 /// Create a new account from the given size.
 #[inline(always)]
@@ -110,12 +110,12 @@ pub fn transfer_lamports_from_pdas<'a>(
     **from.lamports.borrow_mut() = from
         .lamports()
         .checked_sub(lamports)
-        .ok_or::<ProgramError>(TokenLiteError::NumericalOverflow.into())?;
+        .ok_or::<ProgramError>(SigilError::NumericalOverflow.into())?;
 
     **to.lamports.borrow_mut() = to
         .lamports()
         .checked_add(lamports)
-        .ok_or::<ProgramError>(TokenLiteError::NumericalOverflow.into())?;
+        .ok_or::<ProgramError>(SigilError::NumericalOverflow.into())?;
 
     Ok(())
 }
@@ -137,7 +137,7 @@ macro_rules! resize_account {
             let new_len = $recipient_token_account_info
                 .data_len()
                 .checked_add(std::mem::size_of::<U8Node<u32, u32>>())
-                .ok_or(TokenLiteError::NumericalOverflow)?;
+                .ok_or(SigilError::NumericalOverflow)?;
 
             // Resize the account data.
             $recipient_token_account_info.realloc(new_len, false)?;
@@ -146,7 +146,7 @@ macro_rules! resize_account {
             let new_lamports = rent.minimum_balance(new_len);
             let difference = new_lamports
                 .checked_sub($recipient_token_account_info.lamports())
-                .ok_or(TokenLiteError::NumericalOverflow)?;
+                .ok_or(SigilError::NumericalOverflow)?;
 
             invoke(
                 &system_instruction::transfer(

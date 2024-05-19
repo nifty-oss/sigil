@@ -29,37 +29,37 @@ pub fn process_burn<'a>(accounts: &'a [AccountInfo<'a>], args: BurnArgs) -> Prog
     // The token accounts must be associated with the mint via the namespace.
     require!(
         token_account.header.authority == mint.authority,
-        TokenLiteError::InvalidTokenAccount,
+        SigilError::InvalidTokenAccount,
         "token namespace mismatch"
     );
     // The token accounts must be associated with the user and recipient passed in.
     require!(
         &token_account.header.user == user_info.key,
-        TokenLiteError::InvalidTokenAccount,
+        SigilError::InvalidTokenAccount,
         "token user mismatch"
     );
 
     // Look up the amount of tokens in the user's account to make sure they have enough to burn.
     let amount = match token_account.tokens.get_mut(&mint.ticker()) {
         Some(amount) => amount,
-        None => return Err(TokenLiteError::InsufficientFunds.into()),
+        None => return Err(SigilError::InsufficientFunds.into()),
     };
 
     // Fail if, trying to burn more than the user has.
     if args.amount > *amount {
-        return Err(TokenLiteError::InsufficientFunds.into());
+        return Err(SigilError::InsufficientFunds.into());
     }
 
     // Burn the requested amount.
     *amount = amount
         .checked_sub(args.amount)
-        .ok_or(TokenLiteError::NumericalOverflow)?;
+        .ok_or(SigilError::NumericalOverflow)?;
 
     // Decrease the mint supply.
     mint.supply = mint
         .supply
         .checked_sub(args.amount as u64)
-        .ok_or(TokenLiteError::NumericalOverflow)?;
+        .ok_or(SigilError::NumericalOverflow)?;
 
     Ok(())
 }

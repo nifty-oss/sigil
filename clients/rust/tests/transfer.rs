@@ -6,10 +6,10 @@
 //     state::{Asset, Tag, Standard, State},
 //     ZeroCopy,
 // };
-// use nifty_oss_token_lite::state::{MintMetadata, TokenAccount, TokenSeeds};
-// use nifty_oss_token_lite_client::{
+// use sigil_program::state::{MintMetadata, TokenAccount, TokenSeeds};
+// use sigil_client::{
 //     instructions::{AddTokenBuilder, CreateTokenAccountBuilder},
-//     ID as TokenLiteID,
+//     ID as SigilID,
 // };
 // use solana_program_test::tokio;
 // use solana_sdk::{

@@ -1,3 +1,4 @@
+use sigil_client::{accounts::Mint, instructions::CreateMintBuilder, ID as SigilID};
 use solana_program_test::{BanksClientError, ProgramTest, ProgramTestContext};
 use solana_sdk::{
     pubkey::Pubkey,
@@ -5,7 +6,6 @@ use solana_sdk::{
     system_instruction,
     transaction::Transaction,
 };
-use token_lite_client::{accounts::Mint, instructions::CreateMintBuilder, ID as TokenLiteID};
 
 type Result<T> = std::result::Result<T, BanksClientError>;
 
@@ -41,7 +41,7 @@ pub async fn airdrop(
 }
 
 pub async fn program_context() -> ProgramTestContext {
-    let test = ProgramTest::new("token_lite", token_lite_client::ID, None);
+    let test = ProgramTest::new("sigil", sigil_client::ID, None);
     test.start_with_context().await
 }
 
@@ -81,8 +81,8 @@ pub async fn create_mint<'a>(
     let authority = authority_signer.pubkey();
 
     let (mint, _) = Pubkey::find_program_address(
-        &[&Mint::PREFIX, ticker.as_bytes(), &authority.as_ref()],
-        &TokenLiteID,
+        &[Mint::PREFIX, ticker.as_bytes(), authority.as_ref()],
+        &SigilID,
     );
 
     let ix = CreateMintBuilder::new()

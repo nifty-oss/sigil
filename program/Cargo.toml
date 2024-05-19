@@ -1,6 +1,6 @@
 [package]
-name = "token-lite"
-version = "0.0.0"
+name = "sigil"
+version = "0.1.0"
 edition = "2021"
 readme = "./README.md"
 license-file = "../LICENSE"

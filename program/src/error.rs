@@ -7,7 +7,7 @@ use solana_program::{
 use thiserror::Error;
 
 #[derive(Error, Clone, Debug, Eq, PartialEq, FromPrimitive)]
-pub enum TokenLiteError {
+pub enum SigilError {
     /// 0 - Error deserializing an account
     #[error("Error deserializing an account")]
     DeserializationError,
@@ -61,19 +61,19 @@ pub enum TokenLiteError {
     MintHasSupply,
 }
 
-impl PrintProgramError for TokenLiteError {
+impl PrintProgramError for SigilError {
     fn print<E>(&self) {
         msg!(&self.to_string());
     }
 }
 
-impl From<TokenLiteError> for ProgramError {
-    fn from(e: TokenLiteError) -> Self {
+impl From<SigilError> for ProgramError {
+    fn from(e: SigilError) -> Self {
         ProgramError::Custom(e as u32)
     }
 }
 
-impl<T> DecodeError<T> for TokenLiteError {
+impl<T> DecodeError<T> for SigilError {
     fn type_of() -> &'static str {
         "Mpl Project Name Error"
     }

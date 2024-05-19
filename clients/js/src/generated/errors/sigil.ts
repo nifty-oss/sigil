@@ -6,7 +6,7 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
-export const enum TokenLiteProgramErrorCode {
+export const enum SigilProgramErrorCode {
   /** DeserializationError: Error deserializing an account */
   DESERIALIZATION_ERROR = 0x0, // 0
   /** SerializationError: Error serializing an account */
@@ -43,15 +43,15 @@ export const enum TokenLiteProgramErrorCode {
   MINT_HAS_SUPPLY = 0x10, // 16
 }
 
-export class TokenLiteProgramError extends Error {
-  override readonly name = 'TokenLiteProgramError';
+export class SigilProgramError extends Error {
+  override readonly name = 'SigilProgramError';
 
-  readonly code: TokenLiteProgramErrorCode;
+  readonly code: SigilProgramErrorCode;
 
   readonly cause: Error | undefined;
 
   constructor(
-    code: TokenLiteProgramErrorCode,
+    code: SigilProgramErrorCode,
     name: string,
     message: string,
     cause?: Error
@@ -62,89 +62,89 @@ export class TokenLiteProgramError extends Error {
   }
 }
 
-let tokenLiteProgramErrorCodeMap:
-  | Record<TokenLiteProgramErrorCode, [string, string]>
+let sigilProgramErrorCodeMap:
+  | Record<SigilProgramErrorCode, [string, string]>
   | undefined;
 if (__DEV__) {
-  tokenLiteProgramErrorCodeMap = {
-    [TokenLiteProgramErrorCode.DESERIALIZATION_ERROR]: [
+  sigilProgramErrorCodeMap = {
+    [SigilProgramErrorCode.DESERIALIZATION_ERROR]: [
       'DeserializationError',
       `Error deserializing an account`,
     ],
-    [TokenLiteProgramErrorCode.SERIALIZATION_ERROR]: [
+    [SigilProgramErrorCode.SERIALIZATION_ERROR]: [
       'SerializationError',
       `Error serializing an account`,
     ],
-    [TokenLiteProgramErrorCode.INVALID_PROGRAM_OWNER]: [
+    [SigilProgramErrorCode.INVALID_PROGRAM_OWNER]: [
       'InvalidProgramOwner',
       `Invalid program owner. This likely mean the provided account does not exist`,
     ],
-    [TokenLiteProgramErrorCode.INVALID_PDA]: [
+    [SigilProgramErrorCode.INVALID_PDA]: [
       'InvalidPda',
       `Invalid PDA derivation`,
     ],
-    [TokenLiteProgramErrorCode.EXPECTED_EMPTY_ACCOUNT]: [
+    [SigilProgramErrorCode.EXPECTED_EMPTY_ACCOUNT]: [
       'ExpectedEmptyAccount',
       `Expected empty account`,
     ],
-    [TokenLiteProgramErrorCode.EXPECTED_NON_EMPTY_ACCOUNT]: [
+    [SigilProgramErrorCode.EXPECTED_NON_EMPTY_ACCOUNT]: [
       'ExpectedNonEmptyAccount',
       `Expected non empty account`,
     ],
-    [TokenLiteProgramErrorCode.EXPECTED_SIGNER_ACCOUNT]: [
+    [SigilProgramErrorCode.EXPECTED_SIGNER_ACCOUNT]: [
       'ExpectedSignerAccount',
       `Expected signer account`,
     ],
-    [TokenLiteProgramErrorCode.EXPECTED_WRITABLE_ACCOUNT]: [
+    [SigilProgramErrorCode.EXPECTED_WRITABLE_ACCOUNT]: [
       'ExpectedWritableAccount',
       `Expected writable account`,
     ],
-    [TokenLiteProgramErrorCode.ACCOUNT_MISMATCH]: [
+    [SigilProgramErrorCode.ACCOUNT_MISMATCH]: [
       'AccountMismatch',
       `Account mismatch`,
     ],
-    [TokenLiteProgramErrorCode.INVALID_ACCOUNT_KEY]: [
+    [SigilProgramErrorCode.INVALID_ACCOUNT_KEY]: [
       'InvalidAccountKey',
       `Invalid account key`,
     ],
-    [TokenLiteProgramErrorCode.NUMERICAL_OVERFLOW]: [
+    [SigilProgramErrorCode.NUMERICAL_OVERFLOW]: [
       'NumericalOverflow',
       `Numerical overflow`,
     ],
-    [TokenLiteProgramErrorCode.INVALID_TICKER]: [
+    [SigilProgramErrorCode.INVALID_TICKER]: [
       'InvalidTicker',
       `Invalid utf8 ticker`,
     ],
-    [TokenLiteProgramErrorCode.INVALID_MINT]: ['InvalidMint', `Invalid mint`],
-    [TokenLiteProgramErrorCode.INVALID_TOKEN_ACCOUNT]: [
+    [SigilProgramErrorCode.INVALID_MINT]: ['InvalidMint', `Invalid mint`],
+    [SigilProgramErrorCode.INVALID_TOKEN_ACCOUNT]: [
       'InvalidTokenAccount',
       `Invalid token account`,
     ],
-    [TokenLiteProgramErrorCode.INSUFFICIENT_FUNDS]: [
+    [SigilProgramErrorCode.INSUFFICIENT_FUNDS]: [
       'InsufficientFunds',
       `Insufficient funds`,
     ],
-    [TokenLiteProgramErrorCode.MAXIMUM_SUPPLY_REACHED]: [
+    [SigilProgramErrorCode.MAXIMUM_SUPPLY_REACHED]: [
       'MaximumSupplyReached',
       `Maximum supply reached`,
     ],
-    [TokenLiteProgramErrorCode.MINT_HAS_SUPPLY]: [
+    [SigilProgramErrorCode.MINT_HAS_SUPPLY]: [
       'MintHasSupply',
       `Cannot close mint account with supply`,
     ],
   };
 }
 
-export function getTokenLiteProgramErrorFromCode(
-  code: TokenLiteProgramErrorCode,
+export function getSigilProgramErrorFromCode(
+  code: SigilProgramErrorCode,
   cause?: Error
-): TokenLiteProgramError {
+): SigilProgramError {
   if (__DEV__) {
-    return new TokenLiteProgramError(
+    return new SigilProgramError(
       code,
       ...(
-        tokenLiteProgramErrorCodeMap as Record<
-          TokenLiteProgramErrorCode,
+        sigilProgramErrorCodeMap as Record<
+          SigilProgramErrorCode,
           [string, string]
         >
       )[code],
@@ -152,7 +152,7 @@ export function getTokenLiteProgramErrorFromCode(
     );
   }
 
-  return new TokenLiteProgramError(
+  return new SigilProgramError(
     code,
     'Unknown',
     'Error message not available in production bundles. Compile with __DEV__ set to true to see more information.',

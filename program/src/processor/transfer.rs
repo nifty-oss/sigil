@@ -37,13 +37,13 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
     // The token accounts must be in the same namespace.
     require!(
         user_token_account.header.authority == recipient_token_account.header.authority,
-        TokenLiteError::InvalidTokenAccount,
+        SigilError::InvalidTokenAccount,
         "token user mismatch"
     );
     // The user passed in must be the actual user on the token account.
     require!(
         user_token_account.header.user == *user_info.key,
-        TokenLiteError::InvalidTokenAccount,
+        SigilError::InvalidTokenAccount,
         "user authority mismatch"
     );
 
@@ -51,10 +51,10 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
     let source_amount = user_token_account
         .tokens
         .get_mut(&args.ticker)
-        .ok_or(TokenLiteError::InsufficientFunds)?;
+        .ok_or(SigilError::InsufficientFunds)?;
 
     if args.amount > *source_amount {
-        return Err(TokenLiteError::InsufficientFunds.into());
+        return Err(SigilError::InsufficientFunds.into());
     }
     let tree_is_full = recipient_token_account.tokens.is_full();
     let is_none = recipient_token_account.tokens.get(&args.ticker).is_none();
@@ -86,13 +86,13 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
 
         *dest_amount = dest_amount
             .checked_add(args.amount)
-            .ok_or(TokenLiteError::NumericalOverflow)?;
+            .ok_or(SigilError::NumericalOverflow)?;
     }
 
     // Update the source amount.
     *source_amount = source_amount
         .checked_sub(args.amount)
-        .ok_or(TokenLiteError::NumericalOverflow)?;
+        .ok_or(SigilError::NumericalOverflow)?;
 
     Ok(())
 }
