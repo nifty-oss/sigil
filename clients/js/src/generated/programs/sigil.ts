@@ -10,9 +10,9 @@ import { Address } from '@solana/addresses';
 import { getU8Encoder } from '@solana/codecs';
 import { Program, ProgramWithErrors } from '@solana/programs';
 import {
-  SigilProgramProgramError,
-  SigilProgramProgramErrorCode,
-  getSigilProgramProgramErrorFromCode,
+  SigilProgramError,
+  SigilProgramErrorCode,
+  getSigilProgramErrorFromCode,
 } from '../errors';
 import {
   ParsedAddTokenInstruction,
@@ -25,29 +25,29 @@ import {
 } from '../instructions';
 import { memcmp } from '../shared';
 
-export const SIGIL_PROGRAM_PROGRAM_ADDRESS =
+export const SIGIL_PROGRAM_ADDRESS =
   'BpPMgxYawb8Qiguavj3JccMdp7bTZWemSqJmDeYTsTD9' as Address<'BpPMgxYawb8Qiguavj3JccMdp7bTZWemSqJmDeYTsTD9'>;
 
-export type SigilProgramProgram =
+export type SigilProgram =
   Program<'BpPMgxYawb8Qiguavj3JccMdp7bTZWemSqJmDeYTsTD9'> &
-    ProgramWithErrors<SigilProgramProgramErrorCode, SigilProgramProgramError>;
+    ProgramWithErrors<SigilProgramErrorCode, SigilProgramError>;
 
-export function getSigilProgramProgram(): SigilProgramProgram {
+export function getSigilProgram(): SigilProgram {
   return {
-    name: 'sigilProgram',
-    address: SIGIL_PROGRAM_PROGRAM_ADDRESS,
-    getErrorFromCode(code: SigilProgramProgramErrorCode, cause?: Error) {
-      return getSigilProgramProgramErrorFromCode(code, cause);
+    name: 'sigil',
+    address: SIGIL_PROGRAM_ADDRESS,
+    getErrorFromCode(code: SigilProgramErrorCode, cause?: Error) {
+      return getSigilProgramErrorFromCode(code, cause);
     },
   };
 }
 
-export enum SigilProgramAccount {
+export enum SigilAccount {
   Mint,
   TokenAccount,
 }
 
-export enum SigilProgramInstruction {
+export enum SigilInstruction {
   AddToken,
   Burn,
   CloseMint,
@@ -57,58 +57,58 @@ export enum SigilProgramInstruction {
   Transfer,
 }
 
-export function identifySigilProgramInstruction(
+export function identifySigilInstruction(
   instruction: { data: Uint8Array } | Uint8Array
-): SigilProgramInstruction {
+): SigilInstruction {
   const data =
     instruction instanceof Uint8Array ? instruction : instruction.data;
   if (memcmp(data, getU8Encoder().encode(0), 0)) {
-    return SigilProgramInstruction.AddToken;
+    return SigilInstruction.AddToken;
   }
   if (memcmp(data, getU8Encoder().encode(1), 0)) {
-    return SigilProgramInstruction.Burn;
+    return SigilInstruction.Burn;
   }
   if (memcmp(data, getU8Encoder().encode(2), 0)) {
-    return SigilProgramInstruction.CloseMint;
+    return SigilInstruction.CloseMint;
   }
   if (memcmp(data, getU8Encoder().encode(3), 0)) {
-    return SigilProgramInstruction.CreateMint;
+    return SigilInstruction.CreateMint;
   }
   if (memcmp(data, getU8Encoder().encode(4), 0)) {
-    return SigilProgramInstruction.CreateTokenAccount;
+    return SigilInstruction.CreateTokenAccount;
   }
   if (memcmp(data, getU8Encoder().encode(5), 0)) {
-    return SigilProgramInstruction.MintTo;
+    return SigilInstruction.MintTo;
   }
   if (memcmp(data, getU8Encoder().encode(6), 0)) {
-    return SigilProgramInstruction.Transfer;
+    return SigilInstruction.Transfer;
   }
   throw new Error(
-    'The provided instruction could not be identified as a sigilProgram instruction.'
+    'The provided instruction could not be identified as a sigil instruction.'
   );
 }
 
-export type ParsedSigilProgramInstruction<
+export type ParsedSigilInstruction<
   TProgram extends string = 'BpPMgxYawb8Qiguavj3JccMdp7bTZWemSqJmDeYTsTD9',
 > =
   | ({
-      instructionType: SigilProgramInstruction.AddToken;
+      instructionType: SigilInstruction.AddToken;
     } & ParsedAddTokenInstruction<TProgram>)
   | ({
-      instructionType: SigilProgramInstruction.Burn;
+      instructionType: SigilInstruction.Burn;
     } & ParsedBurnInstruction<TProgram>)
   | ({
-      instructionType: SigilProgramInstruction.CloseMint;
+      instructionType: SigilInstruction.CloseMint;
     } & ParsedCloseMintInstruction<TProgram>)
   | ({
-      instructionType: SigilProgramInstruction.CreateMint;
+      instructionType: SigilInstruction.CreateMint;
     } & ParsedCreateMintInstruction<TProgram>)
   | ({
-      instructionType: SigilProgramInstruction.CreateTokenAccount;
+      instructionType: SigilInstruction.CreateTokenAccount;
     } & ParsedCreateTokenAccountInstruction<TProgram>)
   | ({
-      instructionType: SigilProgramInstruction.MintTo;
+      instructionType: SigilInstruction.MintTo;
     } & ParsedMintToInstruction<TProgram>)
   | ({
-      instructionType: SigilProgramInstruction.Transfer;
+      instructionType: SigilInstruction.Transfer;
     } & ParsedTransferInstruction<TProgram>);

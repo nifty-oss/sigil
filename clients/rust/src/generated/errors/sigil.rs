@@ -9,7 +9,7 @@ use num_derive::FromPrimitive;
 use thiserror::Error;
 
 #[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]
-pub enum SigilProgramError {
+pub enum SigilError {
     /// 0 (0x0) - Error deserializing an account
     #[error("Error deserializing an account")]
     DeserializationError,
@@ -63,7 +63,7 @@ pub enum SigilProgramError {
     MintHasSupply,
 }
 
-impl solana_program::program_error::PrintProgramError for SigilProgramError {
+impl solana_program::program_error::PrintProgramError for SigilError {
     fn print<E>(&self) {
         solana_program::msg!(&self.to_string());
     }

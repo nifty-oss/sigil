@@ -54,7 +54,7 @@ impl CreateMint {
         data.append(&mut args);
 
         solana_program::instruction::Instruction {
-            program_id: crate::SIGIL_PROGRAM_ID,
+            program_id: crate::SIGIL_ID,
             accounts,
             data,
         }
@@ -287,7 +287,7 @@ impl<'a, 'b> CreateMintCpi<'a, 'b> {
         data.append(&mut args);
 
         let instruction = solana_program::instruction::Instruction {
-            program_id: crate::SIGIL_PROGRAM_ID,
+            program_id: crate::SIGIL_ID,
             accounts,
             data,
         };

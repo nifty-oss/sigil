@@ -28,11 +28,11 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import { SIGIL_PROGRAM_PROGRAM_ADDRESS } from '../programs';
+import { SIGIL_PROGRAM_ADDRESS } from '../programs';
 import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type CreateTokenAccountInstruction<
-  TProgram extends string = typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
+  TProgram extends string = typeof SIGIL_PROGRAM_ADDRESS,
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
   TAccountAuthority extends string | IAccountMeta<string> = string,
   TAccountUser extends string | IAccountMeta<string> = string,
@@ -134,7 +134,7 @@ export function getCreateTokenAccountInstruction<
     TAccountSystemProgram
   >
 ): CreateTokenAccountInstruction<
-  typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
+  typeof SIGIL_PROGRAM_ADDRESS,
   TAccountTokenAccount,
   TAccountAuthority,
   TAccountUser,
@@ -142,7 +142,7 @@ export function getCreateTokenAccountInstruction<
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress = SIGIL_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = SIGIL_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -180,7 +180,7 @@ export function getCreateTokenAccountInstruction<
       args as CreateTokenAccountInstructionDataArgs
     ),
   } as CreateTokenAccountInstruction<
-    typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
+    typeof SIGIL_PROGRAM_ADDRESS,
     TAccountTokenAccount,
     TAccountAuthority,
     TAccountUser,
@@ -192,7 +192,7 @@ export function getCreateTokenAccountInstruction<
 }
 
 export type ParsedCreateTokenAccountInstruction<
-  TProgram extends string = typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
+  TProgram extends string = typeof SIGIL_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;

@@ -29,11 +29,11 @@ import {
   WritableAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import { SIGIL_PROGRAM_PROGRAM_ADDRESS } from '../programs';
+import { SIGIL_PROGRAM_ADDRESS } from '../programs';
 import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type BurnInstruction<
-  TProgram extends string = typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
+  TProgram extends string = typeof SIGIL_PROGRAM_ADDRESS,
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountUser extends string | IAccountMeta<string> = string,
@@ -107,13 +107,13 @@ export function getBurnInstruction<
 >(
   input: BurnInput<TAccountTokenAccount, TAccountMint, TAccountUser>
 ): BurnInstruction<
-  typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
+  typeof SIGIL_PROGRAM_ADDRESS,
   TAccountTokenAccount,
   TAccountMint,
   TAccountUser
 > {
   // Program address.
-  const programAddress = SIGIL_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = SIGIL_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -141,7 +141,7 @@ export function getBurnInstruction<
       args as BurnInstructionDataArgs
     ),
   } as BurnInstruction<
-    typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
+    typeof SIGIL_PROGRAM_ADDRESS,
     TAccountTokenAccount,
     TAccountMint,
     TAccountUser
@@ -151,7 +151,7 @@ export function getBurnInstruction<
 }
 
 export type ParsedBurnInstruction<
-  TProgram extends string = typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
+  TProgram extends string = typeof SIGIL_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;

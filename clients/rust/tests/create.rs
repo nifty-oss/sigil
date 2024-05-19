@@ -1,7 +1,7 @@
 #![cfg(feature = "test-sbf")]
 
+use sigil::state::{Mint, TokenAccount, TokenSeeds};
 use sigil_client::instructions::{AddTokenBuilder, CreateTokenAccountBuilder};
-use sigil_program::state::{Mint, TokenAccount, TokenSeeds};
 use solana_program_test::tokio;
 use solana_sdk::{
     signature::{Keypair, Signer},

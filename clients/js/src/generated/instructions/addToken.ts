@@ -28,11 +28,11 @@ import {
   WritableSignerAccount,
 } from '@solana/instructions';
 import { IAccountSignerMeta, TransactionSigner } from '@solana/signers';
-import { SIGIL_PROGRAM_PROGRAM_ADDRESS } from '../programs';
+import { SIGIL_PROGRAM_ADDRESS } from '../programs';
 import { ResolvedAccount, getAccountMetaFactory } from '../shared';
 
 export type AddTokenInstruction<
-  TProgram extends string = typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
+  TProgram extends string = typeof SIGIL_PROGRAM_ADDRESS,
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountUser extends string | IAccountMeta<string> = string,
@@ -122,7 +122,7 @@ export function getAddTokenInstruction<
     TAccountSystemProgram
   >
 ): AddTokenInstruction<
-  typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
+  typeof SIGIL_PROGRAM_ADDRESS,
   TAccountTokenAccount,
   TAccountMint,
   TAccountUser,
@@ -130,7 +130,7 @@ export function getAddTokenInstruction<
   TAccountSystemProgram
 > {
   // Program address.
-  const programAddress = SIGIL_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = SIGIL_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -157,7 +157,7 @@ export function getAddTokenInstruction<
     programAddress,
     data: getAddTokenInstructionDataEncoder().encode({}),
   } as AddTokenInstruction<
-    typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
+    typeof SIGIL_PROGRAM_ADDRESS,
     TAccountTokenAccount,
     TAccountMint,
     TAccountUser,
@@ -169,7 +169,7 @@ export function getAddTokenInstruction<
 }
 
 export type ParsedAddTokenInstruction<
-  TProgram extends string = typeof SIGIL_PROGRAM_PROGRAM_ADDRESS,
+  TProgram extends string = typeof SIGIL_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
@@ -208,7 +208,7 @@ export function parseAddTokenInstruction<
   };
   const getNextOptionalAccount = () => {
     const accountMeta = getNextAccount();
-    return accountMeta.address === SIGIL_PROGRAM_PROGRAM_ADDRESS
+    return accountMeta.address === SIGIL_PROGRAM_ADDRESS
       ? undefined
       : accountMeta;
   };

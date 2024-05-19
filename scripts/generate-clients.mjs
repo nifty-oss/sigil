@@ -9,14 +9,14 @@ const kinobi = k.createFromIdls(getAllProgramIdls());
 // Update programs.
 kinobi.update(
   k.updateProgramsVisitor({
-    niftyOssSigil: { name: "sigil_program" },
-  }),
+    niftyOssSigil: { name: "sigil" }
+  })
 );
 
 kinobi.update(
   k.bottomUpTransformerVisitor([
     {
-      select: "[programNode]sigilProgram",
+      select: "[programNode]sigil",
       transform: (node) => {
         k.assertIsNode(node, "programNode");
         return {
@@ -28,68 +28,68 @@ kinobi.update(
               data: k.structTypeNode([
                 k.structFieldTypeNode({
                   name: "tag",
-                  type: k.numberTypeNode("u8"),
+                  type: k.numberTypeNode("u8")
                 }),
                 k.structFieldTypeNode({
                   name: "bump",
-                  type: k.numberTypeNode("u8"),
+                  type: k.numberTypeNode("u8")
                 }),
                 k.structFieldTypeNode({
                   name: "decimals",
-                  type: k.numberTypeNode("u8"),
+                  type: k.numberTypeNode("u8")
                 }),
                 k.structFieldTypeNode({
                   name: "empty",
-                  type: k.numberTypeNode("u8"),
+                  type: k.numberTypeNode("u8")
                 }),
                 k.structFieldTypeNode({
                   name: "ticker",
                   type: k.stringTypeNode({
-                    size: k.fixedSizeNode(4),
-                  }),
+                    size: k.fixedSizeNode(4)
+                  })
                 }),
                 k.structFieldTypeNode({
                   name: "authority",
-                  type: k.publicKeyTypeNode(),
+                  type: k.publicKeyTypeNode()
                 }),
                 k.structFieldTypeNode({
                   name: "supply",
-                  type: k.numberTypeNode("u64"),
+                  type: k.numberTypeNode("u64")
                 }),
                 k.structFieldTypeNode({
                   name: "maxSupply",
-                  type: k.numberTypeNode("u64"),
-                }),
-              ]),
+                  type: k.numberTypeNode("u64")
+                })
+              ])
             }),
             k.accountNode({
               name: "tokenAccount",
               data: k.structTypeNode([
                 k.structFieldTypeNode({
                   name: "tag",
-                  type: k.definedTypeLinkNode("Tag"),
+                  type: k.definedTypeLinkNode("Tag")
                 }),
                 k.structFieldTypeNode({
                   name: "empty",
                   type: k.arrayTypeNode(
                     k.numberTypeNode("u8"),
-                    k.fixedSizeNode(3),
-                  ),
+                    k.fixedSizeNode(3)
+                  )
                 }),
                 k.structFieldTypeNode({
                   name: "authority",
-                  type: k.publicKeyTypeNode(),
+                  type: k.publicKeyTypeNode()
                 }),
                 k.structFieldTypeNode({
                   name: "user",
-                  type: k.publicKeyTypeNode(),
+                  type: k.publicKeyTypeNode()
                 }),
                 k.structFieldTypeNode({
                   name: "tree",
-                  type: k.definedTypeLinkNode("tree"),
-                }),
-              ]),
-            }),
+                  type: k.definedTypeLinkNode("tree")
+                })
+              ])
+            })
           ],
           definedTypes: [
             ...node.definedTypes,
@@ -100,17 +100,17 @@ kinobi.update(
                   name: "allocator",
                   type: k.arrayTypeNode(
                     k.numberTypeNode("u8"),
-                    k.fixedSizeNode(8),
-                  ),
+                    k.fixedSizeNode(8)
+                  )
                 }),
                 k.structFieldTypeNode({
                   name: "nodes",
                   type: k.arrayTypeNode(
                     k.definedTypeLinkNode("node"),
-                    k.remainderSizeNode(),
-                  ),
-                }),
-              ]),
+                    k.remainderSizeNode()
+                  )
+                })
+              ])
             }),
             k.definedTypeNode({
               name: "node",
@@ -119,20 +119,20 @@ kinobi.update(
                   name: "pointer",
                   type: k.arrayTypeNode(
                     k.numberTypeNode("u8"),
-                    k.fixedSizeNode(4),
-                  ),
+                    k.fixedSizeNode(4)
+                  )
                 }),
                 k.structFieldTypeNode({
                   name: "ticker",
                   type: k.stringTypeNode({
-                    size: k.fixedSizeNode(4),
-                  }),
+                    size: k.fixedSizeNode(4)
+                  })
                 }),
                 k.structFieldTypeNode({
                   name: "amount",
-                  type: k.numberTypeNode("u32"),
-                }),
-              ]),
+                  type: k.numberTypeNode("u32")
+                })
+              ])
             }),
             k.definedTypeNodeFromIdl({
               name: "tag",
@@ -141,15 +141,15 @@ kinobi.update(
                 variants: [
                   { name: "Uninitialized" },
                   { name: "Mint" },
-                  { name: "tokenAccount" },
-                ],
-              },
-            }),
-          ],
+                  { name: "tokenAccount" }
+                ]
+              }
+            })
+          ]
         };
-      },
-    },
-  ]),
+      }
+    }
+  ])
 );
 
 // Update accounts.
@@ -161,14 +161,14 @@ kinobi.update(
         k.variablePdaSeedNode(
           "user",
           k.publicKeyTypeNode(),
-          "The user of the token account",
+          "The user of the token account"
         ),
         k.variablePdaSeedNode(
           "authority",
           k.publicKeyTypeNode(),
-          "The authority of the token account",
-        ),
-      ],
+          "The authority of the token account"
+        )
+      ]
     },
     mint: {
       seeds: [
@@ -177,17 +177,17 @@ kinobi.update(
         k.variablePdaSeedNode(
           "authority",
           k.publicKeyTypeNode(),
-          "The authority of the mint account",
-        ),
-      ],
-    },
-  }),
+          "The authority of the mint account"
+        )
+      ]
+    }
+  })
 );
 
 kinobi.update(
   k.updateInstructionsVisitor({
-    transfer: {},
-  }),
+    transfer: {}
+  })
 );
 
 // Render JavaScript.
@@ -196,9 +196,9 @@ kinobi.accept(
   k.renderJavaScriptExperimentalVisitor(
     path.join(jsClient, "src", "generated"),
     {
-      prettier: require(path.join(jsClient, ".prettierrc.json")),
-    },
-  ),
+      prettier: require(path.join(jsClient, ".prettierrc.json"))
+    }
+  )
 );
 
 // Render Rust.
@@ -206,6 +206,6 @@ const rustClient = path.join(__dirname, "..", "clients", "rust");
 kinobi.accept(
   k.renderRustVisitor(path.join(rustClient, "src", "generated"), {
     formatCode: true,
-    crateFolder: rustClient,
-  }),
+    crateFolder: rustClient
+  })
 );

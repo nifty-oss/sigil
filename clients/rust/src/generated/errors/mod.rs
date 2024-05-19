@@ -5,6 +5,6 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
-pub(crate) mod sigil_program;
+pub(crate) mod sigil;
 
-pub use self::sigil_program::SigilProgramError;
+pub use self::sigil::SigilError;

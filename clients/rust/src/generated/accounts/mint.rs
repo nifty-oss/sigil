@@ -43,14 +43,14 @@ impl Mint {
     ) -> Result<solana_program::pubkey::Pubkey, solana_program::pubkey::PubkeyError> {
         solana_program::pubkey::Pubkey::create_program_address(
             &["mint".as_bytes(), &ticker, authority.as_ref(), &[bump]],
-            &crate::SIGIL_PROGRAM_ID,
+            &crate::SIGIL_ID,
         )
     }
 
     pub fn find_pda(ticker: [u8; 4], authority: &Pubkey) -> (solana_program::pubkey::Pubkey, u8) {
         solana_program::pubkey::Pubkey::find_program_address(
             &["mint".as_bytes(), &ticker, authority.as_ref()],
-            &crate::SIGIL_PROGRAM_ID,
+            &crate::SIGIL_ID,
         )
     }
 

@@ -6,7 +6,7 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
-export const enum SigilProgramProgramErrorCode {
+export const enum SigilProgramErrorCode {
   /** DeserializationError: Error deserializing an account */
   DESERIALIZATION_ERROR = 0x0, // 0
   /** SerializationError: Error serializing an account */
@@ -43,15 +43,15 @@ export const enum SigilProgramProgramErrorCode {
   MINT_HAS_SUPPLY = 0x10, // 16
 }
 
-export class SigilProgramProgramError extends Error {
-  override readonly name = 'SigilProgramProgramError';
+export class SigilProgramError extends Error {
+  override readonly name = 'SigilProgramError';
 
-  readonly code: SigilProgramProgramErrorCode;
+  readonly code: SigilProgramErrorCode;
 
   readonly cause: Error | undefined;
 
   constructor(
-    code: SigilProgramProgramErrorCode,
+    code: SigilProgramErrorCode,
     name: string,
     message: string,
     cause?: Error
@@ -62,92 +62,89 @@ export class SigilProgramProgramError extends Error {
   }
 }
 
-let sigilProgramProgramErrorCodeMap:
-  | Record<SigilProgramProgramErrorCode, [string, string]>
+let sigilProgramErrorCodeMap:
+  | Record<SigilProgramErrorCode, [string, string]>
   | undefined;
 if (__DEV__) {
-  sigilProgramProgramErrorCodeMap = {
-    [SigilProgramProgramErrorCode.DESERIALIZATION_ERROR]: [
+  sigilProgramErrorCodeMap = {
+    [SigilProgramErrorCode.DESERIALIZATION_ERROR]: [
       'DeserializationError',
       `Error deserializing an account`,
     ],
-    [SigilProgramProgramErrorCode.SERIALIZATION_ERROR]: [
+    [SigilProgramErrorCode.SERIALIZATION_ERROR]: [
       'SerializationError',
       `Error serializing an account`,
     ],
-    [SigilProgramProgramErrorCode.INVALID_PROGRAM_OWNER]: [
+    [SigilProgramErrorCode.INVALID_PROGRAM_OWNER]: [
       'InvalidProgramOwner',
       `Invalid program owner. This likely mean the provided account does not exist`,
     ],
-    [SigilProgramProgramErrorCode.INVALID_PDA]: [
+    [SigilProgramErrorCode.INVALID_PDA]: [
       'InvalidPda',
       `Invalid PDA derivation`,
     ],
-    [SigilProgramProgramErrorCode.EXPECTED_EMPTY_ACCOUNT]: [
+    [SigilProgramErrorCode.EXPECTED_EMPTY_ACCOUNT]: [
       'ExpectedEmptyAccount',
       `Expected empty account`,
     ],
-    [SigilProgramProgramErrorCode.EXPECTED_NON_EMPTY_ACCOUNT]: [
+    [SigilProgramErrorCode.EXPECTED_NON_EMPTY_ACCOUNT]: [
       'ExpectedNonEmptyAccount',
       `Expected non empty account`,
     ],
-    [SigilProgramProgramErrorCode.EXPECTED_SIGNER_ACCOUNT]: [
+    [SigilProgramErrorCode.EXPECTED_SIGNER_ACCOUNT]: [
       'ExpectedSignerAccount',
       `Expected signer account`,
     ],
-    [SigilProgramProgramErrorCode.EXPECTED_WRITABLE_ACCOUNT]: [
+    [SigilProgramErrorCode.EXPECTED_WRITABLE_ACCOUNT]: [
       'ExpectedWritableAccount',
       `Expected writable account`,
     ],
-    [SigilProgramProgramErrorCode.ACCOUNT_MISMATCH]: [
+    [SigilProgramErrorCode.ACCOUNT_MISMATCH]: [
       'AccountMismatch',
       `Account mismatch`,
     ],
-    [SigilProgramProgramErrorCode.INVALID_ACCOUNT_KEY]: [
+    [SigilProgramErrorCode.INVALID_ACCOUNT_KEY]: [
       'InvalidAccountKey',
       `Invalid account key`,
     ],
-    [SigilProgramProgramErrorCode.NUMERICAL_OVERFLOW]: [
+    [SigilProgramErrorCode.NUMERICAL_OVERFLOW]: [
       'NumericalOverflow',
       `Numerical overflow`,
     ],
-    [SigilProgramProgramErrorCode.INVALID_TICKER]: [
+    [SigilProgramErrorCode.INVALID_TICKER]: [
       'InvalidTicker',
       `Invalid utf8 ticker`,
     ],
-    [SigilProgramProgramErrorCode.INVALID_MINT]: [
-      'InvalidMint',
-      `Invalid mint`,
-    ],
-    [SigilProgramProgramErrorCode.INVALID_TOKEN_ACCOUNT]: [
+    [SigilProgramErrorCode.INVALID_MINT]: ['InvalidMint', `Invalid mint`],
+    [SigilProgramErrorCode.INVALID_TOKEN_ACCOUNT]: [
       'InvalidTokenAccount',
       `Invalid token account`,
     ],
-    [SigilProgramProgramErrorCode.INSUFFICIENT_FUNDS]: [
+    [SigilProgramErrorCode.INSUFFICIENT_FUNDS]: [
       'InsufficientFunds',
       `Insufficient funds`,
     ],
-    [SigilProgramProgramErrorCode.MAXIMUM_SUPPLY_REACHED]: [
+    [SigilProgramErrorCode.MAXIMUM_SUPPLY_REACHED]: [
       'MaximumSupplyReached',
       `Maximum supply reached`,
     ],
-    [SigilProgramProgramErrorCode.MINT_HAS_SUPPLY]: [
+    [SigilProgramErrorCode.MINT_HAS_SUPPLY]: [
       'MintHasSupply',
       `Cannot close mint account with supply`,
     ],
   };
 }
 
-export function getSigilProgramProgramErrorFromCode(
-  code: SigilProgramProgramErrorCode,
+export function getSigilProgramErrorFromCode(
+  code: SigilProgramErrorCode,
   cause?: Error
-): SigilProgramProgramError {
+): SigilProgramError {
   if (__DEV__) {
-    return new SigilProgramProgramError(
+    return new SigilProgramError(
       code,
       ...(
-        sigilProgramProgramErrorCodeMap as Record<
-          SigilProgramProgramErrorCode,
+        sigilProgramErrorCodeMap as Record<
+          SigilProgramErrorCode,
           [string, string]
         >
       )[code],
@@ -155,7 +152,7 @@ export function getSigilProgramProgramErrorFromCode(
     );
   }
 
-  return new SigilProgramProgramError(
+  return new SigilProgramError(
     code,
     'Unknown',
     'Error message not available in production bundles. Compile with __DEV__ set to true to see more information.',

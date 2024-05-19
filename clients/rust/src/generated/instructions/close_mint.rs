@@ -41,7 +41,7 @@ impl CloseMint {
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::SIGIL_PROGRAM_ID,
+                crate::SIGIL_ID,
                 false,
             ));
         }
@@ -49,7 +49,7 @@ impl CloseMint {
         let data = CloseMintInstructionData::new().try_to_vec().unwrap();
 
         solana_program::instruction::Instruction {
-            program_id: crate::SIGIL_PROGRAM_ID,
+            program_id: crate::SIGIL_ID,
             accounts,
             data,
         }
@@ -218,7 +218,7 @@ impl<'a, 'b> CloseMintCpi<'a, 'b> {
             ));
         } else {
             accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-                crate::SIGIL_PROGRAM_ID,
+                crate::SIGIL_ID,
                 false,
             ));
         }
@@ -232,7 +232,7 @@ impl<'a, 'b> CloseMintCpi<'a, 'b> {
         let data = CloseMintInstructionData::new().try_to_vec().unwrap();
 
         let instruction = solana_program::instruction::Instruction {
-            program_id: crate::SIGIL_PROGRAM_ID,
+            program_id: crate::SIGIL_ID,
             accounts,
             data,
         };
