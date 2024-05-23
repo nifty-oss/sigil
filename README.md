@@ -2,7 +2,7 @@
   <code>Sigil</code>
 </h1>
 <p align="center">
-  <img width="400" alt="Sigil" src="(https://github.com/nifty-oss/sigil/assets/1684605/b9f9e784-9739-49f3-9522-84edf4c72e68" />
+  <img width="400" alt="Sigil" src="https://github.com/nifty-oss/sigil/assets/1684605/bc3643c3-8623-45f4-ab63-783b0bea2ce7" />
 </p>
 <p align="center">
   A cost-efficient standard for fungible assets.
