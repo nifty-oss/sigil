@@ -72,36 +72,36 @@ pub struct Header {
 
 ## Cost Savings
 
-In the SPL token program the mint account is 82 bytes in size, plus the standard account info overhead of 128 bytes, but only has to be created once per asset, so typically represents a fixed up-front cost that is paid initially but does not scale up by number of users. Token Lite's mint account is not much smaller, but does save a few bytes coming in at 58 bytes.
+In the SPL token program the mint account is 82 bytes in size, plus the standard account info overhead of 128 bytes, but only has to be created once per asset, so typically represents a fixed up-front cost that is paid initially but does not scale up by number of users. Sigil's mint account is not much smaller, but does save a few bytes coming in at 58 bytes.
 
-Token accounts however have significant savings, as SPL token accounts require a new token account per user and mint which is 128 bytes + 165 bytes for a total of 293 bytes. In Token Lite, there is a fixed cost of 128 bytes + 68 bytes for a new user token account, but then each additional asset only requires 12 bytes without having to pay for the 128 account info header each time as the pairs are simply stored in the AVL tree on the same account.
+Token accounts however have significant savings, as SPL token accounts require a new token account per user and mint which is 128 bytes + 165 bytes for a total of 293 bytes. In Sigil, there is a fixed cost of 128 bytes + 68 bytes for a new user token account, but then each additional asset only requires 12 bytes without having to pay for the 128 account info header each time as the pairs are simply stored in the AVL tree on the same account.
 
 **Base Comparisons**
 
-| Account           | data SIZE (Bytes) | Rent Cost @ $200 SOL |
-| ----------------- | ----------------- | -------------------- |
-| SPL Mint          | 82                | $0.29                |
-| TL Mint           | 58                | $0.26                |
-| SPL Token Account | 165               | $0.41                |
-| TL Token Account  | 80                | $0.29                |
+| Account              | Data Size (Bytes) | Rent Cost @ $200 SOL |
+| -------------------- | ----------------- | -------------------- |
+| SPL Mint             | 82                | $0.29                |
+| TL Mint              | 58                | $0.26                |
+| SPL Token Account    | 165               | $0.41                |
+| Sigil Token Account  | 80                | $0.29                |
 
 
 
 **User w/ 100 Assets**
 
-| Account           | data SIZE (Bytes) | Rent Cost @ $200 SOL |
-| ----------------- | ----------------- | -------------------- |
-| SPL Token Account | 16,500            | $41                  |
-| TL Token Account  | 1268              | $1.94                |
+| Account              | Data Size (Bytes) | Rent Cost @ $200 SOL |
+| -------------------- | ----------------- | -------------------- |
+| SPL Token Account    | 16,500            | $41                  |
+| Sigil Token Account  | 1268              | $1.94                |
 
 
 
 **1000 Users w/ 100 Assets**
 
-| Account           | data SIZE (Bytes) | Rent Cost @ $200 SOL |
-| ----------------- | ----------------- | -------------------- |
-| SPL Token Account | 16,500,000        | $41,000              |
-| TL Token Account  | 1,268,000         | $1,940               |
+| Account              | Data Size (Bytes) | Rent Cost @ $200 SOL |
+| -------------------- | ----------------- | -------------------- |
+| SPL Token Account    | 16,500,000        | $41,000              |
+| Sigil Token Account  | 1,268,000         | $1,940               |
 
 
 
