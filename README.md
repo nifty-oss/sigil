@@ -17,7 +17,7 @@
 </p>
 
 
-# Overview
+## Overview
 
 Sigil is a novel fungible item standard and program on Solana that represents fungible items on-chain using minimal data, ensuring the lowest possible data storage costs. While off-chain data solutions, such as merkle proofs, could be even cheaper, Sigil's on-chain approach offers the benefits of small transactions without requiring cumbersome proofs. Additionally, token data is directly accessible by other Solana programs via account state. Sigil strikes the optimal balance between on-chain, accessible data and minimal costs, considering the current limitations of account data on Solana's runtime.
 
@@ -25,11 +25,11 @@ The Sigil specification is not intended to replace existing token programs on So
 
 To ensure optimal efficiency in terms of compute and memory usage, the Sigil program is implemented with all data structs using zero-copy bytemuck implementations.
 
-## Design
+### Design
 
 The specification is currently represented entirely by two types of accounts: `Mint` and `Token` Accounts. Mint accounts uniquely define a type of fungible item and encode the authority and supply data in account state, while the mint name is encoded via the PDA derivation. Token accounts are defined *per user* and contain pairs of mint tickers and amounts to encode the user's ownership amounts of various assets.
 
-### Mint
+#### Mint
 
 Mint accounts are PDAs derived from the seeds `"mint"`, the four character ticker (e.g. "USDC"), and the authority of the mint. The authority acts as a namespace for tickers to prevent squatting on valuable tickers that would inevitably happen if tickers were globally namespaced.
 
@@ -58,7 +58,7 @@ pub struct Mint {
 }
 ```
 
-### Token Account
+#### Token Account
 
 Token Accounts are PDAs derived from the seeds `"token_account"`, the user and authority pubkeys. They are defined per-user to allow efficient storing of mint and amount pairs, but are also namespaced by the authority of the mint. Each token account has a header which stores the account tag as well as the authority and user pubkeys to allow for efficient indexing. The content of a token account consists of (`ticker`, `amount`) pairs stored in an on-chain AVL tree, which allows looking up amounts by the mint ticker. The innovation here is that creating a new user token account requires paying the header rent cost of `68 bytes` only once for each user in a given namespace, but adding a new mint and amount pair only costs an additional `12 bytes`: `4` for the AVL tree pointers, `4` for the mint ticker and `4` to represent a `u32` amount. This is approximately `25x` savings when compared to the cost of creating a new SPL token account for each new user and mint.
 
@@ -88,7 +88,7 @@ pub struct Header {
 }
 ```
 
-## Cost Savings
+### Cost Savings
 
 In the SPL Token program, the mint account is `82 bytes` in size, plus the standard account info overhead of `128 bytes`. It only has to be created once per asset, so typically represents a fixed up-front cost that is paid initially but does not scale up by number of users. Sigil's mint account is not much smaller, but does save a few bytes coming in at `56 bytes`.
 
@@ -120,16 +120,16 @@ Token accounts however have significant savings, as SPL Token accounts require a
 >[!NOTE]
 > The cost to add a new asset to an existing Sigil token account is `$0.0167` @ $200 SOL.
 
-## Limitations
+### Limitations
 
 To save size, the AVL tree pointers are stored as `u8`s which means that each AVL tree can only store `255` mint/supply pairs. This is expected to be sufficient for most use-cases as users typically do not have more than a few hundred game assets or fungible tokens per wallet. However, given Solana accounts can be up to `10MB` in size, the amount stored could be significantly larger by adding additional AVL trees to the account. The program then would just look up any given mint address in the first tree and if it fails to find it, it would check the next, etc. Given the zero-copy data structure of the design, this would not entail deserializing and loading all the trees into memory so would have little to no compute cost to implement.
 
 The specification currently does not support a delegate system as storing the extra data for that raises the costs significantly. However, delegates could likely be implemented in a cheaper and modular way but using an additional PDA to represent the delegation so that only use-cases that actually require delegates end up paying for them.
 
 >[!IMPORTANT]
-> We are in the process of switching from an AVL tree to a specialized array data structure which will reduce the size requirement for a new asset to `8 bytes`. This will reduce the cost to `$0.0111$` @ $200 SOL for adding a new asset on an existing Sigil token account.
+> We are in the process of switching from an AVL tree to a specialized array data structure which will reduce the size requirement for a new asset to `8 bytes`. This will reduce the cost to `$0.0111` @ $200 SOL for adding a new asset on an existing Sigil token account.
 
-# Project setup for developers
+## Project setup for developers
 
 To get started run the following command
 
@@ -166,14 +166,14 @@ pnpm clients:js:test
 pnpm clients:rust:test
 ```
 
-## Managing clients
+### Managing clients
 
 The following clients are available for the Sigil. You may use the following links to learn more about each client.
 
 - [JS client](./clients/js)
 - [Rust client](./clients/rust)
 
-## Starting and stopping the local validator
+### Starting and stopping the local validator
 
 The following script is available to start a local validator for testing.
 
@@ -192,3 +192,19 @@ Finally, you may stop the local validator using the following command.
 ```sh
 pnpm validator:stop
 ```
+
+## License
+
+Copyright (c) 2024 nifty-oss maintainers
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
