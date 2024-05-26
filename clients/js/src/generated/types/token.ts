@@ -11,38 +11,32 @@ import {
   Decoder,
   Encoder,
   combineCodec,
-  getArrayDecoder,
-  getArrayEncoder,
   getStringDecoder,
   getStringEncoder,
   getStructDecoder,
   getStructEncoder,
   getU32Decoder,
   getU32Encoder,
-  getU8Decoder,
-  getU8Encoder,
 } from '@solana/codecs';
 
-export type Node = { pointer: Array<number>; ticker: string; amount: number };
+export type Token = { ticker: string; amount: number };
 
-export type NodeArgs = Node;
+export type TokenArgs = Token;
 
-export function getNodeEncoder(): Encoder<NodeArgs> {
+export function getTokenEncoder(): Encoder<TokenArgs> {
   return getStructEncoder([
-    ['pointer', getArrayEncoder(getU8Encoder(), { size: 4 })],
     ['ticker', getStringEncoder({ size: 4 })],
     ['amount', getU32Encoder()],
   ]);
 }
 
-export function getNodeDecoder(): Decoder<Node> {
+export function getTokenDecoder(): Decoder<Token> {
   return getStructDecoder([
-    ['pointer', getArrayDecoder(getU8Decoder(), { size: 4 })],
     ['ticker', getStringDecoder({ size: 4 })],
     ['amount', getU32Decoder()],
   ]);
 }
 
-export function getNodeCodec(): Codec<NodeArgs, Node> {
-  return combineCodec(getNodeEncoder(), getNodeDecoder());
+export function getTokenCodec(): Codec<TokenArgs, Token> {
+  return combineCodec(getTokenEncoder(), getTokenDecoder());
 }

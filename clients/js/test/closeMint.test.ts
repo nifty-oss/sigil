@@ -6,8 +6,8 @@ import {
 } from '@solana/web3.js';
 import test from 'ava';
 import {
-  fetchTokenAccount,
-  findTokenAccountPda,
+  fetchPocket,
+  findPocketPda,
   getBurnInstruction,
   getCloseMintInstruction,
 } from '../src/index.js';
@@ -31,14 +31,14 @@ test('it can close a mint account w/ 0 supply', async (t) => {
 
   const mint = await setupAndMint(client, authority, user, ticker, mintAmount);
 
-  const [tokenAccount] = await findTokenAccountPda({
+  const [tokenAccount] = await findPocketPda({
     authority: authority.address,
     user: user.address,
   });
 
-  let tokenAccountData = await fetchTokenAccount(client.rpc, tokenAccount);
+  let tokenAccountData = await fetchPocket(client.rpc, tokenAccount);
 
-  t.assert(tokenAccountData?.data.tree.nodes[0].amount === mintAmount);
+  t.assert(tokenAccountData?.data.tokens[0].amount === mintAmount);
 
   const burnIx = getBurnInstruction({
     user,
@@ -53,10 +53,10 @@ test('it can close a mint account w/ 0 supply', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  tokenAccountData = await fetchTokenAccount(client.rpc, tokenAccount);
+  tokenAccountData = await fetchPocket(client.rpc, tokenAccount);
 
   // No supply left.
-  t.assert(tokenAccountData?.data.tree.nodes[0].amount === 0);
+  t.assert(tokenAccountData?.data.tokens[0].amount === 0);
 
   const closeMintIx = getCloseMintInstruction({
     mint,
@@ -82,14 +82,14 @@ test('it cannot close a mint account w/ remaining supply', async (t) => {
 
   const mint = await setupAndMint(client, authority, user, ticker, mintAmount);
 
-  const [tokenAccount] = await findTokenAccountPda({
+  const [tokenAccount] = await findPocketPda({
     authority: authority.address,
     user: user.address,
   });
 
-  let tokenAccountData = await fetchTokenAccount(client.rpc, tokenAccount);
+  let tokenAccountData = await fetchPocket(client.rpc, tokenAccount);
 
-  t.assert(tokenAccountData?.data.tree.nodes[0].amount === mintAmount);
+  t.assert(tokenAccountData?.data.tokens[0].amount === mintAmount);
 
   const burnIx = getBurnInstruction({
     user,
@@ -104,10 +104,10 @@ test('it cannot close a mint account w/ remaining supply', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  tokenAccountData = await fetchTokenAccount(client.rpc, tokenAccount);
+  tokenAccountData = await fetchPocket(client.rpc, tokenAccount);
 
   // Supply left.
-  t.assert(tokenAccountData?.data.tree.nodes[0].amount > 0);
+  t.assert(tokenAccountData?.data.tokens[0].amount > 0);
 
   const closeMintIx = getCloseMintInstruction({
     mint,

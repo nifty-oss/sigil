@@ -1,6 +1,9 @@
 use super::*;
 
-use crate::instruction::{accounts::MintToAccounts, MintToArgs};
+use crate::{
+    instruction::{accounts::MintToAccounts, MintToArgs},
+    state::Token,
+};
 
 pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) -> ProgramResult {
     // Accounts.
@@ -33,11 +36,11 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
     let ticker = mint.ticker();
 
     let account_data = (*token_account_info.data).borrow();
-    let token_account = TokenAccount::from_bytes(&account_data);
+    let token_account = Pouch::from_bytes(&account_data);
 
     // The token account must be associated with the mint via the authority.
     require!(
-        token_account.header.authority == mint.authority,
+        token_account.base.authority == mint.authority,
         SigilError::InvalidTokenAccount,
         "token authority mismatch"
     );
@@ -52,43 +55,43 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
         return Err(SigilError::MaximumSupplyReached.into());
     }
 
-    let maybe_ticker = token_account.tokens.get(&ticker);
-    let tree_is_full = token_account.tokens.is_full();
+    let maybe_ticker = token_account.tokens.get(&ticker.into()).is_some();
+    let account_is_full = token_account.tokens.is_full();
 
     drop(account_data);
 
-    match maybe_ticker {
-        Some(_) => {
-            msg!("Ticker exists, minting tokens to account.");
-        }
-        None => {
-            msg!("Ticker doesn't exist, adding token to account.");
+    if maybe_ticker {
+        msg!("Ticker exists, minting tokens to account.");
+    } else {
+        msg!("Ticker doesn't exist, adding token to account.");
 
-            // Resize if the tree is full.
-            resize_account!(
-                tree_is_full,
-                ticker,
-                token_account_info,
-                payer_info,
-                system_program_info
-            );
+        // Resize if the tree is full.
+        resize_account!(
+            account_is_full,
+            ticker,
+            token_account_info,
+            payer_info,
+            system_program_info
+        );
 
-            // We need a new reference to the recipient account data after the potential resize.
-            let mut account_data = (*token_account_info.data).borrow_mut();
-            let mut recipient_token_account = TokenAccountMut::from_bytes_mut(&mut account_data);
+        // We need a new reference to the recipient account data after the potential resize.
+        let mut account_data = (*token_account_info.data).borrow_mut();
+        let mut recipient_token_account = PouchMut::from_bytes_mut(&mut account_data);
 
-            // New tokens should start at amount 0.
-            recipient_token_account.tokens.insert(ticker, 0);
-        }
+        // New tokens should start at amount 0.
+        recipient_token_account
+            .tokens
+            .insert(Token { ticker, amount: 0 });
     }
 
     // We need a new reference to the recipient account data after the potential resize.
     let mut account_data = (*token_account_info.data).borrow_mut();
-    let mut token_account = TokenAccountMut::from_bytes_mut(&mut account_data);
+    let mut token_account = PouchMut::from_bytes_mut(&mut account_data);
 
     // Mint the tokens to the token account.
-    let amount = token_account.tokens.get_mut(&ticker).unwrap();
-    *amount = amount
+    let token = token_account.tokens.get_mut(&ticker.into()).unwrap();
+    token.amount = token
+        .amount
         .checked_add(args.amount)
         .ok_or(SigilError::NumericalOverflow)?;
 

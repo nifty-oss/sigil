@@ -39,6 +39,7 @@ import {
   getU8Encoder,
 } from '@solana/codecs';
 import { MintSeeds, findMintPda } from '../pdas';
+import { Tag, TagArgs, getTagDecoder, getTagEncoder } from '../types';
 
 export type Mint<TAddress extends string = string> = Account<
   MintAccountData,
@@ -51,7 +52,7 @@ export type MaybeMint<TAddress extends string = string> = MaybeAccount<
 >;
 
 export type MintAccountData = {
-  tag: number;
+  tag: Tag;
   bump: number;
   decimals: number;
   empty: number;
@@ -62,7 +63,7 @@ export type MintAccountData = {
 };
 
 export type MintAccountDataArgs = {
-  tag: number;
+  tag: TagArgs;
   bump: number;
   decimals: number;
   empty: number;
@@ -74,7 +75,7 @@ export type MintAccountDataArgs = {
 
 export function getMintAccountDataEncoder(): Encoder<MintAccountDataArgs> {
   return getStructEncoder([
-    ['tag', getU8Encoder()],
+    ['tag', getTagEncoder()],
     ['bump', getU8Encoder()],
     ['decimals', getU8Encoder()],
     ['empty', getU8Encoder()],
@@ -87,7 +88,7 @@ export function getMintAccountDataEncoder(): Encoder<MintAccountDataArgs> {
 
 export function getMintAccountDataDecoder(): Decoder<MintAccountData> {
   return getStructDecoder([
-    ['tag', getU8Decoder()],
+    ['tag', getTagDecoder()],
     ['bump', getU8Decoder()],
     ['decimals', getU8Decoder()],
     ['empty', getU8Decoder()],
@@ -156,6 +157,10 @@ export async function fetchAllMaybeMint(
 ): Promise<MaybeMint[]> {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
   return maybeAccounts.map((maybeAccount) => decodeMint(maybeAccount));
+}
+
+export function getMintSize(): number {
+  return 56;
 }
 
 export async function fetchMintFromSeeds(

@@ -9,7 +9,7 @@ const kinobi = k.createFromIdls(getAllProgramIdls());
 // Update programs.
 kinobi.update(
   k.updateProgramsVisitor({
-    niftyOssSigil: { name: "sigil" }
+    sigilProgram: { name: "sigil" },
   })
 );
 
@@ -28,111 +28,85 @@ kinobi.update(
               data: k.structTypeNode([
                 k.structFieldTypeNode({
                   name: "tag",
-                  type: k.numberTypeNode("u8")
+                  type: k.definedTypeLinkNode("Tag"),
                 }),
                 k.structFieldTypeNode({
                   name: "bump",
-                  type: k.numberTypeNode("u8")
+                  type: k.numberTypeNode("u8"),
                 }),
                 k.structFieldTypeNode({
                   name: "decimals",
-                  type: k.numberTypeNode("u8")
+                  type: k.numberTypeNode("u8"),
                 }),
                 k.structFieldTypeNode({
                   name: "empty",
-                  type: k.numberTypeNode("u8")
+                  type: k.numberTypeNode("u8"),
                 }),
                 k.structFieldTypeNode({
                   name: "ticker",
                   type: k.stringTypeNode({
-                    size: k.fixedSizeNode(4)
-                  })
+                    size: k.fixedSizeNode(4),
+                  }),
                 }),
                 k.structFieldTypeNode({
                   name: "authority",
-                  type: k.publicKeyTypeNode()
+                  type: k.publicKeyTypeNode(),
                 }),
                 k.structFieldTypeNode({
                   name: "supply",
-                  type: k.numberTypeNode("u64")
+                  type: k.numberTypeNode("u64"),
                 }),
                 k.structFieldTypeNode({
                   name: "maxSupply",
-                  type: k.numberTypeNode("u64")
-                })
-              ])
+                  type: k.numberTypeNode("u64"),
+                }),
+              ]),
             }),
             k.accountNode({
-              name: "tokenAccount",
+              name: "pocket",
               data: k.structTypeNode([
                 k.structFieldTypeNode({
                   name: "tag",
-                  type: k.definedTypeLinkNode("Tag")
+                  type: k.definedTypeLinkNode("Tag"),
                 }),
                 k.structFieldTypeNode({
-                  name: "empty",
-                  type: k.arrayTypeNode(
-                    k.numberTypeNode("u8"),
-                    k.fixedSizeNode(3)
-                  )
+                  name: "padding",
+                  type: k.numberTypeNode("u8"),
                 }),
                 k.structFieldTypeNode({
                   name: "authority",
-                  type: k.publicKeyTypeNode()
+                  type: k.publicKeyTypeNode(),
                 }),
                 k.structFieldTypeNode({
                   name: "user",
-                  type: k.publicKeyTypeNode()
+                  type: k.publicKeyTypeNode(),
                 }),
                 k.structFieldTypeNode({
-                  name: "tree",
-                  type: k.definedTypeLinkNode("tree")
-                })
-              ])
-            })
+                  name: "tokens",
+                  type: k.arrayTypeNode(
+                    k.definedTypeLinkNode("token"),
+                    k.prefixedSizeNode(k.numberTypeNode("u16"))
+                  ),
+                }),
+              ]),
+            }),
           ],
           definedTypes: [
             ...node.definedTypes,
             k.definedTypeNode({
-              name: "tree",
+              name: "token",
               type: k.structTypeNode([
-                k.structFieldTypeNode({
-                  name: "allocator",
-                  type: k.arrayTypeNode(
-                    k.numberTypeNode("u8"),
-                    k.fixedSizeNode(8)
-                  )
-                }),
-                k.structFieldTypeNode({
-                  name: "nodes",
-                  type: k.arrayTypeNode(
-                    k.definedTypeLinkNode("node"),
-                    k.remainderSizeNode()
-                  )
-                })
-              ])
-            }),
-            k.definedTypeNode({
-              name: "node",
-              type: k.structTypeNode([
-                k.structFieldTypeNode({
-                  name: "pointer",
-                  type: k.arrayTypeNode(
-                    k.numberTypeNode("u8"),
-                    k.fixedSizeNode(4)
-                  )
-                }),
                 k.structFieldTypeNode({
                   name: "ticker",
                   type: k.stringTypeNode({
-                    size: k.fixedSizeNode(4)
-                  })
+                    size: k.fixedSizeNode(4),
+                  }),
                 }),
                 k.structFieldTypeNode({
                   name: "amount",
-                  type: k.numberTypeNode("u32")
-                })
-              ])
+                  type: k.numberTypeNode("u32"),
+                }),
+              ]),
             }),
             k.definedTypeNodeFromIdl({
               name: "tag",
@@ -141,52 +115,54 @@ kinobi.update(
                 variants: [
                   { name: "Uninitialized" },
                   { name: "Mint" },
-                  { name: "tokenAccount" }
-                ]
-              }
-            })
-          ]
+                  { name: "Pocket" },
+                ],
+              },
+            }),
+          ],
         };
-      }
-    }
+      },
+    },
   ])
 );
 
 // Update accounts.
 kinobi.update(
   k.updateAccountsVisitor({
-    tokenAccount: {
+    pocket: {
+      size: 68,
       seeds: [
-        k.constantPdaSeedNodeFromString("token_account"),
+        k.constantPdaSeedNodeFromString("pocket"),
+        k.variablePdaSeedNode(
+          "authority",
+          k.publicKeyTypeNode(),
+          "The authority of the token account"
+        ),
         k.variablePdaSeedNode(
           "user",
           k.publicKeyTypeNode(),
           "The user of the token account"
         ),
-        k.variablePdaSeedNode(
-          "authority",
-          k.publicKeyTypeNode(),
-          "The authority of the token account"
-        )
-      ]
+      ],
     },
     mint: {
+      size: 56,
       seeds: [
         k.constantPdaSeedNodeFromString("mint"),
-        k.variablePdaSeedNode("ticker", k.bytesTypeNode(k.fixedSizeNode(4))),
         k.variablePdaSeedNode(
           "authority",
           k.publicKeyTypeNode(),
           "The authority of the mint account"
-        )
-      ]
-    }
+        ),
+        k.variablePdaSeedNode("ticker", k.bytesTypeNode(k.fixedSizeNode(4))),
+      ],
+    },
   })
 );
 
 kinobi.update(
   k.updateInstructionsVisitor({
-    transfer: {}
+    transfer: {},
   })
 );
 
@@ -196,7 +172,7 @@ kinobi.accept(
   k.renderJavaScriptExperimentalVisitor(
     path.join(jsClient, "src", "generated"),
     {
-      prettier: require(path.join(jsClient, ".prettierrc.json"))
+      prettier: require(path.join(jsClient, ".prettierrc.json")),
     }
   )
 );
@@ -206,6 +182,6 @@ const rustClient = path.join(__dirname, "..", "clients", "rust");
 kinobi.accept(
   k.renderRustVisitor(path.join(rustClient, "src", "generated"), {
     formatCode: true,
-    crateFolder: rustClient
+    crateFolder: rustClient,
   })
 );

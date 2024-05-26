@@ -5,14 +5,12 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
-use crate::generated::types::Node;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
-use kaigan::types::RemainderVec;
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Tree {
-    pub allocator: [u8; 8],
-    pub nodes: RemainderVec<Node>,
+pub struct Token {
+    pub ticker: [u8; 4],
+    pub amount: u32,
 }

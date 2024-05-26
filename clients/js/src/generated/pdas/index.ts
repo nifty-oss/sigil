@@ -7,4 +7,4 @@
  */
 
 export * from './mint';
-export * from './tokenAccount';
+export * from './pocket';

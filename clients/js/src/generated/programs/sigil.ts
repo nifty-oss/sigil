@@ -44,7 +44,7 @@ export function getSigilProgram(): SigilProgram {
 
 export enum SigilAccount {
   Mint,
-  TokenAccount,
+  Pocket,
 }
 
 export enum SigilInstruction {

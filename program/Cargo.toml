@@ -1,5 +1,5 @@
 [package]
-name = "sigil"
+name = "sigil_program"
 version = "0.1.0"
 edition = "2021"
 readme = "./README.md"
@@ -8,17 +8,14 @@ publish = false
 
 [package.metadata.solana]
 program-id = "BpPMgxYawb8Qiguavj3JccMdp7bTZWemSqJmDeYTsTD9"
-program-dependencies = ["AssetGtQBTSgm5s91d1RAQod5JmaZiJDxqsgtqrZud73"]
+program-dependencies = []
 
 [lib]
 crate-type = ["cdylib", "lib"]
 
-[features]
-test-bpf = []
-
 [dependencies]
 borsh = "^0.10"
-bytemuck = "1.14.0"
+bytemuck = "1.16.0"
 shank = "^0.4.2"
 num-derive = "^0.3"
 num-traits = "^0.2"
@@ -26,4 +23,3 @@ num_enum = "0.7.2"
 stevia = { git = "https://github.com/nifty-oss/stevia.git" }
 solana-program = "1.16.27"
 thiserror = "^1.0"
-nifty-asset-interface = "0.4.0"

@@ -1,9 +1,9 @@
 import { address, appendTransactionInstruction, pipe } from '@solana/web3.js';
 import test from 'ava';
 import {
-  fetchTokenAccount,
+  fetchPocket,
   findMintPda,
-  findTokenAccountPda,
+  findPocketPda,
   getCreateMintInstruction,
   getCreateTokenAccountInstruction,
   getMintToInstruction,
@@ -33,12 +33,12 @@ test('it can transfer tokens', async (t) => {
     authority: authority.address,
   });
 
-  const [userTokenAccount] = await findTokenAccountPda({
+  const [userTokenAccount] = await findPocketPda({
     authority: authority.address,
     user: user.address,
   });
 
-  const [recipientTokenAccount] = await findTokenAccountPda({
+  const [recipientTokenAccount] = await findPocketPda({
     authority: authority.address,
     user: recipient.address,
   });
@@ -93,15 +93,12 @@ test('it can transfer tokens', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  let userAccount = await fetchTokenAccount(client.rpc, userTokenAccount);
-  let recipientAccount = await fetchTokenAccount(
-    client.rpc,
-    recipientTokenAccount
-  );
+  let userAccount = await fetchPocket(client.rpc, userTokenAccount);
+  let recipientAccount = await fetchPocket(client.rpc, recipientTokenAccount);
 
-  t.assert(userAccount?.data.tree.nodes[0].amount === mintAmount);
+  t.assert(userAccount?.data.tokens[0].amount === mintAmount);
   // No token added yet.
-  t.assert(recipientAccount?.data.tree.nodes.length === 0);
+  t.assert(recipientAccount?.data.tokens.length === 0);
 
   const transferIx = getTransferInstruction({
     payer: authority,
@@ -119,13 +116,11 @@ test('it can transfer tokens', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  userAccount = await fetchTokenAccount(client.rpc, userTokenAccount);
-  recipientAccount = await fetchTokenAccount(client.rpc, recipientTokenAccount);
+  userAccount = await fetchPocket(client.rpc, userTokenAccount);
+  recipientAccount = await fetchPocket(client.rpc, recipientTokenAccount);
 
-  t.assert(
-    userAccount?.data.tree.nodes[0].amount === mintAmount - transferAmount
-  );
-  t.assert(recipientAccount?.data.tree.nodes[0].amount === transferAmount);
+  t.assert(userAccount?.data.tokens[0].amount === mintAmount - transferAmount);
+  t.assert(recipientAccount?.data.tokens[0].amount === transferAmount);
 
   const transferBackIx = getTransferInstruction({
     payer: authority,

@@ -1,6 +1,9 @@
 use super::*;
 
-use crate::instruction::{accounts::TransferAccounts, TransferArgs};
+use crate::{
+    instruction::{accounts::TransferAccounts, TransferArgs},
+    state::Token,
+};
 
 pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs) -> ProgramResult {
     // Accounts.
@@ -31,33 +34,36 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
     let mut user_account_data = (*user_token_account_info.data).borrow_mut();
     let recipient_account_data = (*recipient_token_account_info.data).borrow();
 
-    let mut user_token_account = TokenAccountMut::from_bytes_mut(&mut user_account_data);
-    let recipient_token_account = TokenAccount::from_bytes(&recipient_account_data);
+    let mut user_token_account = PouchMut::from_bytes_mut(&mut user_account_data);
+    let recipient_token_account = Pouch::from_bytes(&recipient_account_data);
 
     // The token accounts must be in the same namespace.
     require!(
-        user_token_account.header.authority == recipient_token_account.header.authority,
+        user_token_account.base.authority == recipient_token_account.base.authority,
         SigilError::InvalidTokenAccount,
         "token user mismatch"
     );
     // The user passed in must be the actual user on the token account.
     require!(
-        user_token_account.header.user == *user_info.key,
+        user_token_account.base.user == *user_info.key,
         SigilError::InvalidTokenAccount,
         "user authority mismatch"
     );
 
     // Look up the amount of tokens in the user's account to make sure they have enough to send.
-    let source_amount = user_token_account
+    let source_token = user_token_account
         .tokens
-        .get_mut(&args.ticker)
+        .get_mut(&args.ticker.into())
         .ok_or(SigilError::InsufficientFunds)?;
 
-    if args.amount > *source_amount {
+    if args.amount > source_token.amount {
         return Err(SigilError::InsufficientFunds.into());
     }
     let tree_is_full = recipient_token_account.tokens.is_full();
-    let is_none = recipient_token_account.tokens.get(&args.ticker).is_none();
+    let is_none = recipient_token_account
+        .tokens
+        .get(&args.ticker.into())
+        .is_none();
 
     // Drop read-only reference to recipient account data.
     drop(recipient_account_data);
@@ -76,21 +82,26 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
 
     // We need a new reference to the recipient account data after the potential resize.
     let mut account_data = (*recipient_token_account_info.data).borrow_mut();
-    let mut token_account = TokenAccountMut::from_bytes_mut(&mut account_data);
+    let mut token_account = PouchMut::from_bytes_mut(&mut account_data);
 
     if is_none {
-        token_account.tokens.insert(args.ticker, args.amount);
+        token_account.tokens.insert(Token {
+            ticker: args.ticker,
+            amount: args.amount,
+        });
     } else {
         // We know it exists here so we can unwrap.
-        let dest_amount = token_account.tokens.get_mut(&args.ticker).unwrap();
+        let target_token = token_account.tokens.get_mut(&args.ticker.into()).unwrap();
 
-        *dest_amount = dest_amount
+        target_token.amount = target_token
+            .amount
             .checked_add(args.amount)
             .ok_or(SigilError::NumericalOverflow)?;
     }
 
     // Update the source amount.
-    *source_amount = source_amount
+    source_token.amount = source_token
+        .amount
         .checked_sub(args.amount)
         .ok_or(SigilError::NumericalOverflow)?;
 

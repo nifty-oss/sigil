@@ -39,8 +39,8 @@ pub fn process_create_mint<'a>(
 
     let signer_seeds: &[&[u8]] = &[
         Mint::PREFIX,
-        seeds.ticker,
         seeds.authority.as_ref(),
+        seeds.ticker,
         &[bump],
     ];
 

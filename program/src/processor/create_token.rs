@@ -1,6 +1,9 @@
 use super::*;
 
-use crate::instruction::{accounts::CreateTokenAccountAccounts, CreateArgs};
+use crate::{
+    instruction::{accounts::CreateTokenAccountAccounts, CreateArgs},
+    state::Token,
+};
 
 pub fn process_create_token<'a>(
     accounts: &'a [AccountInfo<'a>],
@@ -22,9 +25,9 @@ pub fn process_create_token<'a>(
 
     let (token_account_pubkey, bump) = Pubkey::find_program_address(
         &[
-            b"token_account",
-            user_info.key.as_ref(),
+            Pouch::PREFIX,
             authority_info.key.as_ref(),
+            user_info.key.as_ref(),
         ],
         &crate::ID,
     );
@@ -33,9 +36,9 @@ pub fn process_create_token<'a>(
     assert_same_pubkeys("token_account", token_account_info, &token_account_pubkey)?;
 
     let signer_seeds: &[&[u8]] = &[
-        b"token_account",
-        user_info.key.as_ref(),
+        Pouch::PREFIX,
         authority_info.key.as_ref(),
+        user_info.key.as_ref(),
         &[bump],
     ];
 
@@ -44,7 +47,8 @@ pub fn process_create_token<'a>(
         token_account_info,
         payer_info,
         system_program_info,
-        TokenAccount::BASE_LEN,
+        // base len + capacity to hold tokens.
+        Pouch::LEN + (std::mem::size_of::<Token>() * args.capacity as usize),
         &crate::ID,
         Some(&[signer_seeds]),
     )?;
@@ -53,16 +57,13 @@ pub fn process_create_token<'a>(
     let account_data = &mut (*token_account_info.data).borrow_mut();
 
     // Get the mutable byte muck version of the account so we can mutate the data directly.
-    let mut token_authority = TokenAccountMut::from_bytes_mut(account_data);
+    let token_authority = PouchMut::from_bytes_mut(account_data);
 
     // Now can operate on the struct like a normal Rust struct but the bytes are cast directly
     // without deserializ/serializ(ing).
-    token_authority
-        .header
-        .set_tag(crate::state::Tag::TokenAccount);
-    token_authority.header.authority = *authority_info.key;
-    token_authority.header.user = *user_info.key;
-    token_authority.tokens.initialize(args.capacity);
+    token_authority.base.set_tag(Tag::Pocket);
+    token_authority.base.authority = *authority_info.key;
+    token_authority.base.user = *user_info.key;
 
     Ok(())
 }

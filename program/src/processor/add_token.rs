@@ -1,6 +1,6 @@
 use super::*;
 
-use crate::instruction::accounts::AddTokenAccounts;
+use crate::{instruction::accounts::AddTokenAccounts, state::Token};
 
 pub fn process_add_token<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
     // Accounts.
@@ -25,42 +25,43 @@ pub fn process_add_token<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
     let mint = Mint::load(&data);
 
     let account_data = (*token_account_info.data).borrow();
-    let token_account = TokenAccount::from_bytes(&account_data);
+    let token_account = Pouch::from_bytes(&account_data);
 
     // The token account must be associated with the mint via the namespace.
     require!(
-        token_account.header.authority == mint.authority,
+        token_account.base.authority == mint.authority,
         SigilError::InvalidTokenAccount,
         "token namespace mismatch"
     );
 
     // The token account must be associated with the user passed in.
     require!(
-        &token_account.header.user == user_info.key,
+        &token_account.base.user == user_info.key,
         SigilError::InvalidTokenAccount,
         "token user mismatch"
     );
 
-    let tree_is_full = token_account.tokens.is_full();
+    let account_is_full = token_account.tokens.is_full();
     drop(account_data);
 
     // Resize if the tree is full.
     resize_account!(
-        tree_is_full,
+        account_is_full,
         mint.ticker,
         token_account_info,
         payer_info,
         system_program_info
     );
 
-    msg!("account size: {}", token_account_info.data_len());
-
     // Get a mutable reference to the account data.
     let account_data = &mut (*token_account_info.data).borrow_mut();
-    let mut token_namespace = TokenAccountMut::from_bytes_mut(account_data);
+    let mut token_namespace = PouchMut::from_bytes_mut(account_data);
 
     // New tokens should start at amount 0.
-    token_namespace.tokens.insert(mint.ticker(), 0);
+    token_namespace.tokens.insert(Token {
+        ticker: mint.ticker(),
+        amount: 0,
+    });
 
     Ok(())
 }
