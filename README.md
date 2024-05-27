@@ -63,10 +63,10 @@ pub struct Mint {
 
 #### `Pocket`
 
-`Pocket` are PDAs derived from the seeds `"pocket"`, an authority and user pubkeys. They are defined per-user to allow efficient storing of mint and amount pairs (tokens), but are also namespaced by the authority of mints &mdash; there will be one `Pocket` account for each mint authority (namespace). Each `Pouch` account has a base header which stores the account tag as well as the authority and user pubkeys to allow for efficient indexing.
+`Pocket` are PDAs derived from the seeds `"pocket"`, an authority and user pubkeys. They are defined per-user to allow efficient storing of mint and amount pairs (tokens), but are also namespaced by the authority of mints &mdash; there will be one `Pocket` account for each mint authority (namespace). Each `Pocket` account has a base header which stores the account tag as well as the authority and user pubkeys to allow for efficient indexing.
 
 > [!IMPORTANT]
-> The innovation of `Sigil` consists on using a single `Pocket` account to hold different types of tokens, therefore saving on storage space and costs: creating a new user pouch account requires paying the base rent cost of `68` bytes only once for each user in a given namespace, but adding a new token (mint and amount pair) only costs an additional `8` bytes (`4` for the mint ticker and `4` to represent a `u32` amount). This is approximately `36x` savings when compared to the cost of creating a new SPL Token account for each new user and mint.
+> The innovation of `Sigil` consists on using a single `Pocket` account to hold different types of tokens, therefore saving on storage space and costs: creating a new user pocket account requires paying the base rent cost of `68` bytes only once for each user in a given namespace, but adding a new token (mint and amount pair) only costs an additional `8` bytes (`4` for the mint ticker and `4` to represent a `u32` amount). This is approximately `36x` savings when compared to the cost of creating a new SPL Token account for each new user and mint.
 
 The on-chain `Pocket` struct is shown below.
 
