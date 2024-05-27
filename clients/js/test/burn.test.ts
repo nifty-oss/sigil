@@ -49,7 +49,5 @@ test('it can burn tokens', async (t) => {
 
   tokenAccountData = await fetchPocket(client.rpc, tokenAccount);
 
-  t.assert(
-    tokenAccountData?.data.tokens[0].amount === mintAmount - burnAmount
-  );
+  t.assert(tokenAccountData?.data.tokens[0].amount === mintAmount - burnAmount);
 });

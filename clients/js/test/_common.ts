@@ -2,7 +2,7 @@ import {
   TransactionSigner,
   address,
   appendTransactionInstruction,
-  pipe
+  pipe,
 } from '@solana/web3.js';
 import {
   findPocketPda,

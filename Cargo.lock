@@ -4672,7 +4672,7 @@ dependencies = [
 [[package]]
 name = "stevia"
 version = "0.0.0"
-source = "git+https://github.com/nifty-oss/stevia.git#1e9da79065de2d43443140050abcf237bd4f70e7"
+source = "git+https://github.com/nifty-oss/stevia.git#efb9563c0807e16b7f6b778d4e9fc21aa6eea7d8"
 dependencies = [
  "bytemuck",
 ]

@@ -3,7 +3,7 @@ use std::mem::size_of;
 use bytemuck::{Pod, Zeroable};
 use solana_program::pubkey::Pubkey;
 use stevia::{
-    collections::array_set::{U16ArraySet, U16ArraySetMut},
+    collections::{U16ArraySet, U16ArraySetMut},
     ZeroCopy,
 };
 
