@@ -118,7 +118,7 @@ Token accounts however have significant savings, as SPL Token accounts require a
 | Account              | Data Size (Bytes) | Rent Cost @ $200 SOL |
 | -------------------- | ----------------- | -------------------- |
 | SPL Token Account    | 16,500            | $41                  |
-| Sigil Token Account  | 876               | $1.40                |
+| Sigil Pocket         | 876               | $1.40                |
 
 **📦 1000 Users w/ 100 Assets each**
 
@@ -132,9 +132,9 @@ Token accounts however have significant savings, as SPL Token accounts require a
 
 ### Limitations
 
-The specification currently does not support a delegate system as storing the extra data for that raises the costs significantly. However, delegates could likely be implemented in a cheaper and modular way but using an additional PDA to represent the delegation so that only use-cases that actually require delegates end up paying for them.
+The specification currently does not support a delegate system as storing the extra data for that raises the costs significantly. However, delegates could likely be implemented in a cheaper and modular way by using an additional PDA to represent the delegation so that only use-cases that actually require delegates end up paying for them.
 
-Similarly, there is not option to freeze a token but this could be implemented as a bit flag if needed.
+Similarly, there is no option to freeze a token but this could be implemented as a bit flag if needed.
 
 ## Project setup for developers
 
