@@ -36,7 +36,7 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
     let ticker = mint.ticker();
 
     let account_data = (*token_account_info.data).borrow();
-    let token_account = Pouch::from_bytes(&account_data);
+    let token_account = Pocket::from_bytes(&account_data);
 
     // The token account must be associated with the mint via the authority.
     require!(
@@ -76,7 +76,7 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
 
         // We need a new reference to the recipient account data after the potential resize.
         let mut account_data = (*token_account_info.data).borrow_mut();
-        let mut recipient_token_account = PouchMut::from_bytes_mut(&mut account_data);
+        let mut recipient_token_account = PocketMut::from_bytes_mut(&mut account_data);
 
         // New tokens should start at amount 0.
         recipient_token_account
@@ -86,7 +86,7 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
 
     // We need a new reference to the recipient account data after the potential resize.
     let mut account_data = (*token_account_info.data).borrow_mut();
-    let mut token_account = PouchMut::from_bytes_mut(&mut account_data);
+    let mut token_account = PocketMut::from_bytes_mut(&mut account_data);
 
     // Mint the tokens to the token account.
     let token = token_account.tokens.get_mut(&ticker.into()).unwrap();

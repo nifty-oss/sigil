@@ -13,7 +13,7 @@ use crate::{
     error::SigilError,
     instruction::Instruction,
     require, resize_account,
-    state::{Mint, MintSeeds, Pouch, PouchMut, Tag},
+    state::{Mint, MintSeeds, Pocket, PocketMut, Tag},
     utils::{close_account, create_account},
 };
 

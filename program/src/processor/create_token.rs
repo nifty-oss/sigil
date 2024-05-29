@@ -25,7 +25,7 @@ pub fn process_create_token<'a>(
 
     let (token_account_pubkey, bump) = Pubkey::find_program_address(
         &[
-            Pouch::PREFIX,
+            Pocket::PREFIX,
             authority_info.key.as_ref(),
             user_info.key.as_ref(),
         ],
@@ -36,7 +36,7 @@ pub fn process_create_token<'a>(
     assert_same_pubkeys("token_account", token_account_info, &token_account_pubkey)?;
 
     let signer_seeds: &[&[u8]] = &[
-        Pouch::PREFIX,
+        Pocket::PREFIX,
         authority_info.key.as_ref(),
         user_info.key.as_ref(),
         &[bump],
@@ -48,7 +48,7 @@ pub fn process_create_token<'a>(
         payer_info,
         system_program_info,
         // base len + capacity to hold tokens.
-        Pouch::LEN + (std::mem::size_of::<Token>() * args.capacity as usize),
+        Pocket::LEN + (std::mem::size_of::<Token>() * args.capacity as usize),
         &crate::ID,
         Some(&[signer_seeds]),
     )?;
@@ -57,7 +57,7 @@ pub fn process_create_token<'a>(
     let account_data = &mut (*token_account_info.data).borrow_mut();
 
     // Get the mutable byte muck version of the account so we can mutate the data directly.
-    let token_authority = PouchMut::from_bytes_mut(account_data);
+    let token_authority = PocketMut::from_bytes_mut(account_data);
 
     // Now can operate on the struct like a normal Rust struct but the bytes are cast directly
     // without deserializ/serializ(ing).

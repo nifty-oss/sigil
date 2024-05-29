@@ -24,7 +24,7 @@ pub fn process_burn<'a>(accounts: &'a [AccountInfo<'a>], args: BurnArgs) -> Prog
     assert_program_owner("token", token_account_info, &crate::ID)?;
 
     let mut account_data = (*token_account_info.data).borrow_mut();
-    let mut token_account = PouchMut::from_bytes_mut(&mut account_data);
+    let mut token_account = PocketMut::from_bytes_mut(&mut account_data);
 
     // The token accounts must be associated with the mint via the namespace.
     require!(

@@ -25,7 +25,7 @@ pub fn process_add_token<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
     let mint = Mint::load(&data);
 
     let account_data = (*token_account_info.data).borrow();
-    let token_account = Pouch::from_bytes(&account_data);
+    let token_account = Pocket::from_bytes(&account_data);
 
     // The token account must be associated with the mint via the namespace.
     require!(
@@ -55,7 +55,7 @@ pub fn process_add_token<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
 
     // Get a mutable reference to the account data.
     let account_data = &mut (*token_account_info.data).borrow_mut();
-    let mut token_namespace = PouchMut::from_bytes_mut(account_data);
+    let mut token_namespace = PocketMut::from_bytes_mut(account_data);
 
     // New tokens should start at amount 0.
     token_namespace.tokens.insert(Token {

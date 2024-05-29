@@ -34,8 +34,8 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
     let mut user_account_data = (*user_token_account_info.data).borrow_mut();
     let recipient_account_data = (*recipient_token_account_info.data).borrow();
 
-    let mut user_token_account = PouchMut::from_bytes_mut(&mut user_account_data);
-    let recipient_token_account = Pouch::from_bytes(&recipient_account_data);
+    let mut user_token_account = PocketMut::from_bytes_mut(&mut user_account_data);
+    let recipient_token_account = Pocket::from_bytes(&recipient_account_data);
 
     // The token accounts must be in the same namespace.
     require!(
@@ -82,7 +82,7 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
 
     // We need a new reference to the recipient account data after the potential resize.
     let mut account_data = (*recipient_token_account_info.data).borrow_mut();
-    let mut token_account = PouchMut::from_bytes_mut(&mut account_data);
+    let mut token_account = PocketMut::from_bytes_mut(&mut account_data);
 
     if is_none {
         token_account.tokens.insert(Token {

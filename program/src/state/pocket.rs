@@ -11,8 +11,8 @@ use super::{Tag, Token};
 
 /// Struct representing an account storing tokens.
 ///
-/// A `Pouch` account is a PDA with the seeds `["account", <authority>, <user>]`.
-pub struct Pouch<'a> {
+/// A `Pocket` account is a PDA with the seeds `["pocket", <authority>, <user>]`.
+pub struct Pocket<'a> {
     /// Base account data.
     pub base: &'a Base,
 
@@ -20,7 +20,7 @@ pub struct Pouch<'a> {
     pub tokens: U16ArraySet<'a, Token>,
 }
 
-impl<'a> Pouch<'a> {
+impl<'a> Pocket<'a> {
     // Base + u32 array set.
     pub const LEN: usize = Base::LEN + size_of::<u16>();
 
@@ -35,7 +35,7 @@ impl<'a> Pouch<'a> {
         Self { base, tokens }
     }
 
-    pub fn find_pda(seeds: &PouchSeeds) -> (Pubkey, u8) {
+    pub fn find_pda(seeds: &PocketSeeds) -> (Pubkey, u8) {
         Pubkey::find_program_address(
             &[Self::PREFIX, seeds.user.as_ref(), seeds.authority.as_ref()],
             &crate::ID,
@@ -43,7 +43,7 @@ impl<'a> Pouch<'a> {
     }
 }
 
-pub struct PouchSeeds {
+pub struct PocketSeeds {
     /// Account authority.
     pub authority: Pubkey,
 
@@ -51,8 +51,8 @@ pub struct PouchSeeds {
     pub user: Pubkey,
 }
 
-/// Mutable version of the `Pouch` struct.
-pub struct PouchMut<'a> {
+/// Mutable version of the `Pocket` struct.
+pub struct PocketMut<'a> {
     /// Base account data.
     pub base: &'a mut Base,
 
@@ -60,7 +60,7 @@ pub struct PouchMut<'a> {
     pub tokens: U16ArraySetMut<'a, Token>,
 }
 
-impl<'a> PouchMut<'a> {
+impl<'a> PocketMut<'a> {
     pub fn from_bytes_mut(bytes: &'a mut [u8]) -> Self {
         let (base, tokens) = bytes.split_at_mut(Base::LEN);
 
