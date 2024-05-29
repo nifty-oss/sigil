@@ -106,7 +106,7 @@ test('it can create a new token account', async (t) => {
   t.assert(account?.data.user === user.address);
 });
 
-test.only('it can add tokens to a token account', async (t) => {
+test('it can add tokens to a token account', async (t) => {
   // Given an authority key pair with some SOL.
   const client = createDefaultSolanaClient();
 
