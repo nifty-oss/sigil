@@ -1,4 +1,4 @@
-use sigil_client::{accounts::Mint, instructions::CreateMintBuilder, ID as SigilID};
+use sigil_client::{accounts::Mint, instructions::CreateMintBuilder};
 use solana_program_test::{BanksClientError, ProgramTest, ProgramTestContext};
 use solana_sdk::{
     pubkey::Pubkey,
@@ -41,7 +41,7 @@ pub async fn airdrop(
 }
 
 pub async fn program_context() -> ProgramTestContext {
-    let test = ProgramTest::new("sigil", sigil_client::ID, None);
+    let test = ProgramTest::new("sigil_program", sigil_client::ID, None);
     test.start_with_context().await
 }
 
@@ -80,10 +80,10 @@ pub async fn create_mint<'a>(
     let payer = payer_signer.pubkey();
     let authority = authority_signer.pubkey();
 
-    let (mint, _) = Pubkey::find_program_address(
-        &[Mint::PREFIX, ticker.as_bytes(), authority.as_ref()],
-        &SigilID,
-    );
+    let mut ticker_seed = [0u8; 4];
+    ticker_seed.copy_from_slice(&ticker.as_bytes()[0..4]);
+
+    let (mint, _) = Mint::find_pda(&authority, ticker_seed);
 
     let ix = CreateMintBuilder::new()
         .payer(payer)

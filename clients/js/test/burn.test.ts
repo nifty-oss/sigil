@@ -1,8 +1,8 @@
 import { appendTransactionInstruction, pipe } from '@solana/web3.js';
 import test from 'ava';
 import {
-  fetchTokenAccount,
-  findTokenAccountPda,
+  fetchPocket,
+  findPocketPda,
   getBurnInstruction,
 } from '../src/index.js';
 import { setupAndMint } from './_common.js';
@@ -25,14 +25,14 @@ test('it can burn tokens', async (t) => {
 
   const mint = await setupAndMint(client, authority, user, ticker, mintAmount);
 
-  const [tokenAccount] = await findTokenAccountPda({
+  const [tokenAccount] = await findPocketPda({
     authority: authority.address,
     user: user.address,
   });
 
-  let tokenAccountData = await fetchTokenAccount(client.rpc, tokenAccount);
+  let tokenAccountData = await fetchPocket(client.rpc, tokenAccount);
 
-  t.assert(tokenAccountData?.data.tree.nodes[0].amount === mintAmount);
+  t.assert(tokenAccountData?.data.tokens[0].amount === mintAmount);
 
   const burnIx = getBurnInstruction({
     user,
@@ -47,9 +47,7 @@ test('it can burn tokens', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  tokenAccountData = await fetchTokenAccount(client.rpc, tokenAccount);
+  tokenAccountData = await fetchPocket(client.rpc, tokenAccount);
 
-  t.assert(
-    tokenAccountData?.data.tree.nodes[0].amount === mintAmount - burnAmount
-  );
+  t.assert(tokenAccountData?.data.tokens[0].amount === mintAmount - burnAmount);
 });

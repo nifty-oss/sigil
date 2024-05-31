@@ -16,5 +16,5 @@ use num_derive::FromPrimitive;
 pub enum Tag {
     Uninitialized,
     Mint,
-    TokenAccount,
+    Pocket,
 }

@@ -6,16 +6,17 @@
 //!
 
 use crate::generated::types::Tag;
-use crate::generated::types::Tree;
+use crate::generated::types::Token;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
+use kaigan::types::U16PrefixVec;
 use solana_program::pubkey::Pubkey;
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct TokenAccount {
+pub struct Pocket {
     pub tag: Tag,
-    pub empty: [u8; 3],
+    pub padding: u8,
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
@@ -26,42 +27,40 @@ pub struct TokenAccount {
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
     pub user: Pubkey,
-    pub tree: Tree,
+    pub tokens: U16PrefixVec<Token>,
 }
 
-impl TokenAccount {
+impl Pocket {
+    pub const LEN: usize = 68;
+
     /// Prefix values used to generate a PDA for this account.
     ///
     /// Values are positional and appear in the following order:
     ///
-    ///   0. `TokenAccount::PREFIX`
-    ///   1. user (`Pubkey`)
-    ///   2. authority (`Pubkey`)
-    pub const PREFIX: &'static [u8] = "token_account".as_bytes();
+    ///   0. `Pocket::PREFIX`
+    ///   1. authority (`Pubkey`)
+    ///   2. user (`Pubkey`)
+    pub const PREFIX: &'static [u8] = "pocket".as_bytes();
 
     pub fn create_pda(
-        user: Pubkey,
         authority: Pubkey,
+        user: Pubkey,
         bump: u8,
     ) -> Result<solana_program::pubkey::Pubkey, solana_program::pubkey::PubkeyError> {
         solana_program::pubkey::Pubkey::create_program_address(
             &[
-                "token_account".as_bytes(),
-                user.as_ref(),
+                "pocket".as_bytes(),
                 authority.as_ref(),
+                user.as_ref(),
                 &[bump],
             ],
             &crate::SIGIL_ID,
         )
     }
 
-    pub fn find_pda(user: &Pubkey, authority: &Pubkey) -> (solana_program::pubkey::Pubkey, u8) {
+    pub fn find_pda(authority: &Pubkey, user: &Pubkey) -> (solana_program::pubkey::Pubkey, u8) {
         solana_program::pubkey::Pubkey::find_program_address(
-            &[
-                "token_account".as_bytes(),
-                user.as_ref(),
-                authority.as_ref(),
-            ],
+            &["pocket".as_bytes(), authority.as_ref(), user.as_ref()],
             &crate::SIGIL_ID,
         )
     }
@@ -73,7 +72,7 @@ impl TokenAccount {
     }
 }
 
-impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for TokenAccount {
+impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for Pocket {
     type Error = std::io::Error;
 
     fn try_from(

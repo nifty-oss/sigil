@@ -18,7 +18,7 @@ import {
 export enum Tag {
   Uninitialized,
   Mint,
-  TokenAccount,
+  Pocket,
 }
 
 export type TagArgs = Tag;

@@ -1,18 +1,19 @@
 #![cfg(feature = "test-sbf")]
 
-use sigil::state::{Mint, TokenAccount, TokenSeeds};
-use sigil_client::instructions::{AddTokenBuilder, CreateTokenAccountBuilder};
+pub mod helpers;
+use helpers::program_context;
+
+use sigil_client::{
+    accounts::{Mint, Pocket},
+    instructions::{AddTokenBuilder, CreateTokenAccountBuilder},
+    types::Token,
+};
 use solana_program_test::tokio;
 use solana_sdk::{
     signature::{Keypair, Signer},
     system_program,
     transaction::Transaction,
 };
-use stevia::{collections::u8_avl_tree::U8Node, ZeroCopy};
-
-pub mod helpers;
-
-use helpers::program_context;
 
 use crate::helpers::{create_mint, CreateMintParams, DirtyClone, TestMetadata, TestMint};
 
@@ -47,10 +48,10 @@ async fn create_mint_account() {
 
     let account = account.unwrap();
     let account_data = account.data.as_ref();
-    let mint = Mint::load(account_data);
+    let mint = Mint::from_bytes(account_data).unwrap();
 
-    assert_eq!(mint.decimals(), expected_metadata.decimals);
-    assert_eq!(mint.ticker(), expected_metadata.ticker.as_bytes());
+    assert_eq!(mint.decimals, expected_metadata.decimals);
+    assert_eq!(mint.ticker, expected_metadata.ticker.as_bytes());
     assert_eq!(mint.supply, 0);
     assert_eq!(mint.max_supply, expected_metadata.max_supply);
     assert_eq!(mint.authority, authority);
@@ -71,7 +72,7 @@ async fn create_token_account() {
 
     // Given a PDA derived from the payer's public key.
 
-    let address = TokenAccount::find_pda(&TokenSeeds { user, authority }).0;
+    let address = Pocket::find_pda(&authority, &user).0;
 
     let ix = CreateTokenAccountBuilder::new()
         .token_account(address)
@@ -96,10 +97,10 @@ async fn create_token_account() {
     assert!(account.is_some());
 
     let account = account.unwrap();
-    assert_eq!(account.data.len(), TokenAccount::BASE_LEN);
+    assert_eq!(account.data.len(), Pocket::LEN);
 
-    let token_account = TokenAccount::from_bytes(&account.data);
-    assert_eq!(token_account.header.authority, authority);
+    let token_account = Pocket::from_bytes(&account.data).unwrap();
+    assert_eq!(token_account.authority, authority);
 }
 
 #[tokio::test]
@@ -150,7 +151,7 @@ async fn add_token() {
     .unwrap();
 
     // Find user's token account for the authority.
-    let address = TokenAccount::find_pda(&TokenSeeds { user, authority }).0;
+    let address = Pocket::find_pda(&authority, &user).0;
 
     // Create the token account.
     let ix = CreateTokenAccountBuilder::new()
@@ -175,11 +176,11 @@ async fn add_token() {
 
     //...and has the base length
     let account = account.unwrap();
-    assert_eq!(account.data.len(), TokenAccount::BASE_LEN);
+    assert_eq!(account.data.len(), Pocket::LEN);
 
     //...and the expected data.
-    let token_account = TokenAccount::from_bytes(&account.data);
-    assert_eq!(token_account.header.authority, authority);
+    let token_account = Pocket::from_bytes(&account.data).unwrap();
+    assert_eq!(token_account.authority, authority);
 
     // Add a token account for USDC mint to the user's token account.
 
@@ -206,7 +207,7 @@ async fn add_token() {
     let account = account.unwrap();
     assert_eq!(
         account.data.len(),
-        TokenAccount::BASE_LEN + std::mem::size_of::<U8Node<u32, u32>>()
+        Pocket::LEN + std::mem::size_of::<Token>()
     );
 
     // Add a second token to the token account.
@@ -233,6 +234,6 @@ async fn add_token() {
     let account = account.unwrap();
     assert_eq!(
         account.data.len(),
-        TokenAccount::BASE_LEN + std::mem::size_of::<U8Node<u32, u32>>() * 2
+        Pocket::LEN + std::mem::size_of::<Token>() * 2
     );
 }

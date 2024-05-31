@@ -5,6 +5,7 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
+use crate::generated::types::Tag;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 use solana_program::pubkey::Pubkey;
@@ -12,7 +13,7 @@ use solana_program::pubkey::Pubkey;
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Mint {
-    pub tag: u8,
+    pub tag: Tag,
     pub bump: u8,
     pub decimals: u8,
     pub empty: u8,
@@ -27,29 +28,31 @@ pub struct Mint {
 }
 
 impl Mint {
+    pub const LEN: usize = 56;
+
     /// Prefix values used to generate a PDA for this account.
     ///
     /// Values are positional and appear in the following order:
     ///
     ///   0. `Mint::PREFIX`
-    ///   1. ticker (`[u8; 4]`)
-    ///   2. authority (`Pubkey`)
+    ///   1. authority (`Pubkey`)
+    ///   2. ticker (`[u8; 4]`)
     pub const PREFIX: &'static [u8] = "mint".as_bytes();
 
     pub fn create_pda(
-        ticker: [u8; 4],
         authority: Pubkey,
+        ticker: [u8; 4],
         bump: u8,
     ) -> Result<solana_program::pubkey::Pubkey, solana_program::pubkey::PubkeyError> {
         solana_program::pubkey::Pubkey::create_program_address(
-            &["mint".as_bytes(), &ticker, authority.as_ref(), &[bump]],
+            &["mint".as_bytes(), authority.as_ref(), &ticker, &[bump]],
             &crate::SIGIL_ID,
         )
     }
 
-    pub fn find_pda(ticker: [u8; 4], authority: &Pubkey) -> (solana_program::pubkey::Pubkey, u8) {
+    pub fn find_pda(authority: &Pubkey, ticker: [u8; 4]) -> (solana_program::pubkey::Pubkey, u8) {
         solana_program::pubkey::Pubkey::find_program_address(
-            &["mint".as_bytes(), &ticker, authority.as_ref()],
+            &["mint".as_bytes(), authority.as_ref(), &ticker],
             &crate::SIGIL_ID,
         )
     }

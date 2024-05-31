@@ -14,15 +14,15 @@ import {
 } from '@solana/addresses';
 import { getStringEncoder } from '@solana/codecs';
 
-export type TokenAccountSeeds = {
-  /** The user of the token account */
-  user: Address;
+export type PocketSeeds = {
   /** The authority of the token account */
   authority: Address;
+  /** The user of the token account */
+  user: Address;
 };
 
-export async function findTokenAccountPda(
-  seeds: TokenAccountSeeds,
+export async function findPocketPda(
+  seeds: PocketSeeds,
   config: { programAddress?: Address | undefined } = {}
 ): Promise<ProgramDerivedAddress> {
   const {
@@ -31,9 +31,9 @@ export async function findTokenAccountPda(
   return await getProgramDerivedAddress({
     programAddress,
     seeds: [
-      getStringEncoder({ size: 'variable' }).encode('token_account'),
-      getAddressEncoder().encode(seeds.user),
+      getStringEncoder({ size: 'variable' }).encode('pocket'),
       getAddressEncoder().encode(seeds.authority),
+      getAddressEncoder().encode(seeds.user),
     ],
   });
 }

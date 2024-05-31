@@ -2,12 +2,11 @@ import {
   TransactionSigner,
   address,
   appendTransactionInstruction,
-  getStringEncoder,
   pipe,
 } from '@solana/web3.js';
 import {
+  findPocketPda,
   findMintPda,
-  findTokenAccountPda,
   getCreateMintInstruction,
   getCreateTokenAccountInstruction,
   getMintToInstruction,
@@ -39,7 +38,7 @@ export const setupAndMint = async (
     ticker: 'USDC',
   });
 
-  const [tokenAccount] = await findTokenAccountPda({
+  const [tokenAccount] = await findPocketPda({
     authority: authority.address,
     user: user.address,
   });

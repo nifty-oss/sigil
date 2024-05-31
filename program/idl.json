@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "name": "sigil",
+  "name": "sigil_program",
   "instructions": [
     {
       "name": "AddToken",

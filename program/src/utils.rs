@@ -136,7 +136,7 @@ macro_rules! resize_account {
             // Get the new length of the account data.
             let new_len = $recipient_token_account_info
                 .data_len()
-                .checked_add(std::mem::size_of::<U8Node<u32, u32>>())
+                .checked_add(std::mem::size_of::<Token>())
                 .ok_or(SigilError::NumericalOverflow)?;
 
             // Resize the account data.

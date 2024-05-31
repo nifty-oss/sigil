@@ -3,9 +3,9 @@ import test from 'ava';
 import {
   Tag,
   fetchMint,
-  fetchTokenAccount,
+  fetchPocket,
   findMintPda,
-  findTokenAccountPda,
+  findPocketPda,
   getAddTokenInstruction,
   getCreateMintInstruction,
   getCreateTokenAccountInstruction,
@@ -79,7 +79,7 @@ test('it can create a new token account', async (t) => {
     ticker: 'USDC',
   });
 
-  const [tokenAccount] = await findTokenAccountPda({
+  const [tokenAccount] = await findPocketPda({
     authority: authority.address,
     user: user.address,
   });
@@ -99,9 +99,9 @@ test('it can create a new token account', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  const account = await fetchTokenAccount(client.rpc, tokenAccount);
+  const account = await fetchPocket(client.rpc, tokenAccount);
 
-  t.assert(account?.data.tag == Tag.TokenAccount);
+  t.assert(account?.data.tag == Tag.Pocket);
   t.assert(account?.data.authority === authority.address);
   t.assert(account?.data.user === user.address);
 });
@@ -144,7 +144,7 @@ test('it can add tokens to a token account', async (t) => {
     ticker: ticker2,
   });
 
-  const [tokenAccount] = await findTokenAccountPda({
+  const [tokenAccount] = await findPocketPda({
     authority: authority.address,
     user: user.address,
   });
@@ -193,9 +193,9 @@ test('it can add tokens to a token account', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  const account = await fetchTokenAccount(client.rpc, tokenAccount);
+  const account = await fetchPocket(client.rpc, tokenAccount);
 
-  t.assert(account?.data.tree.nodes.length === 2);
-  t.assert(account?.data.tree.nodes[0].ticker === ticker1);
-  t.assert(account?.data.tree.nodes[1].ticker === ticker2);
+  t.assert(account?.data.tokens.length === 2);
+  t.assert(account?.data.tokens[0].ticker === ticker2);
+  t.assert(account?.data.tokens[1].ticker === ticker1);
 });

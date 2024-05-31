@@ -4,7 +4,7 @@ use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, msg, program::invoke, pubkey::Pubkey,
     rent::Rent, system_instruction, system_program::ID as SYSTEM_PROGRAM_ID, sysvar::Sysvar,
 };
-use stevia::{collections::u8_avl_tree::U8Node, ZeroCopy};
+use stevia::ZeroCopy;
 
 use crate::{
     assertions::{
@@ -13,7 +13,7 @@ use crate::{
     error::SigilError,
     instruction::Instruction,
     require, resize_account,
-    state::{Mint, MintSeeds, Tag, TokenAccount, TokenAccountMut},
+    state::{Mint, MintSeeds, Pocket, PocketMut, Tag},
     utils::{close_account, create_account},
 };
 

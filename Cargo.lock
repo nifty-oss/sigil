@@ -2090,46 +2090,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nifty-asset"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a75ac494054efc518d6d90bd5ec5b5db50d27963ae2c3773009bf7643b11315c"
-dependencies = [
- "borsh 0.10.3",
- "kaigan",
- "nifty-asset-types",
- "num-derive 0.3.3",
- "num-traits",
- "solana-program",
- "thiserror",
-]
-
-[[package]]
-name = "nifty-asset-interface"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56f2be39397e7a45ea2363edc251b88d01ce3b5f5de376882a7d925e7816949e"
-dependencies = [
- "borsh 0.10.3",
- "nifty-asset-types",
- "shank 0.3.0",
- "solana-program",
-]
-
-[[package]]
-name = "nifty-asset-types"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a150fb8153040cd5e568c2d01b15e908fd3d0a15a636efb176ae8004c285a1e"
-dependencies = [
- "borsh 0.10.3",
- "bytemuck",
- "podded",
- "solana-program",
- "thiserror",
-]
-
-[[package]]
 name = "nix"
 version = "0.26.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2533,15 +2493,6 @@ name = "plain"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
-
-[[package]]
-name = "podded"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5ef03855395ea7838e038410cf2be5dd419fa65560c3c82dfcf1ee5b32cfb4e"
-dependencies = [
- "bytemuck",
-]
 
 [[package]]
 name = "polyval"
@@ -3320,33 +3271,11 @@ dependencies = [
 
 [[package]]
 name = "shank"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57c9395612d493b69a522725eef78a095f199d43eeb847f4a4b77ec0cacab535"
-dependencies = [
- "shank_macro 0.3.0",
-]
-
-[[package]]
-name = "shank"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23d894855493d4ce613b25550fe1ed1c62d0af5486b984579ba55e3f8c9631d5"
 dependencies = [
- "shank_macro 0.4.2",
-]
-
-[[package]]
-name = "shank_macro"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8abef069c02e15f62233679b1e71f3152fac10f90b3ff89ebbad6a25b7497754"
-dependencies = [
- "proc-macro2 1.0.82",
- "quote 1.0.36",
- "shank_macro_impl 0.3.0",
- "shank_render 0.3.0",
- "syn 1.0.109",
+ "shank_macro",
 ]
 
 [[package]]
@@ -3357,21 +3286,8 @@ checksum = "a9bf2645f8eebde043da69200195058e7b59806705104f908a31d05ca82844ce"
 dependencies = [
  "proc-macro2 1.0.82",
  "quote 1.0.36",
- "shank_macro_impl 0.4.2",
- "shank_render 0.4.2",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "shank_macro_impl"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64d3d92bfcc6e08f882f2264d774d1a2f46dc36122adc1b76416ba6405a29a9c"
-dependencies = [
- "anyhow",
- "proc-macro2 1.0.82",
- "quote 1.0.36",
- "serde",
+ "shank_macro_impl",
+ "shank_render",
  "syn 1.0.109",
 ]
 
@@ -3390,24 +3306,13 @@ dependencies = [
 
 [[package]]
 name = "shank_render"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a2ea9c6dd95ea311b3b81e63cf4e9c808ed04b098819e6d2c4b1a467d587203"
-dependencies = [
- "proc-macro2 1.0.82",
- "quote 1.0.36",
- "shank_macro_impl 0.3.0",
-]
-
-[[package]]
-name = "shank_render"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "121175ba61809189f888dc5822ebfd30fa0d91e1e1f61d25a4d40b0847b3075e"
 dependencies = [
  "proc-macro2 1.0.82",
  "quote 1.0.36",
- "shank_macro_impl 0.4.2",
+ "shank_macro_impl",
 ]
 
 [[package]]
@@ -3426,37 +3331,33 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "24188a676b6ae68c3b2cb3a01be17fbf7240ce009799bb56d5b1409051e78fde"
 
 [[package]]
-name = "sigil"
-version = "0.1.0"
-dependencies = [
- "borsh 0.10.3",
- "bytemuck",
- "nifty-asset-interface",
- "num-derive 0.3.3",
- "num-traits",
- "num_enum 0.7.2",
- "shank 0.4.2",
- "solana-program",
- "stevia",
- "thiserror",
-]
-
-[[package]]
 name = "sigil-client"
 version = "0.1.0"
 dependencies = [
  "assert_matches",
  "borsh 0.10.3",
  "kaigan",
- "nifty-asset",
  "num-derive 0.3.3",
  "num-traits",
  "serde",
  "serde_with 3.8.1",
- "sigil",
  "solana-program",
  "solana-program-test",
  "solana-sdk",
+ "thiserror",
+]
+
+[[package]]
+name = "sigil_program"
+version = "0.1.0"
+dependencies = [
+ "borsh 0.10.3",
+ "bytemuck",
+ "num-derive 0.3.3",
+ "num-traits",
+ "num_enum 0.7.2",
+ "shank",
+ "solana-program",
  "stevia",
  "thiserror",
 ]
@@ -4763,7 +4664,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 [[package]]
 name = "stevia"
 version = "0.0.0"
-source = "git+https://github.com/nifty-oss/stevia.git#1e9da79065de2d43443140050abcf237bd4f70e7"
+source = "git+https://github.com/nifty-oss/stevia.git#efb9563c0807e16b7f6b778d4e9fc21aa6eea7d8"
 dependencies = [
  "bytemuck",
 ]

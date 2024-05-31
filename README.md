@@ -19,24 +19,26 @@
 
 ## Overview
 
-Sigil is a novel fungible item standard and program on Solana that represents fungible items on-chain using minimal data, ensuring the lowest possible data storage costs. While off-chain data solutions, such as merkle proofs, could be even cheaper, Sigil's on-chain approach offers the benefits of small transactions without requiring cumbersome proofs. Additionally, token data is directly accessible by other Solana programs via account state. Sigil strikes the optimal balance between on-chain, accessible data and minimal costs, considering the current limitations of account data on Solana's runtime.
+Sigil is a novel fungible token standard and program on Solana that represents fungible tokens on-chain using minimal data, ensuring the lowest possible data storage costs. While off-chain data solutions, such as merkle proofs, could be even cheaper, Sigil's on-chain approach offers the benefits of small transactions without requiring cumbersome proofs. Additionally, token data is directly accessible by other Solana programs via account state. Sigil strikes the optimal balance between on-chain, accessible data and minimal costs, considering the current limitations of account data on Solana's runtime.
 
 The Sigil specification is not intended to replace existing token programs on Solana, which are well-established and feature-rich. Instead, it aims to capture new use cases for which the current standards are prohibitively expensive. For example, in gaming, a game studio may want to create numerous assets for users while subsidizing their rent costs to reduce friction. However, the current costs for creating new token accounts for each asset could become excessively high, given a large user base and multiple assets per user.
 
-To ensure optimal efficiency in terms of compute and memory usage, the Sigil program is implemented with all data structs using zero-copy bytemuck implementations.
+To ensure optimal efficiency in terms of compute and memory usage, the Sigil program is implemented with all data structures using zero-copy (bytemuck) implementations.
 
 ### Design
 
-The specification is currently represented entirely by two types of accounts: `Mint` and `Token` Accounts. Mint accounts uniquely define a type of fungible item and encode the authority and supply data in account state, while the mint name is encoded via the PDA derivation. Token accounts are defined *per user* and contain pairs of mint tickers and amounts to encode the user's ownership amounts of various assets.
+The specification is currently represented entirely by two types of accounts: `Mint` and `Pocket` accounts. `Mint` accounts uniquely define a type of fungible item and encode the authority and supply data in account state. `Pocket` accounts are defined *per user* and contain pairs of mint ticker and amount &mdash; in other words **tokens** &mdash; to encode the user's ownership amounts of various assets.
 
-#### Mint
+#### `Mint`
 
-Mint accounts are PDAs derived from the seeds `"mint"`, the four character ticker (e.g. "USDC"), and the authority of the mint. The authority acts as a namespace for tickers to prevent squatting on valuable tickers that would inevitably happen if tickers were globally namespaced.
+Mint accounts are PDAs derived from the seeds `"mint"`, the authority of the mint and a four character ticker (e.g., "USDC"). The authority acts as a namespace for tickers to prevent squatting on valuable tickers that would inevitably happen if tickers were globally namespaced.
 
 The on-chain `Mint` struct is shown below.
 
 ```rust
-/// Seeds: ["mint", <ticker>, <authority>]
+/// Mint data.
+///
+/// A `Mint` is a PDA with the seeds `["mint", <authority>, <ticker>]`.
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
 pub struct Mint {
@@ -44,7 +46,8 @@ pub struct Mint {
     ///   0. tag
     ///   1. bump
     ///   2. decimals
-    ///   3-7. not in use
+    ///   3. not in use
+    ///   4-7. ticker
     data: [u8; 8],
 
     /// Authority of the mint.
@@ -58,27 +61,34 @@ pub struct Mint {
 }
 ```
 
-#### Token Account
+#### `Pocket`
 
-Token Accounts are PDAs derived from the seeds `"token_account"`, the user and authority pubkeys. They are defined per-user to allow efficient storing of mint and amount pairs, but are also namespaced by the authority of the mint. Each token account has a header which stores the account tag as well as the authority and user pubkeys to allow for efficient indexing. The content of a token account consists of (`ticker`, `amount`) pairs stored in an on-chain AVL tree, which allows looking up amounts by the mint ticker. The innovation here is that creating a new user token account requires paying the header rent cost of `68 bytes` only once for each user in a given namespace, but adding a new mint and amount pair only costs an additional `12 bytes`: `4` for the AVL tree pointers, `4` for the mint ticker and `4` to represent a `u32` amount. This is approximately `25x` savings when compared to the cost of creating a new SPL token account for each new user and mint.
+`Pocket` are PDAs derived from the seeds `"pocket"`, an authority and user pubkeys. They are defined per-user to allow efficient storing of mint and amount pairs (tokens), but are also namespaced by the authority of mints &mdash; there will be one `Pocket` account for each mint authority (namespace). Each `Pocket` account has a base header which stores the account tag as well as the authority and user pubkeys to allow for efficient indexing.
+
+> [!IMPORTANT]
+> The innovation of `Sigil` consists on using a single `Pocket` account to hold different types of tokens, therefore saving on storage space and costs: creating a new user pocket account requires paying the base rent cost of `68` bytes only once for each user in a given namespace, but adding a new token (mint and amount pair) only costs an additional `8` bytes (`4` for the mint ticker and `4` to represent a `u32` amount). This is approximately `36x` savings when compared to the cost of creating a new SPL Token account for each new user and mint.
+
+The on-chain `Pocket` struct is shown below.
 
 ```rust
-/// Seeds: ["token_account", <user>, <authority>]
-pub struct TokenAccount<'a> {
-    /// Header information.
-    pub header: &'a Header,
+/// Struct representing an account storing tokens.
+///
+/// A `Pocket` is a PDA with the seeds `["pocket", <authority>, <user>]`.
+pub struct Pocket<'a> {
+    /// Base account data.
+    pub base: &'a Base,
 
-    /// Contents of the account: (ticker, amount) pairs.
-    pub tokens: U8AVLTree<'a, Ticker, Amount>,
+    /// Tokens stored in the account.
+    pub tokens: U32ArraySet<'a, Token>,
 }
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
-pub struct Header {
+pub struct Base {
     /// Internal data.
     ///   0. tag
-    ///   1-3. not in use
-    data: [u8; 4],
+    ///   1. not in use
+    data: [u8; 2],
 
     /// Authority of the account.
     pub authority: Pubkey,
@@ -90,44 +100,41 @@ pub struct Header {
 
 ### Cost Savings
 
-In the SPL Token program, the mint account is `82 bytes` in size, plus the standard account info overhead of `128 bytes`. It only has to be created once per asset, so typically represents a fixed up-front cost that is paid initially but does not scale up by number of users. Sigil's mint account is not much smaller, but does save a few bytes coming in at `56 bytes`.
+In the SPL Token program, the mint account is `82 bytes` in size, plus the standard account info overhead of `128 bytes`. It only has to be created once per asset, so typically represents a fixed up-front cost that is paid initially and it does not scale up by number of users. Sigil's mint account is not much smaller, but does save a few bytes coming in at `56 bytes` plus the standard `128` account info overhead.
 
-Token accounts however have significant savings, as SPL Token accounts require a new token account per user and mint, which is `128 bytes + 165 bytes` for a total of `293 bytes`. In Sigil, there is a fixed cost of `128 bytes + 68 bytes` for a new user token account, but then each additional asset only requires `12 bytes` without having to pay for extra account header each time as the pairs are simply stored in the AVL tree on the same account.
+Token accounts however have significant savings, as SPL Token accounts require a new token account per user and mint, which is `128` bytes plus `165` bytes for a total of `293` bytes. In Sigil, there is a fixed cost of `128` bytes plus `68` bytes for a new user token account and then each additional asset only requires `8` bytes without having to pay for extra account header each time as the pairs are simply stored in on the same account.
 
 **📦 Base Comparisons**
 
 | Account                        | Data Size (Bytes) | Rent Cost @ $200 SOL |
 | ------------------------------ | ----------------- | -------------------- |
 | SPL Mint                       | 82                | $0.29                |
-| TL Mint                        | 56                | $0.26                |
+| Sigil Mint                     | 56                | $0.26                |
 | SPL Token Account (1 asset)    | 165               | $0.41                |
-| Sigil Token Account (1 asset)  | 80                | $0.29                |
+| Sigil Pocket (1 asset)         | 76                | $0.28                |
 
 **📦 User w/ 100 Assets**
 
 | Account              | Data Size (Bytes) | Rent Cost @ $200 SOL |
 | -------------------- | ----------------- | -------------------- |
 | SPL Token Account    | 16,500            | $41                  |
-| Sigil Token Account  | 1268              | $1.94                |
+| Sigil Pocket         | 876               | $1.40                |
 
 **📦 1000 Users w/ 100 Assets each**
 
 | Account              | Data Size (Bytes) | Rent Cost @ $200 SOL |
 | -------------------- | ----------------- | -------------------- |
 | SPL Token Account    | 16,500,000        | $41,000              |
-| Sigil Token Account  | 1,268,000         | $1,940               |
+| Sigil Pocket         | 876,000           | $1,400               |
 
 >[!NOTE]
-> The cost to add a new asset to an existing Sigil token account is `$0.0167` @ $200 SOL.
+> The cost to add a new asset (token) to an existing Sigil pocket account is `$0.0111` @ `$200` SOL and it takes `8` bytes of account space.
 
 ### Limitations
 
-To save size, the AVL tree pointers are stored as `u8`s which means that each AVL tree can only store `255` mint/supply pairs. This is expected to be sufficient for most use-cases as users typically do not have more than a few hundred game assets or fungible tokens per wallet. However, given Solana accounts can be up to `10MB` in size, the amount stored could be significantly larger by adding additional AVL trees to the account. The program then would just look up any given mint address in the first tree and if it fails to find it, it would check the next, etc. Given the zero-copy data structure of the design, this would not entail deserializing and loading all the trees into memory so would have little to no compute cost to implement.
+The specification currently does not support a delegate system as storing the extra data for that raises the costs significantly. However, delegates could likely be implemented in a cheaper and modular way by using an additional PDA to represent the delegation so that only use-cases that actually require delegates end up paying for them.
 
-The specification currently does not support a delegate system as storing the extra data for that raises the costs significantly. However, delegates could likely be implemented in a cheaper and modular way but using an additional PDA to represent the delegation so that only use-cases that actually require delegates end up paying for them.
-
->[!IMPORTANT]
-> We are in the process of switching from an AVL tree to a specialized array data structure which will reduce the size requirement for a new asset to `8 bytes`. This will reduce the cost to `$0.0111` @ $200 SOL for adding a new asset on an existing Sigil token account.
+Similarly, there is no option to freeze a token but this could be implemented as a bit flag if needed.
 
 ## Project setup for developers
 

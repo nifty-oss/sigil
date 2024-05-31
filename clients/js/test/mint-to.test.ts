@@ -1,9 +1,9 @@
 import { address, appendTransactionInstruction, pipe } from '@solana/web3.js';
 import test from 'ava';
 import {
-  fetchTokenAccount,
+  fetchPocket,
   findMintPda,
-  findTokenAccountPda,
+  findPocketPda,
   getAddTokenInstruction,
   getCreateMintInstruction,
   getCreateTokenAccountInstruction,
@@ -39,7 +39,7 @@ test('it can mint tokens to an existing account', async (t) => {
     ticker: 'USDC',
   });
 
-  const [tokenAccount] = await findTokenAccountPda({
+  const [tokenAccount] = await findPocketPda({
     authority: authority.address,
     user: user.address,
   });
@@ -73,10 +73,10 @@ test('it can mint tokens to an existing account', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  let account = await fetchTokenAccount(client.rpc, tokenAccount);
+  let account = await fetchPocket(client.rpc, tokenAccount);
 
-  t.assert(account?.data.tree.nodes[0].ticker === ticker);
-  t.assert(account?.data.tree.nodes[0].amount === 0);
+  t.assert(account?.data.tokens[0].ticker === ticker);
+  t.assert(account?.data.tokens[0].amount === 0);
 
   const mintToIx = getMintToInstruction({
     payer: authority,
@@ -92,10 +92,10 @@ test('it can mint tokens to an existing account', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  account = await fetchTokenAccount(client.rpc, tokenAccount);
+  account = await fetchPocket(client.rpc, tokenAccount);
 
-  t.assert(account?.data.tree.nodes[0].ticker === ticker);
-  t.assert(account?.data.tree.nodes[0].amount === mintAmount);
+  t.assert(account?.data.tokens[0].ticker === ticker);
+  t.assert(account?.data.tokens[0].amount === mintAmount);
 });
 
 test('it can add a token and mint to it account', async (t) => {
@@ -121,7 +121,7 @@ test('it can add a token and mint to it account', async (t) => {
     ticker: 'USDC',
   });
 
-  const [tokenAccount] = await findTokenAccountPda({
+  const [tokenAccount] = await findPocketPda({
     authority: authority.address,
     user: user.address,
   });
@@ -159,8 +159,8 @@ test('it can add a token and mint to it account', async (t) => {
     (tx) => signAndSendTransaction(client, tx)
   );
 
-  const account = await fetchTokenAccount(client.rpc, tokenAccount);
+  const account = await fetchPocket(client.rpc, tokenAccount);
 
-  t.assert(account?.data.tree.nodes[0].ticker === ticker);
-  t.assert(account?.data.tree.nodes[0].amount === mintAmount);
+  t.assert(account?.data.tokens[0].ticker === ticker);
+  t.assert(account?.data.tokens[0].amount === mintAmount);
 });

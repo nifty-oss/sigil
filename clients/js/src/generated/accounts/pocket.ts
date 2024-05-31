@@ -33,150 +33,152 @@ import {
   getArrayEncoder,
   getStructDecoder,
   getStructEncoder,
+  getU16Decoder,
+  getU16Encoder,
   getU8Decoder,
   getU8Encoder,
 } from '@solana/codecs';
-import { TokenAccountSeeds, findTokenAccountPda } from '../pdas';
+import { PocketSeeds, findPocketPda } from '../pdas';
 import {
   Tag,
   TagArgs,
-  Tree,
-  TreeArgs,
+  Token,
+  TokenArgs,
   getTagDecoder,
   getTagEncoder,
-  getTreeDecoder,
-  getTreeEncoder,
+  getTokenDecoder,
+  getTokenEncoder,
 } from '../types';
 
-export type TokenAccount<TAddress extends string = string> = Account<
-  TokenAccountAccountData,
+export type Pocket<TAddress extends string = string> = Account<
+  PocketAccountData,
   TAddress
 >;
 
-export type MaybeTokenAccount<TAddress extends string = string> = MaybeAccount<
-  TokenAccountAccountData,
+export type MaybePocket<TAddress extends string = string> = MaybeAccount<
+  PocketAccountData,
   TAddress
 >;
 
-export type TokenAccountAccountData = {
+export type PocketAccountData = {
   tag: Tag;
-  empty: Array<number>;
+  padding: number;
   authority: Address;
   user: Address;
-  tree: Tree;
+  tokens: Array<Token>;
 };
 
-export type TokenAccountAccountDataArgs = {
+export type PocketAccountDataArgs = {
   tag: TagArgs;
-  empty: Array<number>;
+  padding: number;
   authority: Address;
   user: Address;
-  tree: TreeArgs;
+  tokens: Array<TokenArgs>;
 };
 
-export function getTokenAccountAccountDataEncoder(): Encoder<TokenAccountAccountDataArgs> {
+export function getPocketAccountDataEncoder(): Encoder<PocketAccountDataArgs> {
   return getStructEncoder([
     ['tag', getTagEncoder()],
-    ['empty', getArrayEncoder(getU8Encoder(), { size: 3 })],
+    ['padding', getU8Encoder()],
     ['authority', getAddressEncoder()],
     ['user', getAddressEncoder()],
-    ['tree', getTreeEncoder()],
+    ['tokens', getArrayEncoder(getTokenEncoder(), { size: getU16Encoder() })],
   ]);
 }
 
-export function getTokenAccountAccountDataDecoder(): Decoder<TokenAccountAccountData> {
+export function getPocketAccountDataDecoder(): Decoder<PocketAccountData> {
   return getStructDecoder([
     ['tag', getTagDecoder()],
-    ['empty', getArrayDecoder(getU8Decoder(), { size: 3 })],
+    ['padding', getU8Decoder()],
     ['authority', getAddressDecoder()],
     ['user', getAddressDecoder()],
-    ['tree', getTreeDecoder()],
+    ['tokens', getArrayDecoder(getTokenDecoder(), { size: getU16Decoder() })],
   ]);
 }
 
-export function getTokenAccountAccountDataCodec(): Codec<
-  TokenAccountAccountDataArgs,
-  TokenAccountAccountData
+export function getPocketAccountDataCodec(): Codec<
+  PocketAccountDataArgs,
+  PocketAccountData
 > {
   return combineCodec(
-    getTokenAccountAccountDataEncoder(),
-    getTokenAccountAccountDataDecoder()
+    getPocketAccountDataEncoder(),
+    getPocketAccountDataDecoder()
   );
 }
 
-export function decodeTokenAccount<TAddress extends string = string>(
+export function decodePocket<TAddress extends string = string>(
   encodedAccount: EncodedAccount<TAddress>
-): TokenAccount<TAddress>;
-export function decodeTokenAccount<TAddress extends string = string>(
+): Pocket<TAddress>;
+export function decodePocket<TAddress extends string = string>(
   encodedAccount: MaybeEncodedAccount<TAddress>
-): MaybeTokenAccount<TAddress>;
-export function decodeTokenAccount<TAddress extends string = string>(
+): MaybePocket<TAddress>;
+export function decodePocket<TAddress extends string = string>(
   encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>
-): TokenAccount<TAddress> | MaybeTokenAccount<TAddress> {
+): Pocket<TAddress> | MaybePocket<TAddress> {
   return decodeAccount(
     encodedAccount as MaybeEncodedAccount<TAddress>,
-    getTokenAccountAccountDataDecoder()
+    getPocketAccountDataDecoder()
   );
 }
 
-export async function fetchTokenAccount<TAddress extends string = string>(
+export async function fetchPocket<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
   config?: FetchAccountConfig
-): Promise<TokenAccount<TAddress>> {
-  const maybeAccount = await fetchMaybeTokenAccount(rpc, address, config);
+): Promise<Pocket<TAddress>> {
+  const maybeAccount = await fetchMaybePocket(rpc, address, config);
   assertAccountExists(maybeAccount);
   return maybeAccount;
 }
 
-export async function fetchMaybeTokenAccount<TAddress extends string = string>(
+export async function fetchMaybePocket<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
   config?: FetchAccountConfig
-): Promise<MaybeTokenAccount<TAddress>> {
+): Promise<MaybePocket<TAddress>> {
   const maybeAccount = await fetchEncodedAccount(rpc, address, config);
-  return decodeTokenAccount(maybeAccount);
+  return decodePocket(maybeAccount);
 }
 
-export async function fetchAllTokenAccount(
+export async function fetchAllPocket(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
   config?: FetchAccountsConfig
-): Promise<TokenAccount[]> {
-  const maybeAccounts = await fetchAllMaybeTokenAccount(rpc, addresses, config);
+): Promise<Pocket[]> {
+  const maybeAccounts = await fetchAllMaybePocket(rpc, addresses, config);
   assertAccountsExist(maybeAccounts);
   return maybeAccounts;
 }
 
-export async function fetchAllMaybeTokenAccount(
+export async function fetchAllMaybePocket(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
   config?: FetchAccountsConfig
-): Promise<MaybeTokenAccount[]> {
+): Promise<MaybePocket[]> {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
-  return maybeAccounts.map((maybeAccount) => decodeTokenAccount(maybeAccount));
+  return maybeAccounts.map((maybeAccount) => decodePocket(maybeAccount));
 }
 
-export async function fetchTokenAccountFromSeeds(
+export function getPocketSize(): number {
+  return 68;
+}
+
+export async function fetchPocketFromSeeds(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
-  seeds: TokenAccountSeeds,
+  seeds: PocketSeeds,
   config: FetchAccountConfig & { programAddress?: Address } = {}
-): Promise<TokenAccount> {
-  const maybeAccount = await fetchMaybeTokenAccountFromSeeds(
-    rpc,
-    seeds,
-    config
-  );
+): Promise<Pocket> {
+  const maybeAccount = await fetchMaybePocketFromSeeds(rpc, seeds, config);
   assertAccountExists(maybeAccount);
   return maybeAccount;
 }
 
-export async function fetchMaybeTokenAccountFromSeeds(
+export async function fetchMaybePocketFromSeeds(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
-  seeds: TokenAccountSeeds,
+  seeds: PocketSeeds,
   config: FetchAccountConfig & { programAddress?: Address } = {}
-): Promise<MaybeTokenAccount> {
+): Promise<MaybePocket> {
   const { programAddress, ...fetchConfig } = config;
-  const [address] = await findTokenAccountPda(seeds, { programAddress });
-  return await fetchMaybeTokenAccount(rpc, address, fetchConfig);
+  const [address] = await findPocketPda(seeds, { programAddress });
+  return await fetchMaybePocket(rpc, address, fetchConfig);
 }
