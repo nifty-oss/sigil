@@ -1,14 +1,13 @@
 use super::*;
 
-use crate::instruction::{accounts::BurnAccounts, BurnArgs};
+use crate::instruction::BurnArgs;
 
-pub fn process_burn<'a>(accounts: &'a [AccountInfo<'a>], args: BurnArgs) -> ProgramResult {
+pub fn process_burn<'a>(accounts: &[AccountInfo], args: BurnArgs) -> ProgramResult {
     // Accounts.
-    let ctx = BurnAccounts::context(accounts)?;
-
-    let user_info = ctx.accounts.user;
-    let mint_info = ctx.accounts.mint;
-    let token_account_info = ctx.accounts.token_account;
+    // Accounts.
+    let [token_account_info, mint_info, user_info] = accounts else {
+        return Err(ProgramError::NotEnoughAccountKeys);
+    };
 
     assert_signer("user", user_info)?;
 
@@ -16,28 +15,25 @@ pub fn process_burn<'a>(accounts: &'a [AccountInfo<'a>], args: BurnArgs) -> Prog
     assert_non_empty("mint", mint_info)?;
     assert_program_owner("mint", mint_info, &crate::ID)?;
 
-    let mut data = mint_info.data.borrow_mut();
+    let mut data = unsafe { mint_info.borrow_mut_data_unchecked() };
     let mint = Mint::load_mut(&mut data);
 
     // Token accounts must exist.
     assert_non_empty("token", token_account_info)?;
     assert_program_owner("token", token_account_info, &crate::ID)?;
 
-    let mut account_data = (*token_account_info.data).borrow_mut();
+    let mut account_data = unsafe { token_account_info.borrow_mut_data_unchecked() };
     let mut token_account = PocketMut::from_bytes_mut(&mut account_data);
 
     // The token accounts must be associated with the mint via the namespace.
-    require!(
-        token_account.base.authority == mint.authority,
-        SigilError::InvalidTokenAccount,
-        "token namespace mismatch"
-    );
+    if token_account.base.authority != mint.authority {
+        return Err(SigilError::InvalidTokenAccount.into());
+    }
+
     // The token accounts must be associated with the user and recipient passed in.
-    require!(
-        &token_account.base.user == user_info.key,
-        SigilError::InvalidTokenAccount,
-        "token user mismatch"
-    );
+    if &token_account.base.user != user_info.key() {
+        return Err(SigilError::InvalidTokenAccount.into());
+    }
 
     // Look up the amount of tokens in the user's account to make sure they have enough to burn.
     let token = match token_account.tokens.get_mut(&mint.ticker().into()) {

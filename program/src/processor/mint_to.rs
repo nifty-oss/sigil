@@ -1,28 +1,22 @@
 use super::*;
 
-use crate::{
-    instruction::{accounts::MintToAccounts, MintToArgs},
-    state::Token,
-};
+use crate::{instruction::MintToArgs, state::Token};
 
-pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) -> ProgramResult {
+pub fn process_mint_to(accounts: &[AccountInfo], args: MintToArgs) -> ProgramResult {
     // Accounts.
-    let ctx = MintToAccounts::context(accounts)?;
-
-    let payer_info = ctx.accounts.payer;
-    let authority_info = ctx.accounts.authority;
-    let mint_info = ctx.accounts.mint;
-    let token_account_info = ctx.accounts.token_account;
-    let system_program_info = ctx.accounts.system_program;
+    let [token_account_info, mint_info, authority_info, payer_info, system_program_info] = accounts
+    else {
+        return Err(ProgramError::NotEnoughAccountKeys);
+    };
 
     // Account validation.
-    if let Some(payer_info) = payer_info {
+    if payer_info.key() != &crate::ID {
         assert_signer("payer", payer_info)?;
     }
     assert_signer("authority", authority_info)?;
 
-    if let Some(sys_prog_info) = system_program_info {
-        assert_same_pubkeys("sys_prog", sys_prog_info, &SYSTEM_PROGRAM_ID)?;
+    if system_program_info.key() != &crate::ID {
+        assert_same_pubkeys("sys_prog", system_program_info, &SYSTEM_PROGRAM_ID)?;
     }
 
     // The mint and token accounts must exist: must have data and be owned by the correct program.
@@ -31,11 +25,11 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
     assert_non_empty("token", token_account_info)?;
     assert_program_owner("token", token_account_info, &crate::ID)?;
 
-    let mut data = (*mint_info.data).borrow_mut();
+    let mut data = unsafe { mint_info.borrow_mut_data_unchecked() };
     let mint = Mint::load_mut(&mut data);
     let ticker = mint.ticker();
 
-    let account_data = (*token_account_info.data).borrow();
+    let account_data = unsafe { token_account_info.borrow_data_unchecked() };
     let token_account = Pocket::from_bytes(&account_data);
 
     // The token account must be associated with the mint via the authority.
@@ -58,8 +52,6 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
     let maybe_ticker = token_account.tokens.get(&ticker.into()).is_some();
     let account_is_full = token_account.tokens.is_full();
 
-    drop(account_data);
-
     if maybe_ticker {
         msg!("Ticker exists, minting tokens to account.");
     } else {
@@ -75,7 +67,7 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
         );
 
         // We need a new reference to the recipient account data after the potential resize.
-        let mut account_data = (*token_account_info.data).borrow_mut();
+        let mut account_data = unsafe { token_account_info.borrow_mut_data_unchecked() };
         let mut recipient_token_account = PocketMut::from_bytes_mut(&mut account_data);
 
         // New tokens should start at amount 0.
@@ -85,7 +77,7 @@ pub fn process_mint_to<'a>(accounts: &'a [AccountInfo<'a>], args: MintToArgs) ->
     }
 
     // We need a new reference to the recipient account data after the potential resize.
-    let mut account_data = (*token_account_info.data).borrow_mut();
+    let mut account_data = unsafe { token_account_info.borrow_mut_data_unchecked() };
     let mut token_account = PocketMut::from_bytes_mut(&mut account_data);
 
     // Mint the tokens to the token account.

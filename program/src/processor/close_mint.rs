@@ -1,13 +1,10 @@
 use super::*;
 
-use crate::instruction::accounts::CloseMintAccounts;
-
-pub fn process_close_mint<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
-    let ctx = CloseMintAccounts::context(accounts)?;
-
-    let recipient_info = ctx.accounts.recipient;
-    let authority_info = ctx.accounts.authority;
-    let mint_info = ctx.accounts.mint;
+pub fn process_close_mint<'a>(accounts: &[AccountInfo]) -> ProgramResult {
+    // Accounts.
+    let [mint_info, authority_info, recipient_info] = accounts else {
+        return Err(ProgramError::NotEnoughAccountKeys);
+    };
 
     // Account validation.
     assert_signer("authority", authority_info)?;
@@ -16,22 +13,22 @@ pub fn process_close_mint<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult 
     assert_non_empty("mint", mint_info)?;
     assert_program_owner("mint", mint_info, &crate::ID)?;
 
-    let data = (*mint_info.data).borrow();
+    let data = unsafe { mint_info.borrow_data_unchecked() };
     let mint = Mint::load(&data);
 
     // The authority must be the authority on the the mint.
     assert_same_pubkeys("authority", authority_info, &mint.authority)?;
 
     // Mint supply must be zero.
-    require!(
-        mint.supply == 0,
-        SigilError::MintHasSupply,
-        "mint still has supply"
-    );
+    if mint.supply != 0 {
+        return Err(SigilError::MintHasSupply.into());
+    }
 
-    drop(data);
-
-    let recipient = recipient_info.unwrap_or(authority_info);
+    let recipient = if recipient_info.key() == &crate::ID {
+        authority_info
+    } else {
+        recipient_info
+    };
 
     close_account(mint_info, recipient)
 }

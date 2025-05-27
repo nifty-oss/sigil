@@ -4,7 +4,3 @@
 //!
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
-
-pub(crate) mod sigil;
-
-pub use self::sigil::SigilError;

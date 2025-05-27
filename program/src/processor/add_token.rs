@@ -1,48 +1,40 @@
 use super::*;
 
-use crate::{instruction::accounts::AddTokenAccounts, state::Token};
+use crate::state::Token;
 
-pub fn process_add_token<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
+pub fn process_add_token<'a>(accounts: &[AccountInfo]) -> ProgramResult {
     // Accounts.
-    let ctx = AddTokenAccounts::context(accounts)?;
-
-    let payer_info = ctx.accounts.payer;
-    let user_info = ctx.accounts.user;
-    let mint_info = ctx.accounts.mint;
-    let token_account_info = ctx.accounts.token_account;
-    let system_program_info = ctx.accounts.system_program;
+    let [payer_info, user_info, mint_info, token_account_info, system_program_info] = accounts
+    else {
+        return Err(ProgramError::NotEnoughAccountKeys);
+    };
 
     // Correct system program, if passed in.
-    if let Some(sys_prog_info) = ctx.accounts.system_program {
-        assert_same_pubkeys("sys_prog", sys_prog_info, &SYSTEM_PROGRAM_ID)?;
+    if system_program_info.key() != &crate::ID {
+        assert_same_pubkeys("sys_prog", system_program_info, &SYSTEM_PROGRAM_ID)?;
     }
 
     // The mint account must exist: must have data and be owned by the correct program.
     assert_non_empty("mint", mint_info)?;
     assert_program_owner("mint", mint_info, &crate::ID)?;
 
-    let data = mint_info.data.borrow_mut();
+    let data = unsafe { mint_info.borrow_mut_data_unchecked() };
     let mint = Mint::load(&data);
 
-    let account_data = (*token_account_info.data).borrow();
+    let account_data = unsafe { token_account_info.borrow_data_unchecked() };
     let token_account = Pocket::from_bytes(&account_data);
 
     // The token account must be associated with the mint via the namespace.
-    require!(
-        token_account.base.authority == mint.authority,
-        SigilError::InvalidTokenAccount,
-        "token namespace mismatch"
-    );
+    if token_account.base.authority != mint.authority {
+        return Err(SigilError::InvalidTokenAccount.into());
+    }
 
     // The token account must be associated with the user passed in.
-    require!(
-        &token_account.base.user == user_info.key,
-        SigilError::InvalidTokenAccount,
-        "token user mismatch"
-    );
+    if &token_account.base.user != user_info.key() {
+        return Err(SigilError::InvalidTokenAccount.into());
+    }
 
     let account_is_full = token_account.tokens.is_full();
-    drop(account_data);
 
     // Resize if the tree is full.
     resize_account!(
@@ -54,7 +46,7 @@ pub fn process_add_token<'a>(accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
     );
 
     // Get a mutable reference to the account data.
-    let account_data = &mut (*token_account_info.data).borrow_mut();
+    let account_data = unsafe { token_account_info.borrow_mut_data_unchecked() };
     let mut token_namespace = PocketMut::from_bytes_mut(account_data);
 
     // New tokens should start at amount 0.

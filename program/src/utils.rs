@@ -1,52 +1,47 @@
-use solana_program::{
-    account_info::AccountInfo,
-    entrypoint::ProgramResult,
-    program::{invoke, invoke_signed},
-    program_error::ProgramError,
-    pubkey::Pubkey,
-    rent::Rent,
-    system_instruction, system_program,
-    sysvar::Sysvar,
+use {
+    pinocchio::{
+        account_info::AccountInfo,
+        instruction::Signer,
+        program_error::ProgramError,
+        pubkey::Pubkey,
+        sysvars::{rent::Rent, Sysvar},
+        ProgramResult,
+    },
+    pinocchio_system::{
+        instructions::{CreateAccount, Transfer},
+        ID as SYSTEM_PROGRAM_ID,
+    },
 };
 
 use crate::error::SigilError;
 
 /// Create a new account from the given size.
 #[inline(always)]
-pub fn create_account<'a>(
-    target_account: &AccountInfo<'a>,
-    funding_account: &AccountInfo<'a>,
-    system_program: &AccountInfo<'a>,
+pub fn create_account(
+    target_account: &AccountInfo,
+    funding_account: &AccountInfo,
     size: usize,
     owner: &Pubkey,
-    signer_seeds: Option<&[&[&[u8]]]>,
+    signers: &[Signer],
 ) -> ProgramResult {
     let rent = Rent::get()?;
     let lamports: u64 = rent.minimum_balance(size);
 
-    invoke_signed(
-        &system_instruction::create_account(
-            funding_account.key,
-            target_account.key,
-            lamports,
-            size as u64,
-            owner,
-        ),
-        &[
-            funding_account.clone(),
-            target_account.clone(),
-            system_program.clone(),
-        ],
-        signer_seeds.unwrap_or(&[]),
-    )
+    CreateAccount {
+        from: funding_account,
+        to: target_account,
+        space: size as u64,
+        owner,
+        lamports,
+    }
+    .invoke_signed(signers)
 }
 
 /// Resize an account using realloc, lifted from Solana Cookbook.
 #[inline(always)]
-pub fn realloc_account<'a>(
-    target_account: &AccountInfo<'a>,
-    funding_account: &AccountInfo<'a>,
-    system_program: &AccountInfo<'a>,
+pub fn realloc_account(
+    target_account: &AccountInfo,
+    funding_account: &AccountInfo,
     new_size: usize,
     refund: bool,
 ) -> ProgramResult {
@@ -56,14 +51,12 @@ pub fn realloc_account<'a>(
     let lamports_diff = new_minimum_balance.abs_diff(old_minimum_balance);
 
     if new_minimum_balance > old_minimum_balance {
-        invoke(
-            &system_instruction::transfer(funding_account.key, target_account.key, lamports_diff),
-            &[
-                funding_account.clone(),
-                target_account.clone(),
-                system_program.clone(),
-            ],
-        )?;
+        Transfer {
+            from: funding_account,
+            to: target_account,
+            lamports: lamports_diff,
+        }
+        .invoke()?;
     } else if refund {
         transfer_lamports_from_pdas(target_account, funding_account, lamports_diff)?;
     }
@@ -73,47 +66,54 @@ pub fn realloc_account<'a>(
 
 /// Close an account.
 #[inline(always)]
-pub fn close_account<'a>(
-    target_account: &AccountInfo<'a>,
-    receiving_account: &AccountInfo<'a>,
+pub fn close_account(
+    // The account to close.
+    target_account: &AccountInfo,
+    // The account to receive the lamport rent.
+    receiving_account: &AccountInfo,
 ) -> ProgramResult {
-    let dest_starting_lamports = receiving_account.lamports();
-    **receiving_account.lamports.borrow_mut() = dest_starting_lamports
+    let target_starting_lamports = receiving_account.lamports();
+    let mut receiving_account_lamports = receiving_account.try_borrow_mut_lamports()?;
+    *receiving_account_lamports = target_starting_lamports
         .checked_add(target_account.lamports())
         .unwrap();
-    **target_account.lamports.borrow_mut() = 0;
 
-    target_account.assign(&system_program::ID);
+    let mut target_account_lamports = target_account.try_borrow_mut_lamports()?;
+    *target_account_lamports = 0;
+
+    unsafe {
+        target_account.assign(&SYSTEM_PROGRAM_ID);
+    }
     target_account.realloc(0, false)
 }
 
 /// Transfer lamports.
 #[inline(always)]
-pub fn transfer_lamports<'a>(
-    from: &AccountInfo<'a>,
-    to: &AccountInfo<'a>,
+pub fn transfer_lamports(
+    from: &AccountInfo,
+    to: &AccountInfo,
     lamports: u64,
-    signer_seeds: Option<&[&[&[u8]]]>,
+    signers: &[Signer],
 ) -> ProgramResult {
-    invoke_signed(
-        &system_instruction::transfer(from.key, to.key, lamports),
-        &[from.clone(), to.clone()],
-        signer_seeds.unwrap_or(&[]),
-    )
+    Transfer { from, to, lamports }.invoke_signed(signers)
 }
 
-pub fn transfer_lamports_from_pdas<'a>(
-    from: &AccountInfo<'a>,
-    to: &AccountInfo<'a>,
+pub fn transfer_lamports_from_pdas(
+    from: &AccountInfo,
+    to: &AccountInfo,
     lamports: u64,
 ) -> ProgramResult {
-    **from.lamports.borrow_mut() = from
-        .lamports()
+    let from_account_starting_lamports = from.lamports();
+    let mut from_account_lamports = from.try_borrow_mut_lamports()?;
+
+    *from_account_lamports = from_account_starting_lamports
         .checked_sub(lamports)
         .ok_or::<ProgramError>(SigilError::NumericalOverflow.into())?;
 
-    **to.lamports.borrow_mut() = to
-        .lamports()
+    let to_account_starting_lamports = to.lamports();
+    let mut to_account_lamports = to.try_borrow_mut_lamports()?;
+
+    *to_account_lamports = to_account_starting_lamports
         .checked_add(lamports)
         .ok_or::<ProgramError>(SigilError::NumericalOverflow.into())?;
 
@@ -125,13 +125,9 @@ macro_rules! resize_account {
     ($tree_is_full:expr, $ticker:expr, $recipient_token_account_info:expr, $payer_info:expr, $system_program_info:expr) => {
         if $tree_is_full {
             // We must reallocate so need a payer and the system program.
-            require!(
-                $payer_info.is_some() && $system_program_info.is_some(),
-                ProgramError::NotEnoughAccountKeys,
-                "payer and system program required"
-            );
-
-            let payer_info = $payer_info.unwrap();
+            if $payer_info.key() == &crate::ID || $system_program_info.key() == &crate::ID {
+                return Err(ProgramError::NotEnoughAccountKeys.into());
+            }
 
             // Get the new length of the account data.
             let new_len = $recipient_token_account_info
@@ -148,14 +144,12 @@ macro_rules! resize_account {
                 .checked_sub($recipient_token_account_info.lamports())
                 .ok_or(SigilError::NumericalOverflow)?;
 
-            invoke(
-                &system_instruction::transfer(
-                    payer_info.key,
-                    $recipient_token_account_info.key,
-                    difference as u64,
-                ),
-                &[payer_info.clone(), $recipient_token_account_info.clone()],
-            )?;
+            Transfer {
+                from: $payer_info,
+                to: $recipient_token_account_info,
+                lamports: difference as u64,
+            }
+            .invoke()?;
         }
     };
 }

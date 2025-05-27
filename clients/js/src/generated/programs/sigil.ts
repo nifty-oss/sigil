@@ -8,12 +8,7 @@
 
 import { Address } from '@solana/addresses';
 import { getU8Encoder } from '@solana/codecs';
-import { Program, ProgramWithErrors } from '@solana/programs';
-import {
-  SigilProgramError,
-  SigilProgramErrorCode,
-  getSigilProgramErrorFromCode,
-} from '../errors';
+import { Program } from '@solana/programs';
 import {
   ParsedAddTokenInstruction,
   ParsedBurnInstruction,
@@ -29,16 +24,12 @@ export const SIGIL_PROGRAM_ADDRESS =
   'BpPMgxYawb8Qiguavj3JccMdp7bTZWemSqJmDeYTsTD9' as Address<'BpPMgxYawb8Qiguavj3JccMdp7bTZWemSqJmDeYTsTD9'>;
 
 export type SigilProgram =
-  Program<'BpPMgxYawb8Qiguavj3JccMdp7bTZWemSqJmDeYTsTD9'> &
-    ProgramWithErrors<SigilProgramErrorCode, SigilProgramError>;
+  Program<'BpPMgxYawb8Qiguavj3JccMdp7bTZWemSqJmDeYTsTD9'>;
 
 export function getSigilProgram(): SigilProgram {
   return {
     name: 'sigil',
     address: SIGIL_PROGRAM_ADDRESS,
-    getErrorFromCode(code: SigilProgramErrorCode, cause?: Error) {
-      return getSigilProgramErrorFromCode(code, cause);
-    },
   };
 }
 

@@ -1,5 +1,5 @@
 use bytemuck::{Pod, Zeroable};
-use solana_program::pubkey::Pubkey;
+use pinocchio::{pubkey, pubkey::Pubkey};
 use stevia::ZeroCopy;
 
 use super::{Tag, Ticker};
@@ -15,7 +15,10 @@ pub struct Mint {
     ///   1. bump
     ///   2. decimals
     ///   3. not in use
-    ///   4-7. ticker
+    ///   4. ticker
+    ///   5. ticker
+    ///   6. ticker
+    ///   7. ticker
     data: [u8; 8],
 
     /// Authority of the mint.
@@ -68,7 +71,7 @@ impl Mint {
     }
 
     pub fn find_pda(seeds: &MintSeeds) -> (Pubkey, u8) {
-        Pubkey::find_program_address(
+        pubkey::find_program_address(
             &[Self::PREFIX, seeds.authority.as_ref(), seeds.ticker],
             &crate::ID,
         )
