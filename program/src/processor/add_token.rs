@@ -1,10 +1,12 @@
+use pinocchio_log::log;
+
 use super::*;
 
 use crate::state::Token;
 
 pub fn process_add_token<'a>(accounts: &[AccountInfo]) -> ProgramResult {
     // Accounts.
-    let [payer_info, user_info, mint_info, token_account_info, system_program_info] = accounts
+    let [token_account_info, mint_info, user_info, payer_info, system_program_info] = accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
