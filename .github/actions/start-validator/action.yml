@@ -32,7 +32,7 @@ runs:
         name: ${{ inputs.artifacts }}
 
     - name: Install Solana
-      uses: nifty-oss/actions/install-solana@v1
+      uses: ./.github/actions/install-solana
       with:
         version: ${{ inputs.solana }}
         cache: ${{ inputs.cache }}
