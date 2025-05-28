@@ -125,7 +125,7 @@ macro_rules! resize_account {
     ($tree_is_full:expr, $ticker:expr, $recipient_token_account_info:expr, $payer_info:expr, $system_program_info:expr) => {
         if $tree_is_full {
             // We must reallocate so need a payer and the system program.
-            if $payer_info.key() == &crate::ID || $system_program_info.key() == &crate::ID {
+            if $payer_info.key() == &$crate::ID || $system_program_info.key() == &$crate::ID {
                 return Err(ProgramError::NotEnoughAccountKeys.into());
             }
 

@@ -2,7 +2,7 @@ use super::*;
 
 use crate::instruction::BurnArgs;
 
-pub fn process_burn<'a>(accounts: &[AccountInfo], args: BurnArgs) -> ProgramResult {
+pub fn process_burn(accounts: &[AccountInfo], args: BurnArgs) -> ProgramResult {
     // Accounts.
     // Accounts.
     let [token_account_info, mint_info, user_info] = accounts else {
@@ -15,15 +15,15 @@ pub fn process_burn<'a>(accounts: &[AccountInfo], args: BurnArgs) -> ProgramResu
     assert_non_empty("mint", mint_info)?;
     assert_program_owner("mint", mint_info, &crate::ID)?;
 
-    let mut data = unsafe { mint_info.borrow_mut_data_unchecked() };
-    let mint = Mint::load_mut(&mut data);
+    let data = unsafe { mint_info.borrow_mut_data_unchecked() };
+    let mint = Mint::load_mut(data);
 
     // Token accounts must exist.
     assert_non_empty("token", token_account_info)?;
     assert_program_owner("token", token_account_info, &crate::ID)?;
 
-    let mut account_data = unsafe { token_account_info.borrow_mut_data_unchecked() };
-    let mut token_account = PocketMut::from_bytes_mut(&mut account_data);
+    let account_data = unsafe { token_account_info.borrow_mut_data_unchecked() };
+    let mut token_account = PocketMut::from_bytes_mut(account_data);
 
     // The token accounts must be associated with the mint via the namespace.
     if token_account.base.authority != mint.authority {

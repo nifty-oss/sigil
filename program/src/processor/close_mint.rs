@@ -1,6 +1,6 @@
 use super::*;
 
-pub fn process_close_mint<'a>(accounts: &[AccountInfo]) -> ProgramResult {
+pub fn process_close_mint(accounts: &[AccountInfo]) -> ProgramResult {
     // Accounts.
     let [mint_info, authority_info, recipient_info] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -14,7 +14,7 @@ pub fn process_close_mint<'a>(accounts: &[AccountInfo]) -> ProgramResult {
     assert_program_owner("mint", mint_info, &crate::ID)?;
 
     let data = unsafe { mint_info.borrow_data_unchecked() };
-    let mint = Mint::load(&data);
+    let mint = Mint::load(data);
 
     // The authority must be the authority on the the mint.
     assert_same_pubkeys("authority", authority_info, &mint.authority)?;

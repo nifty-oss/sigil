@@ -44,8 +44,8 @@ pub fn process_create_mint(accounts: &[AccountInfo], args: CreateMintArgs) -> Pr
     // Create the mint account.
     create_account(mint_info, payer_info, Mint::LEN, &crate::ID, &signers)?;
 
-    let mut data = unsafe { mint_info.borrow_mut_data_unchecked() };
-    let mint = Mint::load_mut(&mut data);
+    let data = unsafe { mint_info.borrow_mut_data_unchecked() };
+    let mint = Mint::load_mut(data);
 
     // Setter Data
     mint.set_bump(bump);

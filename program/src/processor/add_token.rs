@@ -2,7 +2,7 @@ use super::*;
 
 use crate::state::Token;
 
-pub fn process_add_token<'a>(accounts: &[AccountInfo]) -> ProgramResult {
+pub fn process_add_token(accounts: &[AccountInfo]) -> ProgramResult {
     // Accounts.
     let [token_account_info, mint_info, user_info, payer_info, system_program_info] = accounts
     else {
@@ -19,10 +19,10 @@ pub fn process_add_token<'a>(accounts: &[AccountInfo]) -> ProgramResult {
     assert_program_owner("mint", mint_info, &crate::ID)?;
 
     let data = unsafe { mint_info.borrow_mut_data_unchecked() };
-    let mint = Mint::load(&data);
+    let mint = Mint::load(data);
 
     let account_data = unsafe { token_account_info.borrow_data_unchecked() };
-    let token_account = Pocket::from_bytes(&account_data);
+    let token_account = Pocket::from_bytes(account_data);
 
     // The token account must be associated with the mint via the namespace.
     if token_account.base.authority != mint.authority {

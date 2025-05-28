@@ -26,11 +26,11 @@ pub fn process_transfer(accounts: &[AccountInfo], args: TransferArgs) -> Program
     assert_non_empty("recipient_token", recipient_token_account_info)?;
     assert_program_owner("recipient_token", recipient_token_account_info, &crate::ID)?;
 
-    let mut user_account_data = unsafe { user_token_account_info.borrow_mut_data_unchecked() };
+    let user_account_data = unsafe { user_token_account_info.borrow_mut_data_unchecked() };
     let recipient_account_data =
         unsafe { recipient_token_account_info.borrow_mut_data_unchecked() };
 
-    let mut user_token_account = PocketMut::from_bytes_mut(&mut user_account_data);
+    let mut user_token_account = PocketMut::from_bytes_mut(user_account_data);
     let recipient_token_account = Pocket::from_bytes(recipient_account_data);
 
     // The token accounts must be in the same namespace.
@@ -73,8 +73,8 @@ pub fn process_transfer(accounts: &[AccountInfo], args: TransferArgs) -> Program
     }
 
     // We need a new reference to the recipient account data after the potential resize.
-    let mut account_data = unsafe { recipient_token_account_info.borrow_mut_data_unchecked() };
-    let mut token_account = PocketMut::from_bytes_mut(&mut account_data);
+    let account_data = unsafe { recipient_token_account_info.borrow_mut_data_unchecked() };
+    let mut token_account = PocketMut::from_bytes_mut(account_data);
 
     if is_none {
         token_account.tokens.insert(Token {

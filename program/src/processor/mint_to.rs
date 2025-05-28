@@ -25,12 +25,12 @@ pub fn process_mint_to(accounts: &[AccountInfo], args: MintToArgs) -> ProgramRes
     assert_non_empty("token", token_account_info)?;
     assert_program_owner("token", token_account_info, &crate::ID)?;
 
-    let mut data = unsafe { mint_info.borrow_mut_data_unchecked() };
-    let mint = Mint::load_mut(&mut data);
+    let data = unsafe { mint_info.borrow_mut_data_unchecked() };
+    let mint = Mint::load_mut(data);
     let ticker = mint.ticker();
 
     let account_data = unsafe { token_account_info.borrow_data_unchecked() };
-    let token_account = Pocket::from_bytes(&account_data);
+    let token_account = Pocket::from_bytes(account_data);
 
     // The token account must be associated with the mint via the authority.
     require!(
@@ -67,8 +67,8 @@ pub fn process_mint_to(accounts: &[AccountInfo], args: MintToArgs) -> ProgramRes
         );
 
         // We need a new reference to the recipient account data after the potential resize.
-        let mut account_data = unsafe { token_account_info.borrow_mut_data_unchecked() };
-        let mut recipient_token_account = PocketMut::from_bytes_mut(&mut account_data);
+        let account_data = unsafe { token_account_info.borrow_mut_data_unchecked() };
+        let mut recipient_token_account = PocketMut::from_bytes_mut(account_data);
 
         // New tokens should start at amount 0.
         recipient_token_account
@@ -77,8 +77,8 @@ pub fn process_mint_to(accounts: &[AccountInfo], args: MintToArgs) -> ProgramRes
     }
 
     // We need a new reference to the recipient account data after the potential resize.
-    let mut account_data = unsafe { token_account_info.borrow_mut_data_unchecked() };
-    let mut token_account = PocketMut::from_bytes_mut(&mut account_data);
+    let account_data = unsafe { token_account_info.borrow_mut_data_unchecked() };
+    let mut token_account = PocketMut::from_bytes_mut(account_data);
 
     // Mint the tokens to the token account.
     let token = token_account.tokens.get_mut(&ticker.into()).unwrap();

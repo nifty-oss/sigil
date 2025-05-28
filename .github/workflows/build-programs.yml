@@ -41,7 +41,7 @@ jobs:
           toolchain: ${{ inputs.rust || env.RUST_VERSION }}
 
       - name: Install Solana
-        uses: nifty-oss/actions/install-solana@v1
+        uses: ./.github/actions/install-solana
         with:
           version: ${{ inputs.solana || env.SOLANA_VERSION }}
           cache: ${{ env.CACHE }}
