@@ -12,7 +12,7 @@ inputs:
   node:
     description: The Node.js version to install
     required: true
-    default: "18.x"
+    default: "22.x"
   solana:
     description: The Solana version to install
     required: true

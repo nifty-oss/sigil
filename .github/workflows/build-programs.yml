@@ -11,18 +11,18 @@ on:
     inputs:
       rust:
         description: Rust version
-        default: 1.75.0
+        default: 1.87.0
         required: true
         type: string
       solana:
         description: Solana version
-        default: 1.17.22
+        default: 2.2.14
         required: true
         type: string
 
 env:
   CACHE: true
-  CARGO_NET_GIT_FETCH_WITH_CLI: 'true'
+  CARGO_NET_GIT_FETCH_WITH_CLI: "true"
 
 jobs:
   build_programs:
@@ -56,7 +56,7 @@ jobs:
       - name: Install Node root dependencies
         uses: nifty-oss/actions/install-node-dependencies@v1
         with:
-          folder: '.'
+          folder: "."
           cache: ${{ env.CACHE }}
           key: client-js
 
@@ -74,12 +74,12 @@ jobs:
         if: env.CACHE == 'true'
         uses: ./.github/actions/cache-crate
         with:
-          folder: '.'
+          folder: "."
           key: programs
 
       - name: Build programs
         shell: bash
-        working-directory: '.'
+        working-directory: "."
         run: npx zx ./scripts/program/build.mjs
         env:
           PROGRAMS: ${{ env.PROGRAMS }}

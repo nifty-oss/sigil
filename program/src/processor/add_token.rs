@@ -1,5 +1,3 @@
-use pinocchio_log::log;
-
 use super::*;
 
 use crate::state::Token;
