@@ -22,7 +22,7 @@ on:
 
 env:
   CACHE: true
-  CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+  CARGO_NET_GIT_FETCH_WITH_CLI: 'true'
 
 jobs:
   build_programs:
@@ -41,7 +41,7 @@ jobs:
           toolchain: ${{ inputs.rust || env.RUST_VERSION }}
 
       - name: Install Solana
-        uses: ./.github/actions/install-solana
+        uses: solana-program/actions/install-solana@v1
         with:
           version: ${{ inputs.solana || env.SOLANA_VERSION }}
           cache: ${{ env.CACHE }}
@@ -56,7 +56,7 @@ jobs:
       - name: Install Node root dependencies
         uses: nifty-oss/actions/install-node-dependencies@v1
         with:
-          folder: "."
+          folder: '.'
           cache: ${{ env.CACHE }}
           key: client-js
 
@@ -74,12 +74,12 @@ jobs:
         if: env.CACHE == 'true'
         uses: ./.github/actions/cache-crate
         with:
-          folder: "."
+          folder: '.'
           key: programs
 
       - name: Build programs
         shell: bash
-        working-directory: "."
+        working-directory: '.'
         run: npx zx ./scripts/program/build.mjs
         env:
           PROGRAMS: ${{ env.PROGRAMS }}

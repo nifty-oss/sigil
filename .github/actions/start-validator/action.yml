@@ -2,28 +2,29 @@ name: Start validator
 
 inputs:
   artifacts:
-    description: The name of the artifact to download program builds. Set to `false` to skip downloading
+    description:
+      The name of the artifact to download program builds. Set to `false` to skip downloading
     required: true
-    default: "program-builds"
+    default: 'program-builds'
   command:
     description: The command to start the validator
     required: true
-    default: "pnpm validator:start"
+    default: 'pnpm validator:start'
   node:
     description: The Node.js version to install
     required: true
-    default: "22.x"
+    default: '22.x'
   solana:
     description: The Solana version to install
     required: true
-    default: "stable"
+    default: 'stable'
   cache:
     description: Whether we should use caches to speed things up
     required: true
-    default: "true"
+    default: 'true'
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Download program builds
       if: inputs.artifacts != 'false'
@@ -32,7 +33,7 @@ runs:
         name: ${{ inputs.artifacts }}
 
     - name: Install Solana
-      uses: ./.github/actions/install-solana
+      uses: solana-program/actions/install-solana@v1
       with:
         version: ${{ inputs.solana }}
         cache: ${{ inputs.cache }}
