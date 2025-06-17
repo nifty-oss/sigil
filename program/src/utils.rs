@@ -7,10 +7,7 @@ use {
         sysvars::{rent::Rent, Sysvar},
         ProgramResult,
     },
-    pinocchio_system::{
-        instructions::{CreateAccount, Transfer},
-        ID as SYSTEM_PROGRAM_ID,
-    },
+    pinocchio_system::instructions::{CreateAccount, Transfer},
 };
 
 use crate::error::SigilError;
@@ -72,19 +69,18 @@ pub fn close_account(
     // The account to receive the lamport rent.
     receiving_account: &AccountInfo,
 ) -> ProgramResult {
-    let target_starting_lamports = receiving_account.lamports();
-    let mut receiving_account_lamports = receiving_account.try_borrow_mut_lamports()?;
-    *receiving_account_lamports = target_starting_lamports
-        .checked_add(target_account.lamports())
-        .unwrap();
+    {
+        let target_starting_lamports = receiving_account.lamports();
+        let mut receiving_account_lamports = receiving_account.try_borrow_mut_lamports()?;
+        *receiving_account_lamports = target_starting_lamports
+            .checked_add(target_account.lamports())
+            .unwrap();
 
-    let mut target_account_lamports = target_account.try_borrow_mut_lamports()?;
-    *target_account_lamports = 0;
-
-    unsafe {
-        target_account.assign(&SYSTEM_PROGRAM_ID);
+        let mut target_account_lamports = target_account.try_borrow_mut_lamports()?;
+        *target_account_lamports = 0;
     }
-    target_account.realloc(0, false)
+
+    target_account.close()
 }
 
 /// Transfer lamports.

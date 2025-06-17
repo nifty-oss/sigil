@@ -14,14 +14,13 @@ pub fn assert_program_owner(
     account: &AccountInfo,
     owner: &Pubkey,
 ) -> ProgramResult {
-    let account_owner = unsafe { account.owner() };
-    if account_owner != owner {
+    if !account.is_owned_by(owner) {
         msg!(&format!(
             "Account \"{}\" [{:?}] expected program owner [{:?}], got [{:?}]",
             account_name,
             account.key(),
             owner,
-            account_owner
+            unsafe { account.owner() }
         ));
         Err(SigilError::InvalidProgramOwner.into())
     } else {

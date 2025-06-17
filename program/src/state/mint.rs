@@ -15,10 +15,7 @@ pub struct Mint {
     ///   1. bump
     ///   2. decimals
     ///   3. not in use
-    ///   4. ticker
-    ///   5. ticker
-    ///   6. ticker
-    ///   7. ticker
+    ///   4-7. ticker
     data: [u8; 8],
 
     /// Authority of the mint.
