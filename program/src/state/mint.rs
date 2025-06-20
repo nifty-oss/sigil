@@ -1,5 +1,5 @@
 use bytemuck::{Pod, Zeroable};
-use solana_program::pubkey::Pubkey;
+use pinocchio::{pubkey, pubkey::Pubkey};
 use stevia::ZeroCopy;
 
 use super::{Tag, Ticker};
@@ -68,7 +68,7 @@ impl Mint {
     }
 
     pub fn find_pda(seeds: &MintSeeds) -> (Pubkey, u8) {
-        Pubkey::find_program_address(
+        pubkey::find_program_address(
             &[Self::PREFIX, seeds.authority.as_ref(), seeds.ticker],
             &crate::ID,
         )

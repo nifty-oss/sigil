@@ -1,17 +1,23 @@
-use borsh::BorshDeserialize;
-use solana_program::program_error::ProgramError;
-use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, msg, program::invoke, pubkey::Pubkey,
-    rent::Rent, system_instruction, system_program::ID as SYSTEM_PROGRAM_ID, sysvar::Sysvar,
+use {
+    borsh::BorshDeserialize,
+    pinocchio::{
+        account_info::AccountInfo,
+        msg,
+        program_error::ProgramError,
+        pubkey::Pubkey,
+        sysvars::{rent::Rent, Sysvar},
+        ProgramResult,
+    },
+    pinocchio_system::{instructions::Transfer, ID as SYSTEM_PROGRAM_ID},
+    stevia::ZeroCopy,
 };
-use stevia::ZeroCopy;
 
 use crate::{
     assertions::{
         assert_empty, assert_non_empty, assert_program_owner, assert_same_pubkeys, assert_signer,
     },
     error::SigilError,
-    instruction::Instruction,
+    instruction::SigilInstruction,
     require, resize_account,
     state::{Mint, MintSeeds, Pocket, PocketMut, Tag},
     utils::{close_account, create_account},
@@ -33,40 +39,40 @@ use create_token::process_create_token;
 use mint_to::process_mint_to;
 use transfer::process_transfer;
 
-pub fn process_instruction<'a>(
+pub fn process_instruction(
     _program_id: &Pubkey,
-    accounts: &'a [AccountInfo<'a>],
+    accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    let instruction: Instruction = Instruction::try_from_slice(instruction_data)
+    let instruction: SigilInstruction = SigilInstruction::try_from_slice(instruction_data)
         .map_err(|_| ProgramError::InvalidInstructionData)?;
 
     match instruction {
-        Instruction::CreateTokenAccount(args) => {
+        SigilInstruction::CreateTokenAccount(args) => {
             msg!("Instruction: Create Token Account");
             process_create_token(accounts, args)
         }
-        Instruction::CreateMint(args) => {
+        SigilInstruction::CreateMint(args) => {
             msg!("Instruction: Create Mint");
             process_create_mint(accounts, args)
         }
-        Instruction::AddToken => {
+        SigilInstruction::AddToken => {
             msg!("Instruction: Add Token");
             process_add_token(accounts)
         }
-        Instruction::MintTo(args) => {
+        SigilInstruction::MintTo(args) => {
             msg!("Instruction: Mint To");
             process_mint_to(accounts, args)
         }
-        Instruction::Burn(args) => {
+        SigilInstruction::Burn(args) => {
             msg!("Instruction: Burn");
             process_burn(accounts, args)
         }
-        Instruction::CloseMint => {
+        SigilInstruction::CloseMint => {
             msg!("Instruction: Close Mint");
             process_close_mint(accounts)
         }
-        Instruction::Transfer(args) => {
+        SigilInstruction::Transfer(args) => {
             msg!("Instruction: Transfer");
             process_transfer(accounts, args)
         }

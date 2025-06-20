@@ -1,27 +1,22 @@
 use super::*;
 
-use crate::{
-    instruction::{accounts::TransferAccounts, TransferArgs},
-    state::Token,
-};
+use crate::{instruction::TransferArgs, state::Token};
 
-pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs) -> ProgramResult {
+pub fn process_transfer(accounts: &[AccountInfo], args: TransferArgs) -> ProgramResult {
     // Accounts.
-    let ctx = TransferAccounts::context(accounts)?;
-
-    let user_token_account_info = ctx.accounts.user_token_account;
-    let recipient_token_account_info = ctx.accounts.recipient_token_account;
-    let user_info = ctx.accounts.user;
-    let payer_info = ctx.accounts.payer;
-    let system_program_info = ctx.accounts.system_program;
+    let [user_token_account_info, recipient_token_account_info, user_info, payer_info, system_program_info] =
+        accounts
+    else {
+        return Err(ProgramError::NotEnoughAccountKeys);
+    };
 
     assert_signer("user", user_info)?;
 
-    if let Some(payer_info) = payer_info {
+    if payer_info.key() != &crate::ID {
         assert_signer("payer", payer_info)?;
     }
-    if let Some(sys_prog_info) = ctx.accounts.system_program {
-        assert_same_pubkeys("sys_prog", sys_prog_info, &SYSTEM_PROGRAM_ID)?;
+    if system_program_info.key() != &crate::ID {
+        assert_same_pubkeys("sys_prog", system_program_info, &SYSTEM_PROGRAM_ID)?;
     }
 
     // Token accounts must exist.
@@ -31,24 +26,22 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
     assert_non_empty("recipient_token", recipient_token_account_info)?;
     assert_program_owner("recipient_token", recipient_token_account_info, &crate::ID)?;
 
-    let mut user_account_data = (*user_token_account_info.data).borrow_mut();
-    let recipient_account_data = (*recipient_token_account_info.data).borrow();
+    let user_account_data = unsafe { user_token_account_info.borrow_mut_data_unchecked() };
+    let recipient_account_data =
+        unsafe { recipient_token_account_info.borrow_mut_data_unchecked() };
 
-    let mut user_token_account = PocketMut::from_bytes_mut(&mut user_account_data);
-    let recipient_token_account = Pocket::from_bytes(&recipient_account_data);
+    let mut user_token_account = PocketMut::from_bytes_mut(user_account_data);
+    let recipient_token_account = Pocket::from_bytes(recipient_account_data);
 
     // The token accounts must be in the same namespace.
-    require!(
-        user_token_account.base.authority == recipient_token_account.base.authority,
-        SigilError::InvalidTokenAccount,
-        "token user mismatch"
-    );
+    if user_token_account.base.authority != recipient_token_account.base.authority {
+        return Err(SigilError::InvalidTokenAccount.into());
+    }
+
     // The user passed in must be the actual user on the token account.
-    require!(
-        user_token_account.base.user == *user_info.key,
-        SigilError::InvalidTokenAccount,
-        "user authority mismatch"
-    );
+    if user_token_account.base.user != *user_info.key() {
+        return Err(SigilError::InvalidTokenAccount.into());
+    }
 
     // Look up the amount of tokens in the user's account to make sure they have enough to send.
     let source_token = user_token_account
@@ -66,7 +59,6 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
         .is_none();
 
     // Drop read-only reference to recipient account data.
-    drop(recipient_account_data);
 
     // If the ticker doesn't exist on the recipient's account, add it.
     if is_none && tree_is_full {
@@ -81,8 +73,8 @@ pub fn process_transfer<'a>(accounts: &'a [AccountInfo<'a>], args: TransferArgs)
     }
 
     // We need a new reference to the recipient account data after the potential resize.
-    let mut account_data = (*recipient_token_account_info.data).borrow_mut();
-    let mut token_account = PocketMut::from_bytes_mut(&mut account_data);
+    let account_data = unsafe { recipient_token_account_info.borrow_mut_data_unchecked() };
+    let mut token_account = PocketMut::from_bytes_mut(account_data);
 
     if is_none {
         token_account.tokens.insert(Token {

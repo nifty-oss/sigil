@@ -1,7 +1,7 @@
 use std::mem::size_of;
 
 use bytemuck::{Pod, Zeroable};
-use solana_program::pubkey::Pubkey;
+use pinocchio::{pubkey, pubkey::Pubkey};
 use stevia::{
     collections::{U16ArraySet, U16ArraySetMut},
     ZeroCopy,
@@ -36,7 +36,7 @@ impl<'a> Pocket<'a> {
     }
 
     pub fn find_pda(seeds: &PocketSeeds) -> (Pubkey, u8) {
-        Pubkey::find_program_address(
+        pubkey::find_program_address(
             &[Self::PREFIX, seeds.user.as_ref(), seeds.authority.as_ref()],
             &crate::ID,
         )
