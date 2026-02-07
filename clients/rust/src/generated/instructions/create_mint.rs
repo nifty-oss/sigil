@@ -68,7 +68,7 @@ pub struct CreateMintInstructionData {
 
 impl CreateMintInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 3 }
+        Self { discriminator: 4 }
     }
 }
 

@@ -1,6 +1,8 @@
+mod delegation;
 mod mint;
 mod pocket;
 
+pub use delegation::*;
 pub use mint::*;
 pub use pocket::*;
 
@@ -15,6 +17,7 @@ pub enum Tag {
     Uninitialized,
     Mint,
     Pocket,
+    Delegation,
 }
 
 /// Struct representing a token entry in an account.

@@ -6,5 +6,6 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
+export * from './delegation';
 export * from './mint';
 export * from './pocket';

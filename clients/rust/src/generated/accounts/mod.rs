@@ -5,8 +5,10 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
+pub(crate) mod r#delegation;
 pub(crate) mod r#mint;
 pub(crate) mod r#pocket;
 
+pub use self::r#delegation::*;
 pub use self::r#mint::*;
 pub use self::r#pocket::*;

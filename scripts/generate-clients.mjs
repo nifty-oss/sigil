@@ -70,7 +70,7 @@ kinobi.update(
                   type: k.definedTypeLinkNode("Tag"),
                 }),
                 k.structFieldTypeNode({
-                  name: "padding",
+                  name: "delegateCount",
                   type: k.numberTypeNode("u8"),
                 }),
                 k.structFieldTypeNode({
@@ -87,6 +87,41 @@ kinobi.update(
                     k.definedTypeLinkNode("token"),
                     k.prefixedSizeNode(k.numberTypeNode("u16"))
                   ),
+                }),
+              ]),
+            }),
+            k.accountNode({
+              name: "delegation",
+              data: k.structTypeNode([
+                k.structFieldTypeNode({
+                  name: "tag",
+                  type: k.definedTypeLinkNode("Tag"),
+                }),
+                k.structFieldTypeNode({
+                  name: "bump",
+                  type: k.numberTypeNode("u8"),
+                }),
+                k.structFieldTypeNode({
+                  name: "ticker",
+                  type: k.stringTypeNode({
+                    size: k.fixedSizeNode(4),
+                  }),
+                }),
+                k.structFieldTypeNode({
+                  name: "reserved",
+                  type: k.bytesTypeNode(k.fixedSizeNode(2)),
+                }),
+                k.structFieldTypeNode({
+                  name: "delegate",
+                  type: k.publicKeyTypeNode(),
+                }),
+                k.structFieldTypeNode({
+                  name: "user",
+                  type: k.publicKeyTypeNode(),
+                }),
+                k.structFieldTypeNode({
+                  name: "authority",
+                  type: k.publicKeyTypeNode(),
                 }),
               ]),
             }),
@@ -116,6 +151,7 @@ kinobi.update(
                   { name: "Uninitialized" },
                   { name: "Mint" },
                   { name: "Pocket" },
+                  { name: "Delegation" },
                 ],
               },
             }),
@@ -153,6 +189,23 @@ kinobi.update(
           "authority",
           k.publicKeyTypeNode(),
           "The authority of the mint account"
+        ),
+        k.variablePdaSeedNode("ticker", k.bytesTypeNode(k.fixedSizeNode(4))),
+      ],
+    },
+    delegation: {
+      size: 104,
+      seeds: [
+        k.constantPdaSeedNodeFromString("delegate"),
+        k.variablePdaSeedNode(
+          "user",
+          k.publicKeyTypeNode(),
+          "The user who granted the delegation"
+        ),
+        k.variablePdaSeedNode(
+          "authority",
+          k.publicKeyTypeNode(),
+          "The authority namespace"
         ),
         k.variablePdaSeedNode("ticker", k.bytesTypeNode(k.fixedSizeNode(4))),
       ],

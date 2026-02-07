@@ -11,11 +11,13 @@ import { getU8Encoder } from '@solana/codecs';
 import { Program } from '@solana/programs';
 import {
   ParsedAddTokenInstruction,
+  ParsedApproveInstruction,
   ParsedBurnInstruction,
   ParsedCloseMintInstruction,
   ParsedCreateMintInstruction,
   ParsedCreateTokenAccountInstruction,
   ParsedMintToInstruction,
+  ParsedRevokeInstruction,
   ParsedTransferInstruction,
 } from '../instructions';
 import { memcmp } from '../shared';
@@ -36,15 +38,18 @@ export function getSigilProgram(): SigilProgram {
 export enum SigilAccount {
   Mint,
   Pocket,
+  Delegation,
 }
 
 export enum SigilInstruction {
   AddToken,
+  Approve,
   Burn,
   CloseMint,
   CreateMint,
   CreateTokenAccount,
   MintTo,
+  Revoke,
   Transfer,
 }
 
@@ -57,21 +62,27 @@ export function identifySigilInstruction(
     return SigilInstruction.AddToken;
   }
   if (memcmp(data, getU8Encoder().encode(1), 0)) {
-    return SigilInstruction.Burn;
+    return SigilInstruction.Approve;
   }
   if (memcmp(data, getU8Encoder().encode(2), 0)) {
-    return SigilInstruction.CloseMint;
+    return SigilInstruction.Burn;
   }
   if (memcmp(data, getU8Encoder().encode(3), 0)) {
-    return SigilInstruction.CreateMint;
+    return SigilInstruction.CloseMint;
   }
   if (memcmp(data, getU8Encoder().encode(4), 0)) {
-    return SigilInstruction.CreateTokenAccount;
+    return SigilInstruction.CreateMint;
   }
   if (memcmp(data, getU8Encoder().encode(5), 0)) {
-    return SigilInstruction.MintTo;
+    return SigilInstruction.CreateTokenAccount;
   }
   if (memcmp(data, getU8Encoder().encode(6), 0)) {
+    return SigilInstruction.MintTo;
+  }
+  if (memcmp(data, getU8Encoder().encode(7), 0)) {
+    return SigilInstruction.Revoke;
+  }
+  if (memcmp(data, getU8Encoder().encode(8), 0)) {
     return SigilInstruction.Transfer;
   }
   throw new Error(
@@ -85,6 +96,9 @@ export type ParsedSigilInstruction<
   | ({
       instructionType: SigilInstruction.AddToken;
     } & ParsedAddTokenInstruction<TProgram>)
+  | ({
+      instructionType: SigilInstruction.Approve;
+    } & ParsedApproveInstruction<TProgram>)
   | ({
       instructionType: SigilInstruction.Burn;
     } & ParsedBurnInstruction<TProgram>)
@@ -100,6 +114,9 @@ export type ParsedSigilInstruction<
   | ({
       instructionType: SigilInstruction.MintTo;
     } & ParsedMintToInstruction<TProgram>)
+  | ({
+      instructionType: SigilInstruction.Revoke;
+    } & ParsedRevokeInstruction<TProgram>)
   | ({
       instructionType: SigilInstruction.Transfer;
     } & ParsedTransferInstruction<TProgram>);

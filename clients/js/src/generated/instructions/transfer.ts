@@ -43,6 +43,7 @@ export type TransferInstruction<
   TAccountUser extends string | IAccountMeta<string> = string,
   TAccountPayer extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends string | IAccountMeta<string> = string,
+  TAccountDelegation extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -64,6 +65,9 @@ export type TransferInstruction<
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
+      TAccountDelegation extends string
+        ? ReadonlyAccount<TAccountDelegation>
+        : TAccountDelegation,
       ...TRemainingAccounts,
     ]
   >;
@@ -86,7 +90,7 @@ export function getTransferInstructionDataEncoder(): Encoder<TransferInstruction
       ['ticker', getArrayEncoder(getU8Encoder(), { size: 4 })],
       ['amount', getU32Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 6 })
+    (value) => ({ ...value, discriminator: 8 })
   );
 }
 
@@ -114,17 +118,20 @@ export type TransferInput<
   TAccountUser extends string = string,
   TAccountPayer extends string = string,
   TAccountSystemProgram extends string = string,
+  TAccountDelegation extends string = string,
 > = {
   /** The token authority account. */
   userTokenAccount: Address<TAccountUserTokenAccount>;
   /** The token authority account. */
   recipientTokenAccount: Address<TAccountRecipientTokenAccount>;
-  /** The pubkey of the user associated with the token account */
+  /** The user or delegate of the token account */
   user: TransactionSigner<TAccountUser>;
   /** The account paying for the storage fees. */
   payer?: TransactionSigner<TAccountPayer>;
   /** The system program */
   systemProgram?: Address<TAccountSystemProgram>;
+  /** The Delegation PDA, required if signer is a delegate. */
+  delegation?: Address<TAccountDelegation>;
   ticker: TransferInstructionDataArgs['ticker'];
   amount: TransferInstructionDataArgs['amount'];
 };
@@ -135,13 +142,15 @@ export function getTransferInstruction<
   TAccountUser extends string,
   TAccountPayer extends string,
   TAccountSystemProgram extends string,
+  TAccountDelegation extends string,
 >(
   input: TransferInput<
     TAccountUserTokenAccount,
     TAccountRecipientTokenAccount,
     TAccountUser,
     TAccountPayer,
-    TAccountSystemProgram
+    TAccountSystemProgram,
+    TAccountDelegation
   >
 ): TransferInstruction<
   typeof SIGIL_PROGRAM_ADDRESS,
@@ -149,7 +158,8 @@ export function getTransferInstruction<
   TAccountRecipientTokenAccount,
   TAccountUser,
   TAccountPayer,
-  TAccountSystemProgram
+  TAccountSystemProgram,
+  TAccountDelegation
 > {
   // Program address.
   const programAddress = SIGIL_PROGRAM_ADDRESS;
@@ -167,6 +177,7 @@ export function getTransferInstruction<
     user: { value: input.user ?? null, isWritable: false },
     payer: { value: input.payer ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+    delegation: { value: input.delegation ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -184,6 +195,7 @@ export function getTransferInstruction<
       getAccountMeta(accounts.user),
       getAccountMeta(accounts.payer),
       getAccountMeta(accounts.systemProgram),
+      getAccountMeta(accounts.delegation),
     ],
     programAddress,
     data: getTransferInstructionDataEncoder().encode(
@@ -195,7 +207,8 @@ export function getTransferInstruction<
     TAccountRecipientTokenAccount,
     TAccountUser,
     TAccountPayer,
-    TAccountSystemProgram
+    TAccountSystemProgram,
+    TAccountDelegation
   >;
 
   return instruction;
@@ -211,12 +224,14 @@ export type ParsedTransferInstruction<
     userTokenAccount: TAccountMetas[0];
     /** The token authority account. */
     recipientTokenAccount: TAccountMetas[1];
-    /** The pubkey of the user associated with the token account */
+    /** The user or delegate of the token account */
     user: TAccountMetas[2];
     /** The account paying for the storage fees. */
     payer?: TAccountMetas[3] | undefined;
     /** The system program */
     systemProgram?: TAccountMetas[4] | undefined;
+    /** The Delegation PDA, required if signer is a delegate. */
+    delegation?: TAccountMetas[5] | undefined;
   };
   data: TransferInstructionData;
 };
@@ -229,7 +244,7 @@ export function parseTransferInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedTransferInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 5) {
+  if (instruction.accounts.length < 6) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -253,6 +268,7 @@ export function parseTransferInstruction<
       user: getNextAccount(),
       payer: getNextOptionalAccount(),
       systemProgram: getNextOptionalAccount(),
+      delegation: getNextOptionalAccount(),
     },
     data: getTransferInstructionDataDecoder().decode(instruction.data),
   };

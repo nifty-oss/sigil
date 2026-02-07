@@ -19,6 +19,7 @@ export enum Tag {
   Uninitialized,
   Mint,
   Pocket,
+  Delegation,
 }
 
 export type TagArgs = Tag;

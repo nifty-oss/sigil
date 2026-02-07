@@ -62,7 +62,7 @@ export type CloseMintInstructionDataArgs = {};
 export function getCloseMintInstructionDataEncoder(): Encoder<CloseMintInstructionDataArgs> {
   return mapEncoder(
     getStructEncoder([['discriminator', getU8Encoder()]]),
-    (value) => ({ ...value, discriminator: 2 })
+    (value) => ({ ...value, discriminator: 3 })
   );
 }
 

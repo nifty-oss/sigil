@@ -11,11 +11,15 @@ use super::{Tag, Ticker};
 #[derive(Clone, Copy, Default, Pod, Zeroable)]
 pub struct Mint {
     /// Internal data.
+    ///
     ///   0. tag
     ///   1. bump
     ///   2. decimals
     ///   3. not in use
-    ///   4-7. ticker
+    ///   4. ticker
+    ///   5. ticker
+    ///   6. ticker
+    ///   7. ticker
     data: [u8; 8],
 
     /// Authority of the mint.
