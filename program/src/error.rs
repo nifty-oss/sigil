@@ -36,6 +36,10 @@ pub enum SigilError {
     MaximumSupplyReached,
     /// 16 - Maximum supply reached
     MintHasSupply,
+    /// 17 - Invalid delegate
+    InvalidDelegate,
+    /// 18 - No active delegation
+    NoActiveDelegation,
 }
 
 impl From<SigilError> for ProgramError {

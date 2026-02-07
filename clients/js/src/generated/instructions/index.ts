@@ -7,9 +7,11 @@
  */
 
 export * from './addToken';
+export * from './approve';
 export * from './burn';
 export * from './closeMint';
 export * from './createMint';
 export * from './createTokenAccount';
 export * from './mintTo';
+export * from './revoke';
 export * from './transfer';

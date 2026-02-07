@@ -14,12 +14,14 @@ pub struct Transfer {
     pub user_token_account: solana_program::pubkey::Pubkey,
     /// The token authority account.
     pub recipient_token_account: solana_program::pubkey::Pubkey,
-    /// The pubkey of the user associated with the token account
+    /// The user or delegate of the token account
     pub user: solana_program::pubkey::Pubkey,
     /// The account paying for the storage fees.
     pub payer: Option<solana_program::pubkey::Pubkey>,
     /// The system program
     pub system_program: Option<solana_program::pubkey::Pubkey>,
+    /// The Delegation PDA, required if signer is a delegate.
+    pub delegation: Option<solana_program::pubkey::Pubkey>,
 }
 
 impl Transfer {
@@ -35,7 +37,7 @@ impl Transfer {
         args: TransferInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.user_token_account,
             false,
@@ -66,6 +68,16 @@ impl Transfer {
                 false,
             ));
         }
+        if let Some(delegation) = self.delegation {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                delegation, false,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::SIGIL_ID,
+                false,
+            ));
+        }
         accounts.extend_from_slice(remaining_accounts);
         let mut data = TransferInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -86,7 +98,7 @@ pub struct TransferInstructionData {
 
 impl TransferInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 6 }
+        Self { discriminator: 8 }
     }
 }
 
@@ -106,6 +118,7 @@ pub struct TransferInstructionArgs {
 ///   2. `[signer]` user
 ///   3. `[writable, signer, optional]` payer
 ///   4. `[optional]` system_program
+///   5. `[optional]` delegation
 #[derive(Default)]
 pub struct TransferBuilder {
     user_token_account: Option<solana_program::pubkey::Pubkey>,
@@ -113,6 +126,7 @@ pub struct TransferBuilder {
     user: Option<solana_program::pubkey::Pubkey>,
     payer: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
+    delegation: Option<solana_program::pubkey::Pubkey>,
     ticker: Option<[u8; 4]>,
     amount: Option<u32>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -140,7 +154,7 @@ impl TransferBuilder {
         self.recipient_token_account = Some(recipient_token_account);
         self
     }
-    /// The pubkey of the user associated with the token account
+    /// The user or delegate of the token account
     #[inline(always)]
     pub fn user(&mut self, user: solana_program::pubkey::Pubkey) -> &mut Self {
         self.user = Some(user);
@@ -161,6 +175,13 @@ impl TransferBuilder {
         system_program: Option<solana_program::pubkey::Pubkey>,
     ) -> &mut Self {
         self.system_program = system_program;
+        self
+    }
+    /// `[optional account]`
+    /// The Delegation PDA, required if signer is a delegate.
+    #[inline(always)]
+    pub fn delegation(&mut self, delegation: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.delegation = delegation;
         self
     }
     #[inline(always)]
@@ -203,6 +224,7 @@ impl TransferBuilder {
             user: self.user.expect("user is not set"),
             payer: self.payer,
             system_program: self.system_program,
+            delegation: self.delegation,
         };
         let args = TransferInstructionArgs {
             ticker: self.ticker.clone().expect("ticker is not set"),
@@ -219,12 +241,14 @@ pub struct TransferCpiAccounts<'a, 'b> {
     pub user_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// The token authority account.
     pub recipient_token_account: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The pubkey of the user associated with the token account
+    /// The user or delegate of the token account
     pub user: &'b solana_program::account_info::AccountInfo<'a>,
     /// The account paying for the storage fees.
     pub payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The system program
     pub system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    /// The Delegation PDA, required if signer is a delegate.
+    pub delegation: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
 /// `transfer` CPI instruction.
@@ -235,12 +259,14 @@ pub struct TransferCpi<'a, 'b> {
     pub user_token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// The token authority account.
     pub recipient_token_account: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The pubkey of the user associated with the token account
+    /// The user or delegate of the token account
     pub user: &'b solana_program::account_info::AccountInfo<'a>,
     /// The account paying for the storage fees.
     pub payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The system program
     pub system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    /// The Delegation PDA, required if signer is a delegate.
+    pub delegation: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
     pub __args: TransferInstructionArgs,
 }
@@ -258,6 +284,7 @@ impl<'a, 'b> TransferCpi<'a, 'b> {
             user: accounts.user,
             payer: accounts.payer,
             system_program: accounts.system_program,
+            delegation: accounts.delegation,
             __args: args,
         }
     }
@@ -294,7 +321,7 @@ impl<'a, 'b> TransferCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(5 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.user_token_account.key,
             false,
@@ -328,6 +355,17 @@ impl<'a, 'b> TransferCpi<'a, 'b> {
                 false,
             ));
         }
+        if let Some(delegation) = self.delegation {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *delegation.key,
+                false,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::SIGIL_ID,
+                false,
+            ));
+        }
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -344,7 +382,7 @@ impl<'a, 'b> TransferCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(5 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(6 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.user_token_account.clone());
         account_infos.push(self.recipient_token_account.clone());
@@ -354,6 +392,9 @@ impl<'a, 'b> TransferCpi<'a, 'b> {
         }
         if let Some(system_program) = self.system_program {
             account_infos.push(system_program.clone());
+        }
+        if let Some(delegation) = self.delegation {
+            account_infos.push(delegation.clone());
         }
         remaining_accounts
             .iter()
@@ -376,6 +417,7 @@ impl<'a, 'b> TransferCpi<'a, 'b> {
 ///   2. `[signer]` user
 ///   3. `[writable, signer, optional]` payer
 ///   4. `[optional]` system_program
+///   5. `[optional]` delegation
 pub struct TransferCpiBuilder<'a, 'b> {
     instruction: Box<TransferCpiBuilderInstruction<'a, 'b>>,
 }
@@ -389,6 +431,7 @@ impl<'a, 'b> TransferCpiBuilder<'a, 'b> {
             user: None,
             payer: None,
             system_program: None,
+            delegation: None,
             ticker: None,
             amount: None,
             __remaining_accounts: Vec::new(),
@@ -413,7 +456,7 @@ impl<'a, 'b> TransferCpiBuilder<'a, 'b> {
         self.instruction.recipient_token_account = Some(recipient_token_account);
         self
     }
-    /// The pubkey of the user associated with the token account
+    /// The user or delegate of the token account
     #[inline(always)]
     pub fn user(&mut self, user: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.user = Some(user);
@@ -437,6 +480,16 @@ impl<'a, 'b> TransferCpiBuilder<'a, 'b> {
         system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ) -> &mut Self {
         self.instruction.system_program = system_program;
+        self
+    }
+    /// `[optional account]`
+    /// The Delegation PDA, required if signer is a delegate.
+    #[inline(always)]
+    pub fn delegation(
+        &mut self,
+        delegation: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.delegation = delegation;
         self
     }
     #[inline(always)]
@@ -512,6 +565,8 @@ impl<'a, 'b> TransferCpiBuilder<'a, 'b> {
             payer: self.instruction.payer,
 
             system_program: self.instruction.system_program,
+
+            delegation: self.instruction.delegation,
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -528,6 +583,7 @@ struct TransferCpiBuilderInstruction<'a, 'b> {
     user: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    delegation: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     ticker: Option<[u8; 4]>,
     amount: Option<u32>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

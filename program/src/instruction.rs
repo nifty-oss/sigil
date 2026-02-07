@@ -64,6 +64,12 @@ pub struct TransferArgs {
     pub amount: u32,
 }
 
+#[repr(C)]
+#[derive(BorshSerialize, BorshDeserialize, PartialEq, Eq, Debug, Clone)]
+pub struct ApproveArgs {
+    pub ticker: [u8; 4],
+}
+
 #[derive(BorshDeserialize, BorshSerialize, Clone, Debug, ShankInstruction)]
     #[rustfmt::skip]
     pub enum SigilInstruction {
@@ -76,10 +82,21 @@ pub struct TransferArgs {
         #[account(4, optional, name="system_program", desc = "The system program")]
         AddToken,
 
-        /// Allows a user to burn tokens from their account.
+        /// Approve a delegate for a specific ticker on a user's Pocket.
+        #[account(0, writable, name="token_account", desc = "The user's Pocket account.")]
+        #[account(1, writable, name="delegation", desc = "The Delegation PDA to create.")]
+        #[account(2, signer, name="user", desc = "The Pocket owner.")]
+        #[account(3, name="delegate", desc = "The pubkey being approved as delegate.")]
+        #[account(4, name="authority", desc = "The authority namespace.")]
+        #[account(5, writable, signer, name="payer", desc = "Pays rent for the Delegation account.")]
+        #[account(6, name="system_program", desc = "The system program.")]
+        Approve(ApproveArgs),
+
+        /// Allows a user or delegate to burn tokens from their account.
         #[account(0, writable, name="token_account", desc = "The token authority account.")]
         #[account(1, writable, name="mint", desc = "The mint account PDA derived from the ticker and authority.")]
-        #[account(2, signer, name="user", desc = "The user of the token account")]
+        #[account(2, signer, name="user", desc = "The user or delegate of the token account")]
+        #[account(3, optional, name="delegation", desc = "The Delegation PDA, required if signer is a delegate.")]
         Burn(BurnArgs),
 
         /// Create a new mint account from a ticker and an authority.
@@ -117,11 +134,20 @@ pub struct TransferArgs {
         #[account(4, optional, name="system_program", desc = "The system program")]
         MintTo(MintToArgs),
 
+        /// Revoke a delegate for a specific ticker, closing the Delegation account.
+        #[account(0, writable, name="token_account", desc = "The user's Pocket account.")]
+        #[account(1, writable, name="delegation", desc = "The Delegation PDA to close.")]
+        #[account(2, signer, name="user", desc = "The Pocket owner.")]
+        #[account(3, name="authority", desc = "The authority namespace.")]
+        #[account(4, optional, writable, name="recipient", desc = "Receives refunded rent. Defaults to user.")]
+        Revoke(ApproveArgs),
+
         /// Transfer tokens from one user to another.
         #[account(0, writable, name="user_token_account", desc = "The token authority account.")]
         #[account(1, writable, name="recipient_token_account", desc = "The token authority account.")]
-        #[account(2, signer, name="user", desc = "The pubkey of the user associated with the token account")]
+        #[account(2, signer, name="user", desc = "The user or delegate of the token account")]
         #[account(3, optional, writable, signer, name="payer", desc = "The account paying for the storage fees.")]
         #[account(4, optional, name="system_program", desc = "The system program")]
+        #[account(5, optional, name="delegation", desc = "The Delegation PDA, required if signer is a delegate.")]
         Transfer(TransferArgs),
     }

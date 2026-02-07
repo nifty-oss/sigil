@@ -6,5 +6,6 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
+export * from './approveArgs';
 export * from './tag';
 export * from './token';

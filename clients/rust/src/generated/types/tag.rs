@@ -17,4 +17,5 @@ pub enum Tag {
     Uninitialized,
     Mint,
     Pocket,
+    Delegation,
 }

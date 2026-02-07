@@ -62,7 +62,7 @@ export type MaybePocket<TAddress extends string = string> = MaybeAccount<
 
 export type PocketAccountData = {
   tag: Tag;
-  padding: number;
+  delegateCount: number;
   authority: Address;
   user: Address;
   tokens: Array<Token>;
@@ -70,7 +70,7 @@ export type PocketAccountData = {
 
 export type PocketAccountDataArgs = {
   tag: TagArgs;
-  padding: number;
+  delegateCount: number;
   authority: Address;
   user: Address;
   tokens: Array<TokenArgs>;
@@ -79,7 +79,7 @@ export type PocketAccountDataArgs = {
 export function getPocketAccountDataEncoder(): Encoder<PocketAccountDataArgs> {
   return getStructEncoder([
     ['tag', getTagEncoder()],
-    ['padding', getU8Encoder()],
+    ['delegateCount', getU8Encoder()],
     ['authority', getAddressEncoder()],
     ['user', getAddressEncoder()],
     ['tokens', getArrayEncoder(getTokenEncoder(), { size: getU16Encoder() })],
@@ -89,7 +89,7 @@ export function getPocketAccountDataEncoder(): Encoder<PocketAccountDataArgs> {
 export function getPocketAccountDataDecoder(): Decoder<PocketAccountData> {
   return getStructDecoder([
     ['tag', getTagDecoder()],
-    ['padding', getU8Decoder()],
+    ['delegateCount', getU8Decoder()],
     ['authority', getAddressDecoder()],
     ['user', getAddressDecoder()],
     ['tokens', getArrayDecoder(getTokenDecoder(), { size: getU16Decoder() })],

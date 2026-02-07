@@ -76,7 +76,7 @@ export function getMintToInstructionDataEncoder(): Encoder<MintToInstructionData
       ['discriminator', getU8Encoder()],
       ['amount', getU32Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 5 })
+    (value) => ({ ...value, discriminator: 6 })
   );
 }
 

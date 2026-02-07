@@ -14,8 +14,10 @@ pub struct Burn {
     pub token_account: solana_program::pubkey::Pubkey,
     /// The mint account PDA derived from the ticker and authority.
     pub mint: solana_program::pubkey::Pubkey,
-    /// The user of the token account
+    /// The user or delegate of the token account
     pub user: solana_program::pubkey::Pubkey,
+    /// The Delegation PDA, required if signer is a delegate.
+    pub delegation: Option<solana_program::pubkey::Pubkey>,
 }
 
 impl Burn {
@@ -31,7 +33,7 @@ impl Burn {
         args: BurnInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.token_account,
             false,
@@ -42,6 +44,16 @@ impl Burn {
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.user, true,
         ));
+        if let Some(delegation) = self.delegation {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                delegation, false,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::SIGIL_ID,
+                false,
+            ));
+        }
         accounts.extend_from_slice(remaining_accounts);
         let mut data = BurnInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -62,7 +74,7 @@ pub struct BurnInstructionData {
 
 impl BurnInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 1 }
+        Self { discriminator: 2 }
     }
 }
 
@@ -79,11 +91,13 @@ pub struct BurnInstructionArgs {
 ///   0. `[writable]` token_account
 ///   1. `[writable]` mint
 ///   2. `[signer]` user
+///   3. `[optional]` delegation
 #[derive(Default)]
 pub struct BurnBuilder {
     token_account: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     user: Option<solana_program::pubkey::Pubkey>,
+    delegation: Option<solana_program::pubkey::Pubkey>,
     amount: Option<u32>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
@@ -104,10 +118,17 @@ impl BurnBuilder {
         self.mint = Some(mint);
         self
     }
-    /// The user of the token account
+    /// The user or delegate of the token account
     #[inline(always)]
     pub fn user(&mut self, user: solana_program::pubkey::Pubkey) -> &mut Self {
         self.user = Some(user);
+        self
+    }
+    /// `[optional account]`
+    /// The Delegation PDA, required if signer is a delegate.
+    #[inline(always)]
+    pub fn delegation(&mut self, delegation: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.delegation = delegation;
         self
     }
     #[inline(always)]
@@ -139,6 +160,7 @@ impl BurnBuilder {
             token_account: self.token_account.expect("token_account is not set"),
             mint: self.mint.expect("mint is not set"),
             user: self.user.expect("user is not set"),
+            delegation: self.delegation,
         };
         let args = BurnInstructionArgs {
             amount: self.amount.clone().expect("amount is not set"),
@@ -154,8 +176,10 @@ pub struct BurnCpiAccounts<'a, 'b> {
     pub token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// The mint account PDA derived from the ticker and authority.
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The user of the token account
+    /// The user or delegate of the token account
     pub user: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The Delegation PDA, required if signer is a delegate.
+    pub delegation: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
 /// `burn` CPI instruction.
@@ -166,8 +190,10 @@ pub struct BurnCpi<'a, 'b> {
     pub token_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// The mint account PDA derived from the ticker and authority.
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The user of the token account
+    /// The user or delegate of the token account
     pub user: &'b solana_program::account_info::AccountInfo<'a>,
+    /// The Delegation PDA, required if signer is a delegate.
+    pub delegation: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
     pub __args: BurnInstructionArgs,
 }
@@ -183,6 +209,7 @@ impl<'a, 'b> BurnCpi<'a, 'b> {
             token_account: accounts.token_account,
             mint: accounts.mint,
             user: accounts.user,
+            delegation: accounts.delegation,
             __args: args,
         }
     }
@@ -219,7 +246,7 @@ impl<'a, 'b> BurnCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(4 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.token_account.key,
             false,
@@ -232,6 +259,17 @@ impl<'a, 'b> BurnCpi<'a, 'b> {
             *self.user.key,
             true,
         ));
+        if let Some(delegation) = self.delegation {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *delegation.key,
+                false,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::SIGIL_ID,
+                false,
+            ));
+        }
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -248,11 +286,14 @@ impl<'a, 'b> BurnCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(3 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(4 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.token_account.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.user.clone());
+        if let Some(delegation) = self.delegation {
+            account_infos.push(delegation.clone());
+        }
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -272,6 +313,7 @@ impl<'a, 'b> BurnCpi<'a, 'b> {
 ///   0. `[writable]` token_account
 ///   1. `[writable]` mint
 ///   2. `[signer]` user
+///   3. `[optional]` delegation
 pub struct BurnCpiBuilder<'a, 'b> {
     instruction: Box<BurnCpiBuilderInstruction<'a, 'b>>,
 }
@@ -283,6 +325,7 @@ impl<'a, 'b> BurnCpiBuilder<'a, 'b> {
             token_account: None,
             mint: None,
             user: None,
+            delegation: None,
             amount: None,
             __remaining_accounts: Vec::new(),
         });
@@ -303,10 +346,20 @@ impl<'a, 'b> BurnCpiBuilder<'a, 'b> {
         self.instruction.mint = Some(mint);
         self
     }
-    /// The user of the token account
+    /// The user or delegate of the token account
     #[inline(always)]
     pub fn user(&mut self, user: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.user = Some(user);
+        self
+    }
+    /// `[optional account]`
+    /// The Delegation PDA, required if signer is a delegate.
+    #[inline(always)]
+    pub fn delegation(
+        &mut self,
+        delegation: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.delegation = delegation;
         self
     }
     #[inline(always)]
@@ -369,6 +422,8 @@ impl<'a, 'b> BurnCpiBuilder<'a, 'b> {
             mint: self.instruction.mint.expect("mint is not set"),
 
             user: self.instruction.user.expect("user is not set"),
+
+            delegation: self.instruction.delegation,
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -383,6 +438,7 @@ struct BurnCpiBuilderInstruction<'a, 'b> {
     token_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     user: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    delegation: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     amount: Option<u32>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(

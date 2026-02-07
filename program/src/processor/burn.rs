@@ -4,8 +4,7 @@ use crate::instruction::BurnArgs;
 
 pub fn process_burn(accounts: &[AccountInfo], args: BurnArgs) -> ProgramResult {
     // Accounts.
-    // Accounts.
-    let [token_account_info, mint_info, user_info] = accounts else {
+    let [token_account_info, mint_info, user_info, delegation_info] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
@@ -30,10 +29,9 @@ pub fn process_burn(accounts: &[AccountInfo], args: BurnArgs) -> ProgramResult {
         return Err(SigilError::InvalidTokenAccount.into());
     }
 
-    // The token accounts must be associated with the user and recipient passed in.
-    if &token_account.base.user != user_info.key() {
-        return Err(SigilError::InvalidTokenAccount.into());
-    }
+    // The signer must be the user or a valid delegate for this ticker.
+    let ticker = mint.ticker();
+    validate_user_or_delegate(user_info, token_account.base, &ticker, delegation_info)?;
 
     // Look up the amount of tokens in the user's account to make sure they have enough to burn.
     let token = match token_account.tokens.get_mut(&mint.ticker().into()) {

@@ -55,6 +55,79 @@
       }
     },
     {
+      "name": "Approve",
+      "accounts": [
+        {
+          "name": "tokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The user's Pocket account."
+          ]
+        },
+        {
+          "name": "delegation",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The Delegation PDA to create."
+          ]
+        },
+        {
+          "name": "user",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "The Pocket owner."
+          ]
+        },
+        {
+          "name": "delegate",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The pubkey being approved as delegate."
+          ]
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The authority namespace."
+          ]
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "Pays rent for the Delegation account."
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The system program."
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "approveArgs",
+          "type": {
+            "defined": "ApproveArgs"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 1
+      }
+    },
+    {
       "name": "Burn",
       "accounts": [
         {
@@ -78,7 +151,16 @@
           "isMut": false,
           "isSigner": true,
           "docs": [
-            "The user of the token account"
+            "The user or delegate of the token account"
+          ]
+        },
+        {
+          "name": "delegation",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true,
+          "docs": [
+            "The Delegation PDA, required if signer is a delegate."
           ]
         }
       ],
@@ -92,7 +174,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 1
+        "value": 2
       }
     },
     {
@@ -127,7 +209,7 @@
       "args": [],
       "discriminant": {
         "type": "u8",
-        "value": 2
+        "value": 3
       }
     },
     {
@@ -176,7 +258,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 3
+        "value": 4
       }
     },
     {
@@ -233,7 +315,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 4
+        "value": 5
       }
     },
     {
@@ -292,7 +374,65 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 5
+        "value": 6
+      }
+    },
+    {
+      "name": "Revoke",
+      "accounts": [
+        {
+          "name": "tokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The user's Pocket account."
+          ]
+        },
+        {
+          "name": "delegation",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The Delegation PDA to close."
+          ]
+        },
+        {
+          "name": "user",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "The Pocket owner."
+          ]
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The authority namespace."
+          ]
+        },
+        {
+          "name": "recipient",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true,
+          "docs": [
+            "Receives refunded rent. Defaults to user."
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "approveArgs",
+          "type": {
+            "defined": "ApproveArgs"
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 7
       }
     },
     {
@@ -319,7 +459,7 @@
           "isMut": false,
           "isSigner": true,
           "docs": [
-            "The pubkey of the user associated with the token account"
+            "The user or delegate of the token account"
           ]
         },
         {
@@ -339,6 +479,15 @@
           "docs": [
             "The system program"
           ]
+        },
+        {
+          "name": "delegation",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true,
+          "docs": [
+            "The Delegation PDA, required if signer is a delegate."
+          ]
         }
       ],
       "args": [
@@ -351,7 +500,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 6
+        "value": 8
       }
     }
   ],
@@ -432,12 +581,29 @@
           }
         ]
       }
+    },
+    {
+      "name": "ApproveArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "ticker",
+            "type": {
+              "array": [
+                "u8",
+                4
+              ]
+            }
+          }
+        ]
+      }
     }
   ],
   "metadata": {
     "origin": "shank",
     "address": "BpPMgxYawb8Qiguavj3JccMdp7bTZWemSqJmDeYTsTD9",
-    "binaryVersion": "0.4.3",
+    "binaryVersion": "0.4.7",
     "libVersion": "^0.4.2"
   }
 }

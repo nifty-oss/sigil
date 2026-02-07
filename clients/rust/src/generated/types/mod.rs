@@ -5,8 +5,10 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
+pub(crate) mod r#approve_args;
 pub(crate) mod r#tag;
 pub(crate) mod r#token;
 
+pub use self::r#approve_args::*;
 pub use self::r#tag::*;
 pub use self::r#token::*;

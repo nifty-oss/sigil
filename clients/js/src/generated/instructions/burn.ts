@@ -25,6 +25,7 @@ import {
   IInstruction,
   IInstructionWithAccounts,
   IInstructionWithData,
+  ReadonlyAccount,
   ReadonlySignerAccount,
   WritableAccount,
 } from '@solana/instructions';
@@ -37,6 +38,7 @@ export type BurnInstruction<
   TAccountTokenAccount extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountUser extends string | IAccountMeta<string> = string,
+  TAccountDelegation extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -51,6 +53,9 @@ export type BurnInstruction<
       TAccountUser extends string
         ? ReadonlySignerAccount<TAccountUser> & IAccountSignerMeta<TAccountUser>
         : TAccountUser,
+      TAccountDelegation extends string
+        ? ReadonlyAccount<TAccountDelegation>
+        : TAccountDelegation,
       ...TRemainingAccounts,
     ]
   >;
@@ -65,7 +70,7 @@ export function getBurnInstructionDataEncoder(): Encoder<BurnInstructionDataArgs
       ['discriminator', getU8Encoder()],
       ['amount', getU32Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: 1 })
+    (value) => ({ ...value, discriminator: 2 })
   );
 }
 
@@ -90,13 +95,16 @@ export type BurnInput<
   TAccountTokenAccount extends string = string,
   TAccountMint extends string = string,
   TAccountUser extends string = string,
+  TAccountDelegation extends string = string,
 > = {
   /** The token authority account. */
   tokenAccount: Address<TAccountTokenAccount>;
   /** The mint account PDA derived from the ticker and authority. */
   mint: Address<TAccountMint>;
-  /** The user of the token account */
+  /** The user or delegate of the token account */
   user: TransactionSigner<TAccountUser>;
+  /** The Delegation PDA, required if signer is a delegate. */
+  delegation?: Address<TAccountDelegation>;
   amount: BurnInstructionDataArgs['amount'];
 };
 
@@ -104,13 +112,20 @@ export function getBurnInstruction<
   TAccountTokenAccount extends string,
   TAccountMint extends string,
   TAccountUser extends string,
+  TAccountDelegation extends string,
 >(
-  input: BurnInput<TAccountTokenAccount, TAccountMint, TAccountUser>
+  input: BurnInput<
+    TAccountTokenAccount,
+    TAccountMint,
+    TAccountUser,
+    TAccountDelegation
+  >
 ): BurnInstruction<
   typeof SIGIL_PROGRAM_ADDRESS,
   TAccountTokenAccount,
   TAccountMint,
-  TAccountUser
+  TAccountUser,
+  TAccountDelegation
 > {
   // Program address.
   const programAddress = SIGIL_PROGRAM_ADDRESS;
@@ -120,6 +135,7 @@ export function getBurnInstruction<
     tokenAccount: { value: input.tokenAccount ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: true },
     user: { value: input.user ?? null, isWritable: false },
+    delegation: { value: input.delegation ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -135,6 +151,7 @@ export function getBurnInstruction<
       getAccountMeta(accounts.tokenAccount),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.user),
+      getAccountMeta(accounts.delegation),
     ],
     programAddress,
     data: getBurnInstructionDataEncoder().encode(
@@ -144,7 +161,8 @@ export function getBurnInstruction<
     typeof SIGIL_PROGRAM_ADDRESS,
     TAccountTokenAccount,
     TAccountMint,
-    TAccountUser
+    TAccountUser,
+    TAccountDelegation
   >;
 
   return instruction;
@@ -160,8 +178,10 @@ export type ParsedBurnInstruction<
     tokenAccount: TAccountMetas[0];
     /** The mint account PDA derived from the ticker and authority. */
     mint: TAccountMetas[1];
-    /** The user of the token account */
+    /** The user or delegate of the token account */
     user: TAccountMetas[2];
+    /** The Delegation PDA, required if signer is a delegate. */
+    delegation?: TAccountMetas[3] | undefined;
   };
   data: BurnInstructionData;
 };
@@ -174,7 +194,7 @@ export function parseBurnInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedBurnInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 3) {
+  if (instruction.accounts.length < 4) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -184,12 +204,19 @@ export function parseBurnInstruction<
     accountIndex += 1;
     return accountMeta;
   };
+  const getNextOptionalAccount = () => {
+    const accountMeta = getNextAccount();
+    return accountMeta.address === SIGIL_PROGRAM_ADDRESS
+      ? undefined
+      : accountMeta;
+  };
   return {
     programAddress: instruction.programAddress,
     accounts: {
       tokenAccount: getNextAccount(),
       mint: getNextAccount(),
       user: getNextAccount(),
+      delegation: getNextOptionalAccount(),
     },
     data: getBurnInstructionDataDecoder().decode(instruction.data),
   };

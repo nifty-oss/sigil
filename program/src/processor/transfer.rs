@@ -4,7 +4,7 @@ use crate::{instruction::TransferArgs, state::Token};
 
 pub fn process_transfer(accounts: &[AccountInfo], args: TransferArgs) -> ProgramResult {
     // Accounts.
-    let [user_token_account_info, recipient_token_account_info, user_info, payer_info, system_program_info] =
+    let [user_token_account_info, recipient_token_account_info, user_info, payer_info, system_program_info, delegation_info] =
         accounts
     else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -38,10 +38,13 @@ pub fn process_transfer(accounts: &[AccountInfo], args: TransferArgs) -> Program
         return Err(SigilError::InvalidTokenAccount.into());
     }
 
-    // The user passed in must be the actual user on the token account.
-    if user_token_account.base.user != *user_info.key() {
-        return Err(SigilError::InvalidTokenAccount.into());
-    }
+    // The signer must be the user or a valid delegate for this ticker.
+    validate_user_or_delegate(
+        user_info,
+        user_token_account.base,
+        &args.ticker,
+        delegation_info,
+    )?;
 
     // Look up the amount of tokens in the user's account to make sure they have enough to send.
     let source_token = user_token_account
